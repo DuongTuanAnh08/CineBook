@@ -42,3 +42,52 @@ export interface SeatPricing {
   vip: number
   couple: number
 }
+
+// ─── Concession Types (UC-42 / UC-43 / UC-44) ────────────────────────────────
+
+export type ConcessionItemType = 'drink' | 'popcorn' | 'combo'
+export type ConcessionItemStatus = 'active' | 'inactive'
+
+export interface ConcessionItem {
+  id: string
+  name: string
+  price: number
+  type: ConcessionItemType
+  image: string
+  status: ConcessionItemStatus
+  description?: string
+}
+
+export interface ConcessionOrderItem {
+  item: ConcessionItem
+  quantity: number
+}
+
+// ─── Resale Types (UC-45 / UC-46 / UC-47 / UC-48 / UC-49 / UC-50) ────────────
+
+export type ResaleListingStatus = 'active' | 'hidden' | 'expired' | 'deleted' | 'sold'
+
+export interface ResaleListing {
+  id: string
+  bookingId: string
+  movieTitle: string
+  moviePoster: string
+  cinemaName: string
+  roomName: string
+  showDate: string
+  showTime: string
+  seatNumber: string
+  ticketType: SeatType
+  originalPrice: number
+  resalePrice: number
+  sellerName: string
+  sellerPhone: string
+  note?: string
+  status: ResaleListingStatus
+  createdAt: string
+  ownerId: string
+  // Admin-hide fields (UC-49 / BR-22 / BR-23)
+  hiddenByAdminId?: string
+  hiddenReason?: string
+  hiddenAt?: string
+}
