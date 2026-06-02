@@ -8,9 +8,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Ticket, Calendar, Clock, MapPin, Armchair, Download, Search, QrCode, RefreshCw } from 'lucide-react';
+import { Ticket, Calendar, Clock, MapPin, Armchair, Download, Search, QrCode, RefreshCw, Star, MessageSquare } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Link } from 'react-router-dom';
+import reviewApi from '@/api/reviewApi';
+import { toast } from 'sonner';
 import { useNavigate, Navigate } from 'react-router-dom';
 
 const STATUS = {
@@ -49,6 +54,12 @@ export default function MyTicketsPage() {
   const [search, setSearch] = useState('');
   const [myTickets, setMyTickets] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Review state
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   
   useEffect(() => {
     if (isAuthenticated) {
@@ -73,6 +84,38 @@ export default function MyTicketsPage() {
     const matchSearch = String(t.id).toLowerCase().includes(search.toLowerCase()) || (t.movieTitle ?? '').toLowerCase().includes(search.toLowerCase());
     return matchTab && matchSearch;
   });
+
+  const openReviewModal = (ticket) => {
+    setSelectedTicket(ticket);
+    setReviewForm({ rating: 5, comment: '' });
+    setIsReviewOpen(true);
+  };
+
+  const handleSubmitReview = async () => {
+    if (!selectedTicket) return;
+    setIsSubmittingReview(true);
+    try {
+      const payload = {
+        customerId: null, // Let backend or api client resolve this via token if needed, or we pass user.id. Since user is in context:
+        movieId: selectedTicket.movieId || 1, // fallback for mock
+        bookingId: selectedTicket.id,
+        rating: reviewForm.rating,
+        comment: reviewForm.comment
+      };
+      
+      const res = await reviewApi.createReview(payload);
+      if (res.success) {
+        toast.success("Đánh giá thành công!");
+        setIsReviewOpen(false);
+      } else {
+        toast.error("Lỗi: " + res.error?.message);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.error?.message || "Không thể gửi đánh giá");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
   
   return (
       <div className="container mx-auto px-4 py-10 max-w-3xl space-y-6">
@@ -175,6 +218,13 @@ export default function MyTicketsPage() {
                                     </Link>
                                   </Button>}
                               </>}
+                            
+                            {ticket.status === 'used' && (
+                              <Button size="sm" variant="outline" className="h-7 gap-1 text-xs border-blue-500/50 text-blue-500 hover:bg-blue-500/10" onClick={() => openReviewModal(ticket)}>
+                                <MessageSquare className="w-3 h-3" /> Đánh giá
+                              </Button>
+                            )}
+                            
                             <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs">
                               <Download className="w-3 h-3" /> PDF
                             </Button>
@@ -186,6 +236,59 @@ export default function MyTicketsPage() {
                 </Card>;
         })}
           </div>}
+
+        <Dialog open={isReviewOpen} onOpenChange={setIsReviewOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Đánh giá phim</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="text-center mb-2 font-medium text-lg">
+                {selectedTicket?.movieTitle}
+              </div>
+              
+              <div className="flex flex-col items-center gap-2">
+                <Label>Chất lượng phim</Label>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                      className="p-1 focus:outline-none transition-transform hover:scale-110"
+                    >
+                      <Star
+                        className={`w-8 h-8 ${
+                          reviewForm.rating >= star
+                            ? 'fill-accent text-accent'
+                            : 'fill-muted text-muted-foreground/30'
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid gap-2 mt-4">
+                <Label htmlFor="comment">Cảm nhận của bạn (Tùy chọn)</Label>
+                <Textarea 
+                  id="comment" 
+                  placeholder="Chia sẻ cảm nhận về bộ phim này..." 
+                  value={reviewForm.comment}
+                  onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
+                  rows={4}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsReviewOpen(false)} disabled={isSubmittingReview}>Hủy</Button>
+              <Button onClick={handleSubmitReview} disabled={isSubmittingReview}>
+                {isSubmittingReview ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <Star className="w-4 h-4 mr-2" />}
+                Gửi đánh giá
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
   );
 }

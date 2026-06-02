@@ -47,7 +47,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/payments/vnpay-return").permitAll()   // VNPay IPN/Return (no JWT)
                 .requestMatchers("/api/payments/vnpay/callback").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/movies/**", "/api/cinemas/**", "/api/showtimes/**", "/api/news/**", "/api/rooms/**", "/api/fnb/**", "/api/promos/**", "/api/resale/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/movies/**", "/api/showtimes/**", "/api/cinemas/**", "/api/rooms/**", "/api/concessions/**", "/api/promos/**", "/api/news/**", "/api/reviews/**", "/api/configs/**", "/api/resale", "/uploads/**").permitAll()
                 // Swagger UI
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/api-docs/**", "/swagger-ui.html").permitAll()
                 

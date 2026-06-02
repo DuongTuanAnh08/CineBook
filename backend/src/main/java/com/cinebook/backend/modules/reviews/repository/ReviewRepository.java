@@ -17,4 +17,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
            "GROUP BY m.movieId, m.title " +
            "ORDER BY AVG(r.rating) DESC")
     java.util.List<Object[]> findTopMoviesByRating(@Param("status") com.cinebook.backend.modules.reviews.entity.ReviewStatus status, org.springframework.data.domain.Pageable pageable);
+
+    java.util.List<Review> findByMovieIdOrderByCreatedAtDesc(Long movieId);
 }

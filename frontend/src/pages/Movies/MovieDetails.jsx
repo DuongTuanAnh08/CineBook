@@ -26,12 +26,32 @@ import {
 import { StarRating } from '@/components/movies/star-rating'
 import { ShowtimeList } from '@/components/movies/showtime-list'
 import { useData } from '@/contexts/data-context'
+import { useEffect } from 'react'
+import reviewApi from '@/api/reviewApi'
+import { MessageSquare } from 'lucide-react'
 
 export default function MovieDetailPage() {
   const { movies, showtimes } = useData();
   const { id } = useParams()
-  const movie = movies.find((m) => m.id === id)
+  const movie = movies.find((m) => String(m.id) === String(id) || String(m.movieId) === String(id))
   const [trailerOpen, setTrailerOpen] = useState(false)
+  const [reviews, setReviews] = useState([]);
+
+  useEffect(() => {
+    if (movie && (movie.id || movie.movieId)) {
+      const fetchReviews = async () => {
+        try {
+          const res = await reviewApi.getMovieReviews(movie.movieId || movie.id);
+          if (res.success) {
+            setReviews(res.data || []);
+          }
+        } catch (error) {
+          console.error('Failed to fetch reviews', error);
+        }
+      };
+      fetchReviews();
+    }
+  }, [movie]);
 
   const movieShowtimes = useMemo(() => {
     if (!movie || movie.status !== 'now_showing') return [];
@@ -234,6 +254,10 @@ export default function MovieDetailPage() {
               <User className="mr-2 size-4" />
               Diễn viên
             </TabsTrigger>
+            <TabsTrigger value="reviews">
+              <MessageSquare className="mr-2 size-4" />
+              Đánh giá ({reviews.length})
+            </TabsTrigger>
             {movie.trailer && (
               <TabsTrigger value="trailer">
                 <Play className="mr-2 size-4" />
@@ -282,6 +306,47 @@ export default function MovieDetailPage() {
                 </Card>
               ))}
             </div>
+          </TabsContent>
+
+          <TabsContent value="reviews" className="mt-0">
+            <Card className="border-border/50">
+              <CardContent className="p-6">
+                <div className="space-y-6">
+                  {reviews.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">
+                      Chưa có đánh giá nào cho phim này.
+                    </div>
+                  ) : (
+                    reviews.map((review) => (
+                      <div key={review.id} className="flex gap-4 border-b border-border/50 pb-6 last:border-0 last:pb-0">
+                        <Avatar className="size-10">
+                          <AvatarFallback className="bg-primary/20 text-primary">
+                            {review.customerName ? review.customerName.charAt(0).toUpperCase() : 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold">{review.customerName}</h4>
+                            <span className="text-xs text-muted-foreground">
+                              {format(new Date(review.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1 mb-2">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`size-3 ${i < review.rating ? 'fill-accent text-accent' : 'fill-muted text-muted'}`}
+                              />
+                            ))}
+                          </div>
+                          <p className="text-sm text-muted-foreground leading-relaxed">{review.comment}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {movie.trailer && (

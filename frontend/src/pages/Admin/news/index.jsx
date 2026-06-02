@@ -6,16 +6,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import newsApi from '../../../api/newsApi';
+import uploadApi from '@/api/uploadApi';
 import { useAuth } from '@/contexts/auth-context';
+import { useRef } from 'react';
 
 export default function AdminNews() {
   const [news, setNews] = useState([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingNews, setEditingNews] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
   const { user } = useAuth();
   
   const [formData, setFormData] = useState({
@@ -87,6 +91,27 @@ export default function AdminNews() {
       fetchNews();
     } catch (error) {
       toast.error(error.response?.data?.error?.message || 'Có lỗi xảy ra khi lưu bài viết');
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+      const res = await uploadApi.uploadFile(file);
+      if (res.success && res.data) {
+        setFormData(prev => ({ ...prev, thumbnailUrl: res.data }));
+        toast.success("Tải ảnh lên thành công!");
+      }
+    } catch (error) {
+      toast.error("Lỗi khi tải ảnh lên");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -173,12 +198,30 @@ export default function AdminNews() {
             </div>
             
             <div className="space-y-2">
-              <Label>Ảnh đại diện (URL)</Label>
-              <Input 
-                value={formData.thumbnailUrl}
-                onChange={e => setFormData({...formData, thumbnailUrl: e.target.value})}
-                placeholder="https://example.com/image.jpg"
-              />
+              <Label>Ảnh đại diện (URL hoặc Tải lên)</Label>
+              <div className="flex items-center gap-2">
+                <Input 
+                  value={formData.thumbnailUrl}
+                  onChange={e => setFormData({...formData, thumbnailUrl: e.target.value})}
+                  placeholder="https://example.com/image.jpg"
+                  className="flex-1"
+                />
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="hidden" 
+                  ref={fileInputRef} 
+                  onChange={handleFileUpload} 
+                />
+                <Button 
+                  variant="outline" 
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Tải lên"}
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-2">

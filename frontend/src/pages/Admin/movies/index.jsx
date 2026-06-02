@@ -12,15 +12,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Film, Plus, Search, MoreHorizontal, Pencil, Trash2, Loader2 } from 'lucide-react';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import movieApi from '@/api/movieApi';
+import uploadApi from '@/api/uploadApi';
 
 export default function AdminMoviesPage() {
   const [movies, setMovies] = useState([]);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
   
   // States for Modals
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -77,9 +80,31 @@ export default function AdminMoviesPage() {
       duration: movie.duration || '', 
       status: movie.status === 'NOW_SHOWING' ? 'now_showing' : (movie.status === 'COMING_SOON' ? 'coming_soon' : 'now_showing'), 
       ageRating: movie.ageRating || 'C13', 
+      ageRating: movie.ageRating || 'C13', 
       rating: movie.rating || 4.5 
     });
     setIsDialogOpen(true);
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+      const res = await uploadApi.uploadFile(file);
+      if (res.success && res.data) {
+        setFormData(prev => ({ ...prev, poster: res.data }));
+        toast.success("Tải ảnh lên thành công!");
+      }
+    } catch (error) {
+      toast.error("Lỗi khi tải ảnh lên");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   const handleSave = async () => {
@@ -283,8 +308,30 @@ export default function AdminMoviesPage() {
                 <Input value={formData.originalTitle} onChange={e => setFormData({ ...formData, originalTitle: e.target.value })} />
               </div>
               <div className="grid gap-2">
-                <Label>URL Poster</Label>
-                <Input value={formData.poster} onChange={e => setFormData({ ...formData, poster: e.target.value })} />
+                <Label>Poster</Label>
+                <div className="flex items-center gap-2">
+                  <Input 
+                    placeholder="URL ảnh hoặc Tải lên..." 
+                    value={formData.poster} 
+                    onChange={e => setFormData({ ...formData, poster: e.target.value })} 
+                    className="flex-1"
+                  />
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    ref={fileInputRef} 
+                    onChange={handleFileUpload} 
+                  />
+                  <Button 
+                    variant="outline" 
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                  >
+                    {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Tải lên"}
+                  </Button>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">

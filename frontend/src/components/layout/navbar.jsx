@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '@/contexts/auth-context'
 import { Button } from '@/components/ui/button'
+import { NotificationBell } from './NotificationBell'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -109,7 +110,9 @@ export function Navbar() {
             </Button>
 
             {isAuthenticated && user ? (
-              /* Logged In User */
+              <div className="flex items-center gap-1">
+                <NotificationBell />
+              {/* Logged In User */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-10 gap-2 px-2">
@@ -184,6 +187,7 @@ export function Navbar() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              </div>
             ) : (
               /* Guest User - Login/Register Buttons */
               <div className="flex items-center gap-2">

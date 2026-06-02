@@ -4,6 +4,7 @@ import com.cinebook.backend.modules.cinemas.entity.Cinema;
 import com.cinebook.backend.modules.cinemas.repository.CinemaRepository;
 import com.cinebook.backend.modules.rooms.dto.RoomRequest;
 import com.cinebook.backend.modules.rooms.dto.RoomDto;
+import com.cinebook.backend.modules.rooms.dto.SeatConfigDto;
 import com.cinebook.backend.modules.rooms.entity.Room;
 import com.cinebook.backend.modules.rooms.entity.Seat;
 import com.cinebook.backend.modules.rooms.entity.SeatType;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -87,5 +89,36 @@ public class RoomService {
         seatRepository.saveAll(seats);
 
         return mapToDto(room);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Seat> getSeatsByRoomId(Long roomId) {
+        return seatRepository.findByRoomRoomId(roomId);
+    }
+
+    @Transactional
+    public List<Seat> configureSeats(Long roomId, List<SeatConfigDto> seatConfigs) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new RuntimeException("Room not found"));
+
+        // Delete old seats
+        List<Seat> oldSeats = seatRepository.findByRoomRoomId(roomId);
+        try {
+            seatRepository.deleteAll(oldSeats);
+            seatRepository.flush();
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot configure seats because some seats are already booked or referenced.");
+        }
+
+        // Insert new seats
+        List<Seat> newSeats = seatConfigs.stream().map(dto -> Seat.builder()
+                .room(room)
+                .rowLabel(dto.getRowLabel())
+                .colNumber(dto.getColNumber())
+                .seatLabel(dto.getSeatLabel())
+                .seatType(dto.getSeatType())
+                .build()).collect(Collectors.toList());
+
+        return seatRepository.saveAll(newSeats);
     }
 }

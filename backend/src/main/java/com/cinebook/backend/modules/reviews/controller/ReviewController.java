@@ -1,11 +1,14 @@
 package com.cinebook.backend.modules.reviews.controller;
 
 import com.cinebook.backend.common.response.ApiResponse;
+import com.cinebook.backend.modules.reviews.dto.ReviewDto;
 import com.cinebook.backend.modules.reviews.dto.ReviewRequest;
 import com.cinebook.backend.modules.reviews.entity.Review;
 import com.cinebook.backend.modules.reviews.service.ReviewService;
 import lombok.RequiredArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/reviews")
@@ -27,5 +30,10 @@ public class ReviewController {
         } catch (Exception e) {
             return ApiResponse.error("BAD_REQUEST", e.getMessage());
         }
+    }
+
+    @GetMapping("/movie/{movieId}")
+    public ApiResponse<List<ReviewDto>> getMovieReviews(@PathVariable Long movieId) {
+        return ApiResponse.ok(service.getReviewsByMovieId(movieId));
     }
 }

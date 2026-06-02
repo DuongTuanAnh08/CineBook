@@ -7,6 +7,12 @@ const roomApi = {
   getRoomById: (id) => {
     return axiosClient.get(`/rooms/${id}`);
   },
+  getRoomSeats: (id) => {
+    return axiosClient.get(`/rooms/${id}/seats`);
+  },
+  configureSeats: (id, seatConfigs) => {
+    return axiosClient.post(`/rooms/${id}/seats`, seatConfigs);
+  },
   createRoom: (data) => {
     return axiosClient.post('/rooms', data);
   }
