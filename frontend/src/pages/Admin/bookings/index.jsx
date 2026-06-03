@@ -50,7 +50,7 @@ export default function AdminBookingsPage() {
     try {
       setLoading(true);
       const res = await bookingApi.getAllBookingsAdmin({ page: 0, size: 100 });
-      setBookings(res.data?.data?.content || []);
+      setBookings(res.data?.content || []);
     } catch (error) {
       console.error("Failed to fetch bookings", error);
       toast.error('Không thể tải danh sách đơn đặt vé');

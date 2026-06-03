@@ -48,6 +48,7 @@ public class RoomService {
                 .columns(room.getColumns())
                 .capacity(room.getCapacity())
                 .baseNormalPrice(room.getBaseNormalPrice())
+                .roomType(room.getRoomType())
                 .status(room.getStatus())
                 .build();
     }
@@ -65,7 +66,9 @@ public class RoomService {
                 .rows(request.getRows())
                 .columns(request.getColumns())
                 .capacity(capacity)
-                .baseNormalPrice(request.getBaseNormalPrice())
+                .baseNormalPrice(request.getBaseNormalPrice() != null ? request.getBaseNormalPrice() : 0)
+                .roomType(request.getRoomType() != null ? request.getRoomType() : "2D")
+                .status(request.getStatus() != null ? request.getStatus() : "Active")
                 .build();
         
         room = roomRepository.save(room);
@@ -91,13 +94,24 @@ public class RoomService {
         return mapToDto(room);
     }
 
+    @Transactional
+    public RoomDto updateRoomStatus(Long id, String status) {
+        Room room = roomRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Room not found"));
+        room.setStatus(status);
+        roomRepository.save(room);
+        return mapToDto(room);
+    }
+
     @Transactional(readOnly = true)
-    public List<Seat> getSeatsByRoomId(Long roomId) {
-        return seatRepository.findByRoomRoomId(roomId);
+    public List<SeatConfigDto> getSeatsByRoomId(Long roomId) {
+        return seatRepository.findByRoomRoomId(roomId).stream()
+                .map(this::mapSeatToDto)
+                .collect(Collectors.toList());
     }
 
     @Transactional
-    public List<Seat> configureSeats(Long roomId, List<SeatConfigDto> seatConfigs) {
+    public List<SeatConfigDto> configureSeats(Long roomId, List<SeatConfigDto> seatConfigs) {
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
 
@@ -119,6 +133,16 @@ public class RoomService {
                 .seatType(dto.getSeatType())
                 .build()).collect(Collectors.toList());
 
-        return seatRepository.saveAll(newSeats);
+        List<Seat> savedSeats = seatRepository.saveAll(newSeats);
+        return savedSeats.stream().map(this::mapSeatToDto).collect(Collectors.toList());
+    }
+
+    private SeatConfigDto mapSeatToDto(Seat seat) {
+        SeatConfigDto dto = new SeatConfigDto();
+        dto.setRowLabel(seat.getRowLabel());
+        dto.setColNumber(seat.getColNumber());
+        dto.setSeatLabel(seat.getSeatLabel());
+        dto.setSeatType(seat.getSeatType());
+        return dto;
     }
 }

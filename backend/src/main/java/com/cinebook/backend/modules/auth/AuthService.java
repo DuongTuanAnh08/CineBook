@@ -216,6 +216,24 @@ public class AuthService {
                 .email(user.getEmail())
                 .role(user.getRole().name())
                 .avatarUrl(user.getAvatarUrl())
+                .phone(user.getPhone())
+                .dateOfBirth(user.getDateOfBirth())
+                .address(user.getAddress())
+                .build();
+    }
+
+    public AuthResponse.UserInfo getUserInfoByEmail(String email) {
+        User user = userRepository.findByEmailAndDeletedAtIsNull(email)
+                .orElseThrow(() -> AppException.notFound("User not found."));
+        return AuthResponse.UserInfo.builder()
+                .userId(user.getUserId())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .role(user.getRole().name())
+                .avatarUrl(user.getAvatarUrl())
+                .phone(user.getPhone())
+                .dateOfBirth(user.getDateOfBirth())
+                .address(user.getAddress())
                 .build();
     }
 
@@ -244,6 +262,9 @@ public class AuthService {
                         .email(user.getEmail())
                         .role(user.getRole().name())
                         .avatarUrl(user.getAvatarUrl())
+                        .phone(user.getPhone())
+                        .dateOfBirth(user.getDateOfBirth())
+                        .address(user.getAddress())
                         .build())
                 .build();
     }

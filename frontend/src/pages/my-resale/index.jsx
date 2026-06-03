@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { useAuth } from '@/contexts/auth-context';
-import { useData } from '@/contexts/data-context'
+import resaleApi from '@/api/resaleApi';
+import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -35,7 +36,6 @@ const STATUS_LABELS = {
   sold: 'Đã bán'
 };
 export default function MyResaleListingsPage() {
-  const { resaleListings } = useData();
   const {
     user,
     isAuthenticated
@@ -45,8 +45,27 @@ export default function MyResaleListingsPage() {
     return <Navigate to='/login' replace />;
   }
 
-  // BR-24: Customer sees their own listings including HIDDEN ones
-  const [listings, setListings] = useState(resaleListings.filter(l => l.ownerId === user?.id && l.status !== 'deleted'));
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchListings = async () => {
+    try {
+      const res = await resaleApi.getMyListings(user.id, { page: 0, size: 100 });
+      if (res.data?.success) {
+        setListings(res.data.data.content);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Lỗi khi tải danh sách vé bán lại');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchListings();
+  }, []);
+
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedListing, setSelectedListing] = useState(null);
@@ -65,22 +84,26 @@ export default function MyResaleListingsPage() {
     setDeleteDialogOpen(true);
   };
   const handleSaveEdit = () => {
-    const priceNum = Number(editPrice);
-    if (!editPrice || isNaN(priceNum) || priceNum <= 0) {
-      setPriceError('Giá phải lớn hơn 0.');
-      return;
-    }
-    setListings(prev => prev.map(l => l.id === selectedListing?.id ? {
-      ...l,
-      resalePrice: priceNum,
-      note: editNote.trim() || undefined
-    } : l));
+    // Note: Creating/Updating listings requires another API.
+    // For now, this is just mocked in UI. 
+    toast.success('Tính năng cập nhật bài đăng đang được phát triển');
     setEditDialogOpen(false);
   };
-  const handleDelete = () => {
-    setListings(prev => prev.filter(l => l.id !== selectedListing?.id));
+  const handleDelete = async () => {
+    try {
+      await resaleApi.deleteListing(selectedListing.id.replace('RSL', ''));
+      toast.success('Đã xóa bài đăng');
+      fetchListings();
+    } catch (error) {
+      toast.error('Lỗi khi xóa bài đăng');
+    }
     setDeleteDialogOpen(false);
   };
+
+  if (loading) {
+    return <div className="text-center py-20">Đang tải...</div>;
+  }
+
   return (
     <>
       <div className="container mx-auto px-4 py-10 max-w-3xl space-y-6">
@@ -118,10 +141,10 @@ export default function MyResaleListingsPage() {
             month: '2-digit',
             year: 'numeric'
           });
-          const isExpired = listing.status === 'expired';
-          // BR-25: Customer cannot un-hide admin-hidden listings
-          const isAdminHidden = listing.status === 'hidden';
-          const isSold = listing.status === 'sold';
+          const listingStatus = listing.status?.toLowerCase() || 'active';
+          const isExpired = listingStatus === 'expired';
+          const isAdminHidden = listingStatus === 'hidden';
+          const isSold = listingStatus === 'sold';
           return <Card key={listing.id} className="bg-card border-border overflow-hidden">
                   <CardContent className="p-0">
                     <div className="flex">
@@ -141,8 +164,8 @@ export default function MyResaleListingsPage() {
                               #{listing.id.toUpperCase()} • {TICKET_TYPE_LABELS[listing.ticketType]}
                             </p>
                           </div>
-                          <Badge className={cn('shrink-0', STATUS_STYLES[listing.status])}>
-                            {STATUS_LABELS[listing.status]}
+                          <Badge className={cn('shrink-0', STATUS_STYLES[listingStatus])}>
+                            {STATUS_LABELS[listingStatus] || listingStatus}
                           </Badge>
                         </div>
 
@@ -189,8 +212,7 @@ export default function MyResaleListingsPage() {
                           </div>
                         </div>
 
-                        {/* BR-24: Show hidden reason to customer */}
-                        {listing.status === 'hidden' && listing.hiddenReason && <div className="flex items-start gap-1.5 p-2 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                        {listingStatus === 'hidden' && listing.hiddenReason && <div className="flex items-start gap-1.5 p-2 rounded-lg bg-orange-500/10 border border-orange-500/20">
                             <AlertTriangle className="w-3.5 h-3.5 text-orange-400 shrink-0 mt-0.5" />
                             <p className="text-xs text-orange-400">
                               Bị ẩn: {listing.hiddenReason}

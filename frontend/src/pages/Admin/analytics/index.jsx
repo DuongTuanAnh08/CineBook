@@ -155,6 +155,9 @@ export default function AdminAnalyticsPage() {
   const [revenueDataState, setRevenueDataState] = useState(revenueData);
   const [summaryStatsState, setSummaryStatsState] = useState(summaryStats);
   const [topMovies, setTopMovies] = useState([]);
+  const [genreDataState, setGenreDataState] = useState(genreData);
+  const [cinemaDataState, setCinemaDataState] = useState(cinemaData);
+  const [weekdayDataState, setWeekdayDataState] = useState(weekdayData);
 
   useEffect(() => {
     // Fetch KPI
@@ -171,8 +174,8 @@ export default function AdminAnalyticsPage() {
 
     // Fetch Revenue Chart
     dashboardApi.getRevenueChart().then(res => {
-      if (res.success) {
-        const newChartData = res.data.map(item => ({
+      if (res.data?.data) {
+        const newChartData = res.data.data.map(item => ({
           month: item.label.replace('Month ', 'T'),
           revenue: (item.value || 0) / 1000000,
           tickets: 0
@@ -180,10 +183,37 @@ export default function AdminAnalyticsPage() {
         setRevenueDataState(newChartData);
       }
     }).catch(console.error);
+
+    // Fetch Genre Chart
+    dashboardApi.getGenreChart().then(res => {
+      if (res.data?.data) setGenreDataState(res.data.data);
+    }).catch(console.error);
+
+    // Fetch Cinema Chart
+    dashboardApi.getCinemaChart().then(res => {
+      if (res.data?.data) setCinemaDataState(res.data.data);
+    }).catch(console.error);
+
+    // Fetch Weekday Chart
+    dashboardApi.getWeekdayChart().then(res => {
+      if (res.data?.data) setWeekdayDataState(res.data.data);
+    }).catch(console.error);
   }, []);
 
-  const handleExport = () => {
-    window.open(dashboardApi.exportExcelUrl(), '_blank');
+  const handleExport = async () => {
+    try {
+      const res = await dashboardApi.exportExcel();
+      const blob = new Blob([res], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'revenue_report.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+    } catch (error) {
+      console.error("Export failed:", error);
+    }
   };
 
   return (
@@ -268,14 +298,14 @@ export default function AdminAnalyticsPage() {
             <CardContent>
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
-                  <Pie data={genreData} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={3} dataKey="value">
-                    {genreData.map(entry => <Cell key={entry.name} fill={entry.color} />)}
+                  <Pie data={genreDataState} cx="50%" cy="50%" innerRadius={80} outerRadius={110} paddingAngle={5} dataKey="value">
+                    {genreDataState.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                   </Pie>
                   <Tooltip contentStyle={TOOLTIP_STYLE} formatter={v => [`${v}%`, 'Tỷ lệ']} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="space-y-1.5 mt-2">
-                {genreData.map(g => <div key={g.name} className="flex items-center justify-between text-sm">
+                {genreDataState.map(g => <div key={g.name} className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full" style={{
                     background: g.color
@@ -296,12 +326,7 @@ export default function AdminAnalyticsPage() {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={cinemaData} layout="vertical" margin={{
-                top: 0,
-                right: 10,
-                left: 0,
-                bottom: 0
-              }}>
+                <BarChart data={cinemaDataState} layout="vertical" margin={{ top: 0, right: 30, left: 40, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
                   <XAxis type="number" tick={{
                   fill: 'hsl(var(--muted-foreground))',
@@ -326,12 +351,7 @@ export default function AdminAnalyticsPage() {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={weekdayData} margin={{
-                top: 5,
-                right: 10,
-                left: 0,
-                bottom: 5
-              }}>
+                <BarChart data={weekdayDataState} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="day" tick={{
                   fill: 'hsl(var(--muted-foreground))',

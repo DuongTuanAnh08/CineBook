@@ -11,29 +11,19 @@ import { useState, useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import roomApi from '@/api/roomApi';
+import cinemaApi from '@/api/cinemaApi';
 
 const SEAT_COLORS = {
-  Hidden: 'opacity-0 pointer-events-none',
+  Hidden: 'opacity-0',
   Normal: 'bg-secondary/60 hover:bg-primary/30 border-border',
   VIP: 'bg-yellow-500/20 border-yellow-500/40 hover:bg-yellow-500/40',
   Couple: 'bg-pink-500/20 border-pink-500/40 hover:bg-pink-500/40',
 };
 
 export default function AdminSeatsPage() {
-  const { cinemas } = useData();
-  const ROOM_OPTIONS = useMemo(() => cinemas.flatMap((c, ci) => Array.from({
-    length: c.rooms || 1
-  }).map((_, i) => ({
-    id: `${c.id}-${i + 1}`,
-    cinemaId: c.id,
-    cinemaName: c.name,
-    name: `Phòng ${i + 1}`,
-    type: i === 0 ? 'IMAX' : '2D',
-    roomId: null // In real app, this should be mapped to the actual DB room ID. We'll simulate fetching real room
-  }))), [cinemas]);
-  
-  // Actually, we should fetch actual rooms from API. Let's use roomApi.
+  const [realCinemas, setRealCinemas] = useState([]);
   const [realRooms, setRealRooms] = useState([]);
+  const [selectedCinema, setSelectedCinema] = useState('');
   const [selectedRoom, setSelectedRoom] = useState('');
   
   const [seats, setSeats] = useState([]);
@@ -43,20 +33,54 @@ export default function AdminSeatsPage() {
 
   const [gridConfig, setGridConfig] = useState({ rows: 10, cols: 12 });
 
+  const recalculateSeatLabels = (seatsArray) => {
+    const grouped = {};
+    seatsArray.forEach(s => {
+      if (!grouped[s.rowLabel]) grouped[s.rowLabel] = [];
+      grouped[s.rowLabel].push(s);
+    });
+
+    Object.values(grouped).forEach(rowSeats => {
+      rowSeats.sort((a, b) => a.colNumber - b.colNumber);
+      let logicalNum = 1;
+      for (let i = 0; i < rowSeats.length; i++) {
+        const seat = rowSeats[i];
+        
+        if (i > 0 && rowSeats[i - 1].seatType === 'Couple' && seat.seatType === 'Hidden') {
+          seat.seatLabel = `${seat.rowLabel}-Absorbed-${seat.colNumber}`;
+          continue;
+        }
+
+        if (seat.seatType !== 'Hidden') {
+          seat.seatLabel = `${seat.rowLabel}${logicalNum}`;
+          logicalNum++;
+        } else {
+          seat.seatLabel = `${seat.rowLabel}-Aisle-${seat.colNumber}`;
+        }
+      }
+    });
+
+    return [...seatsArray];
+  };
+
   useEffect(() => {
-    // In a real app we would fetch all rooms, but we will mock realRooms if not available
-    const fetchRooms = async () => {
-      // Assuming GET /api/rooms returns list of rooms
+    const fetchBaseData = async () => {
       try {
-        // Fallback to fetch room 1 if possible
-        const res = await roomApi.getRoomSeats(1).catch(() => null);
-        if (res && res.data) {
-          // Just a test
+        const [cinemaRes, roomRes] = await Promise.all([
+          cinemaApi.getCinemas({ size: 100 }),
+          roomApi.getRooms({ size: 500 }) 
+        ]);
+        if (cinemaRes.success && cinemaRes.data && cinemaRes.data.content) {
+          setRealCinemas(cinemaRes.data.content);
+        }
+        if (roomRes.success && roomRes.data && roomRes.data.content) {
+          setRealRooms(roomRes.data.content);
         }
       } catch (e) {
+        console.error(e);
       }
     };
-    fetchRooms();
+    fetchBaseData();
   }, []);
 
   useEffect(() => {
@@ -72,7 +96,7 @@ export default function AdminSeatsPage() {
     try {
       const res = await roomApi.getRoomSeats(roomId);
       if (res.success) {
-        setSeats(res.data || []);
+        setSeats(recalculateSeatLabels(res.data || []));
       }
     } catch (error) {
       toast.error('Không thể tải sơ đồ ghế: ' + (error.response?.data?.error?.message || error.message));
@@ -94,7 +118,7 @@ export default function AdminSeatsPage() {
         });
       }
     }
-    setSeats(newSeats);
+    setSeats(recalculateSeatLabels(newSeats));
     setIsEditMode(true);
   };
 
@@ -108,8 +132,21 @@ export default function AdminSeatsPage() {
     else if (currentType === 'VIP') nextType = 'Couple';
     else if (currentType === 'Couple') nextType = 'Hidden';
     
+    if (nextType === 'Couple') {
+      const nextSeat = newSeats[index + 1];
+      if (nextSeat && nextSeat.rowLabel === newSeats[index].rowLabel) {
+        nextSeat.seatType = 'Hidden';
+      }
+    } else if (currentType === 'Couple' && nextType === 'Hidden') {
+      // Khi từ ghế đôi trở thành lối đi, nếu ghế bên cạnh đang ẩn, ta có thể tự động hiện nó lại thành Normal
+      const nextSeat = newSeats[index + 1];
+      if (nextSeat && nextSeat.rowLabel === newSeats[index].rowLabel && nextSeat.seatType === 'Hidden') {
+        nextSeat.seatType = 'Normal';
+      }
+    }
+    
     newSeats[index].seatType = nextType;
-    setSeats(newSeats);
+    setSeats(recalculateSeatLabels(newSeats));
   };
 
   const handleSave = async () => {
@@ -130,7 +167,7 @@ export default function AdminSeatsPage() {
       if (res.success) {
         toast.success("Đã lưu sơ đồ ghế thành công!");
         setIsEditMode(false);
-        setSeats(res.data);
+        setSeats(recalculateSeatLabels(res.data));
       }
     } catch (error) {
       toast.error('Lỗi khi lưu sơ đồ: ' + (error.response?.data?.error?.message || error.message));
@@ -211,14 +248,31 @@ export default function AdminSeatsPage() {
           <CardHeader>
             <div className="flex items-center gap-3 flex-wrap">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Nhập Room ID để cấu hình:</span>
-                <Input 
-                  type="number" 
-                  placeholder="ID (vd: 1)" 
-                  value={selectedRoom} 
-                  onChange={e => setSelectedRoom(e.target.value)} 
-                  className="w-32"
-                />
+                <span className="text-sm font-medium">Rạp:</span>
+                <Select value={selectedCinema} onValueChange={(v) => { setSelectedCinema(v); setSelectedRoom(''); }}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="-- Chọn rạp --" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {realCinemas.map(c => (
+                      <SelectItem key={c.cinemaId} value={String(c.cinemaId)}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Phòng:</span>
+                <Select value={selectedRoom} onValueChange={setSelectedRoom} disabled={!selectedCinema}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="-- Chọn phòng --" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {realRooms.filter(r => String(r.cinemaId) === selectedCinema).map(r => (
+                      <SelectItem key={r.roomId} value={String(r.roomId)}>{r.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {isEditMode && (
@@ -257,21 +311,29 @@ export default function AdminSeatsPage() {
                     <div key={rowLabel} className="flex items-center gap-1.5 justify-center">
                       <span className="w-5 text-xs text-muted-foreground text-center">{rowLabel}</span>
                       <div className="flex gap-1.5">
-                        {layoutRows[rowLabel].map((seat) => {
+                        {layoutRows[rowLabel].map((seat, indexInRow, rowArray) => {
+                          if (indexInRow > 0 && rowArray[indexInRow - 1].seatType === 'Couple') {
+                            return null;
+                          }
                           const originalIndex = seats.findIndex(s => s.rowLabel === seat.rowLabel && s.colNumber === seat.colNumber);
                           return (
                             <div key={`${seat.rowLabel}${seat.colNumber}`} className="flex gap-1.5">
                               <div 
                                 onClick={() => handleSeatClick(originalIndex)}
                                 className={cn(
-                                  'w-8 h-8 rounded-t-sm text-[10px] flex items-center justify-center border transition-colors select-none', 
+                                  'h-8 rounded-t-sm text-[10px] flex items-center justify-center border transition-colors select-none relative overflow-hidden', 
+                                  seat.seatType === 'Couple' ? 'w-[70px]' : 'w-8',
+                                  !isEditMode && seat.seatType === 'Hidden' ? 'pointer-events-none' : '',
                                   SEAT_COLORS[seat.seatType] || SEAT_COLORS.Normal,
                                   isEditMode && seat.seatType !== 'Hidden' ? 'cursor-pointer hover:ring-2 hover:ring-primary ring-offset-1' : '',
                                   isEditMode && seat.seatType === 'Hidden' ? 'opacity-30 cursor-pointer border-dashed bg-transparent' : ''
                                 )} 
                                 title={`${seat.seatLabel} — ${seat.seatType}`}
                               >
-                                {seat.seatType !== 'Hidden' ? seat.colNumber : (isEditMode ? '+' : '')}
+                                {seat.seatType === 'Couple' && (
+                                  <div className="absolute inset-y-0 left-1/2 w-px border-r border-pink-500/40 border-dashed" />
+                                )}
+                                <span className="z-10">{seat.seatType !== 'Hidden' ? seat.seatLabel.replace(/^[A-Z]+/, '') : (isEditMode ? '+' : '')}</span>
                               </div>
                             </div>
                           );

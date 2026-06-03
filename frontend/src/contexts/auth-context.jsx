@@ -50,7 +50,7 @@ export function AuthProvider({ children }) {
         else if (userData.role === 'ScheduleManager') uiRole = 'manager';
 
         // Map fullName to name for frontend components
-        const finalUser = { ...userData, role: uiRole, name: userData.fullName || "User" };
+        const finalUser = { ...userData, id: userData.userId, role: uiRole, name: userData.fullName || "User" };
         localStorage.setItem('user', JSON.stringify(finalUser));
         
         setAuthState({ user: finalUser, isAuthenticated: true, isLoading: false })

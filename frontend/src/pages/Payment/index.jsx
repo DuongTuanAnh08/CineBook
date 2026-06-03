@@ -127,7 +127,7 @@ function PaymentContent() {
     try {
       // Step 1: Tạo booking trước
       const payload = {
-        customerId: user?.id,
+        customerId: user?.userId || user?.id,
         showtimeId: Number(showtimeId),
         seatIds: seats.map(s => Number(s))
       };

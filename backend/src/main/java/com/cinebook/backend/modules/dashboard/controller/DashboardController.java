@@ -13,6 +13,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.cinebook.backend.modules.dashboard.dto.GenreChartResponse;
+import com.cinebook.backend.modules.dashboard.dto.CinemaChartResponse;
+import com.cinebook.backend.modules.dashboard.dto.WeekdayChartResponse;
+import com.cinebook.backend.modules.dashboard.dto.RecentBookingResponse;
+import org.springframework.web.bind.annotation.RequestParam;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -54,5 +60,25 @@ public class DashboardController {
     @GetMapping("/movies/top-rating")
     public ApiResponse<List<MovieRankingResponse>> getTopMoviesByRating() {
         return ApiResponse.ok(dashboardService.getTopMoviesByRating());
+    }
+
+    @GetMapping("/recent-bookings")
+    public ApiResponse<List<RecentBookingResponse>> getRecentBookings(@RequestParam(defaultValue = "10") int limit) {
+        return ApiResponse.ok(dashboardService.getRecentBookings(limit));
+    }
+
+    @GetMapping("/chart/genre")
+    public ApiResponse<List<GenreChartResponse>> getGenreChart() {
+        return ApiResponse.ok(dashboardService.getGenreChart());
+    }
+
+    @GetMapping("/chart/cinema")
+    public ApiResponse<List<CinemaChartResponse>> getCinemaChart() {
+        return ApiResponse.ok(dashboardService.getCinemaChart());
+    }
+
+    @GetMapping("/chart/weekday")
+    public ApiResponse<List<WeekdayChartResponse>> getWeekdayChart() {
+        return ApiResponse.ok(dashboardService.getWeekdayChart());
     }
 }

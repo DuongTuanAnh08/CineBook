@@ -26,9 +26,8 @@ export default function AdminRoomsPage() {
   // Modal State
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Form State
   const [formData, setFormData] = useState({
-    cinemaId: '', name: '', rows: '10', columns: '10', baseNormalPrice: '50000'
+    cinemaId: '', name: '', rows: '10', columns: '10', roomType: '2D'
   });
 
   const fetchData = async () => {
@@ -39,8 +38,8 @@ export default function AdminRoomsPage() {
         roomApi.getRooms() // This gets pageable rooms, we might need a large size or use content
       ]);
       
-      if (cinemaRes.success && cinemaRes.data) {
-        setCinemas(cinemaRes.data.map(c => ({ ...c, id: c.cinemaId })));
+      if (cinemaRes.success && cinemaRes.data && cinemaRes.data.content) {
+        setCinemas(cinemaRes.data.content.map(c => ({ ...c, id: c.cinemaId })));
       }
       
       if (roomRes.success && roomRes.data) {
@@ -49,8 +48,8 @@ export default function AdminRoomsPage() {
         setRooms(content.map(r => ({
           ...r,
           id: r.roomId,
-          cinemaName: r.cinema?.name || 'Không xác định',
-          cinemaId: r.cinema?.cinemaId
+          cinemaName: r.cinemaName || 'Không xác định',
+          cinemaId: r.cinemaId
         })));
       }
     } catch (error) {
@@ -68,8 +67,21 @@ export default function AdminRoomsPage() {
   const activeCount = filtered.filter(r => r.status === 'Active' || r.status === 'active').length;
 
   const openAdd = () => {
-    setFormData({ cinemaId: '', name: '', rows: '10', columns: '10', baseNormalPrice: '50000' });
+    setFormData({ cinemaId: '', name: '', rows: '10', columns: '10', roomType: '2D' });
     setIsDialogOpen(true);
+  };
+
+  const handleToggleStatus = async (room) => {
+    const newStatus = (room.status === 'Active' || room.status === 'active') ? 'UnderMaintenance' : 'Active';
+    try {
+      const res = await roomApi.updateRoomStatus(room.roomId || room.id, newStatus);
+      if (res.success) {
+        toast.success(`Đã cập nhật trạng thái phòng thành ${newStatus}`);
+        fetchData();
+      }
+    } catch (error) {
+      toast.error(error.message || "Đã có lỗi xảy ra");
+    }
   };
 
   const handleSave = async () => {
@@ -79,13 +91,14 @@ export default function AdminRoomsPage() {
     }
     
     setIsSaving(true);
-    const payload = {
-      cinemaId: parseInt(formData.cinemaId),
-      name: formData.name,
-      rows: parseInt(formData.rows) || 10,
-      columns: parseInt(formData.columns) || 10,
-      baseNormalPrice: parseInt(formData.baseNormalPrice) || 50000
-    };
+      const payload = {
+        cinemaId: parseInt(formData.cinemaId),
+        name: formData.name,
+        rows: parseInt(formData.rows) || 10,
+        columns: parseInt(formData.columns) || 10,
+        baseNormalPrice: 0,
+        roomType: formData.roomType || '2D'
+      };
 
     try {
       const res = await roomApi.createRoom(payload);
@@ -171,11 +184,10 @@ export default function AdminRoomsPage() {
               <TableRow className="border-border hover:bg-transparent">
                 <TableHead>Tên phòng</TableHead>
                 <TableHead>Rạp</TableHead>
-                <TableHead>Loại</TableHead>
-                <TableHead>Số ghế</TableHead>
-                <TableHead>Giá vé (VNĐ)</TableHead>
+                <TableHead>Loại phòng</TableHead>
+                <TableHead>Sức chứa</TableHead>
                 <TableHead>Trạng thái</TableHead>
-                <TableHead className="w-12" />
+                <TableHead className="w-[100px] text-right">Thao tác</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -185,17 +197,16 @@ export default function AdminRoomsPage() {
                   <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
                     {room.cinemaName}
                   </TableCell>
-                  <TableCell>
-                    <Badge className="bg-secondary text-muted-foreground">Tiêu chuẩn (2D)</Badge>
+                  <TableCell className="text-sm">
+                    <Badge className="bg-secondary text-muted-foreground">{room.roomType || '2D'}</Badge>
                   </TableCell>
                   <TableCell className="text-sm">{room.capacity || 0} ghế</TableCell>
-                  <TableCell className="text-sm">{room.baseNormalPrice ? room.baseNormalPrice.toLocaleString() : 0}đ</TableCell>
                   <TableCell>
                     <Badge className={room.status === 'Active' || room.status === 'active' ? 'bg-green-500/20 text-green-500' : 'bg-yellow-500/20 text-yellow-500'}>
                       {room.status === 'Active' || room.status === 'active' ? 'Hoạt động' : 'Bảo trì'}
                     </Badge>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="w-8 h-8">
@@ -203,8 +214,11 @@ export default function AdminRoomsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem className="gap-2" onClick={() => handleToggleStatus(room)}>
+                          <Eye className="w-4 h-4" /> {(room.status === 'Active' || room.status === 'active') ? 'Bảo trì / Ẩn phòng' : 'Mở lại phòng'}
+                        </DropdownMenuItem>
                         <DropdownMenuItem className="gap-2">
-                          <Eye className="w-4 h-4" /> Xem sơ đồ ghế
+                          <LayoutGrid className="w-4 h-4" /> Xem sơ đồ ghế
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -242,10 +256,23 @@ export default function AdminRoomsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-2">
-              <Label>Tên phòng</Label>
-              <Input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="VD: Phòng 1" />
-            </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Tên phòng</Label>
+                  <Input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="VD: Phòng 1" />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Loại phòng</Label>
+                  <Select value={formData.roomType} onValueChange={v => setFormData({ ...formData, roomType: v })}>
+                    <SelectTrigger><SelectValue placeholder="-- Chọn loại --" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="2D">Tiêu chuẩn (2D)</SelectItem>
+                      <SelectItem value="3D">Phòng 3D</SelectItem>
+                      <SelectItem value="IMAX">Phòng IMAX</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label>Số hàng ghế (Rows)</Label>
@@ -255,10 +282,6 @@ export default function AdminRoomsPage() {
                 <Label>Số ghế mỗi hàng (Cols)</Label>
                 <Input type="number" value={formData.columns} onChange={e => setFormData({ ...formData, columns: e.target.value })} />
               </div>
-            </div>
-            <div className="grid gap-2">
-              <Label>Giá vé cơ bản (VNĐ)</Label>
-              <Input type="number" value={formData.baseNormalPrice} onChange={e => setFormData({ ...formData, baseNormalPrice: e.target.value })} />
             </div>
           </div>
           <DialogFooter>

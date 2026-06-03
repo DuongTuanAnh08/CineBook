@@ -57,13 +57,13 @@ app:
     refresh-token-expiration-ms: ${JWT_REFRESH_EXPIRATION:604800000}    # 7 days
 
   vnpay:
-    tmn-code: ${VNPAY_TMN_CODE:DEMO0001}           # Replace with sandbox TmnCode from sandbox.vnpayment.vn
-    hash-secret: ${VNPAY_HASH_SECRET:RAOEXHYVSDDIIENYWSLDIIZTANXUXZFJ}  # Replace with sandbox HashSecret
+    tmn-code: ${VNPAY_TMN_CODE:07Q0SY6L}           # Replace with sandbox TmnCode from sandbox.vnpayment.vn
+    hash-secret: ${VNPAY_HASH_SECRET:STA83M5NY7P5YLX9SVOBUXYNOTMY4LDI}  # Replace with sandbox HashSecret
     pay-url: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
     return-url: ${VNPAY_RETURN_URL:http://localhost:8080/api/payments/vnpay-return}
 
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
 
   frontend:
     url: ${FRONTEND_URL:http://localhost:3000}

@@ -19,13 +19,16 @@ public class BookingController {
 
     @PostMapping
     @PreAuthorize("hasRole('Customer')")
-    public ResponseEntity<ApiResponse<Booking>> createBooking(@Valid @RequestBody CreateBookingRequest request) {
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> createBooking(@Valid @RequestBody CreateBookingRequest request) {
         Booking booking = bookingService.createBooking(
                 request.getCustomerId(),
                 request.getShowtimeId(),
                 request.getSeatIds()
         );
-        return ResponseEntity.ok(ApiResponse.ok(booking));
+        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        data.put("id", booking.getId());
+        data.put("bookingId", booking.getId());
+        return ResponseEntity.ok(ApiResponse.ok(data));
     }
 
     @GetMapping("/admin")

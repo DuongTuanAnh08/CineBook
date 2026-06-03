@@ -13,4 +13,5 @@ public class ReviewDto {
     private Integer rating;
     private String comment;
     private LocalDateTime createdAt;
+    private String status;
 }

@@ -2,8 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tag, Copy, Clock, Ticket, Gift, Star } from 'lucide-react';
-
-const promotions = [];
+import { useState, useEffect } from 'react';
+import promoApi from '@/api/promoApi';
+import { toast } from 'sonner';
 
 const TAG_CONFIG = {
   hot: {
@@ -33,8 +34,25 @@ const TAG_CONFIG = {
 };
 
 export default function PromotionsPage() {
-  const active = promotions.filter(p => p.tag !== 'expired');
-  const expired = promotions.filter(p => p.tag === 'expired');
+  const [promotions, setPromotions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    promoApi.getAllPromos({ page: 0, size: 100 })
+      .then(res => {
+        if (res.data?.success) {
+          setPromotions(res.data.data.content);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        toast.error('Lỗi tải danh sách khuyến mãi');
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const active = promotions.filter(p => p.status === 'Active');
+  const expired = promotions.filter(p => p.status !== 'Active');
   return (
     <div className="container mx-auto px-4 py-10 space-y-10">
         {/* Header */}
@@ -54,8 +72,8 @@ export default function PromotionsPage() {
           {active.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2">
               {active.map(promo => {
-              const tag = TAG_CONFIG[promo.tag];
-              const Icon = promo.icon;
+              const tag = TAG_CONFIG['hot'];
+              const Icon = Ticket;
               return <Card key={promo.id} className="bg-card border-border hover:border-primary/40 transition-colors overflow-hidden">
                     <div className="absolute top-0 left-0 w-1 h-full bg-primary" />
                     <CardHeader className="pb-2 pl-6">
@@ -71,20 +89,25 @@ export default function PromotionsPage() {
                         </div>
                         <div className="text-right shrink-0">
                           <p className="text-2xl font-bold text-primary">{promo.discount}</p>
+                          <p className="text-2xl font-bold text-primary">{promo.discountValue}</p>
                         </div>
                       </div>
                     </CardHeader>
                     <CardContent className="pl-6 space-y-3">
                       <p className="text-sm text-muted-foreground">{promo.description}</p>
                       <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                        <span>Đơn tối thiểu: <strong className="text-foreground">{promo.minOrder}</strong></span>
-                        <span>Hết hạn: <strong className="text-foreground">{promo.expires}</strong></span>
+                        <span>Đơn tối thiểu: <strong className="text-foreground">{promo.minOrderValue?.toLocaleString('vi-VN')}₫</strong></span>
+                        <span>Giảm tối đa: <strong className="text-foreground">{promo.maxDiscountAmount?.toLocaleString('vi-VN')}₫</strong></span>
+                        <span>Hết hạn: <strong className="text-foreground">{promo.endDate ? new Date(promo.endDate).toLocaleDateString('vi-VN') : 'Không giới hạn'}</strong></span>
                       </div>
                       <div className="flex items-center gap-2">
                         <code className="flex-1 text-center font-mono font-bold text-sm bg-secondary rounded-lg px-3 py-2 tracking-widest">
                           {promo.code}
                         </code>
-                        <Button size="sm" variant="outline" className="gap-1.5 shrink-0">
+                        <Button size="sm" variant="outline" className="gap-1.5 shrink-0" onClick={() => {
+                          navigator.clipboard.writeText(promo.code);
+                          toast.success('Đã sao chép mã!');
+                        }}>
                           <Copy className="w-3.5 h-3.5" />
                           Sao chép
                         </Button>
@@ -107,7 +130,7 @@ export default function PromotionsPage() {
             </h2>
             <div className="grid gap-4 md:grid-cols-2 opacity-60">
               {expired.map(promo => {
-            const Icon = promo.icon;
+            const Icon = Clock;
             return <Card key={promo.id} className="bg-card border-border">
                     <CardHeader className="pb-2">
                       <div className="flex items-center gap-3">
@@ -116,7 +139,7 @@ export default function PromotionsPage() {
                           <CardTitle className="text-base leading-tight line-through">
                             {promo.title}
                           </CardTitle>
-                          <p className="text-xs text-muted-foreground mt-0.5">Hết hạn: {promo.expires}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">Hết hạn: {promo.endDate ? new Date(promo.endDate).toLocaleDateString('vi-VN') : '—'}</p>
                         </div>
                       </div>
                     </CardHeader>

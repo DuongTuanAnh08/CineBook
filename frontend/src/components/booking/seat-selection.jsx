@@ -25,6 +25,7 @@ export function SeatSelection({
   roomName,
   showDate,
   showTime,
+  showtimeId,
   pricing = DEFAULT_PRICING,
   maxSeats = MAX_SEATS,
   onConfirm,

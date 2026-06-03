@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useNavigate, Navigate, useSearchParams } from 'react-router-dom';
 
 import { useAuth } from '@/contexts/auth-context';
@@ -14,6 +14,9 @@ import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, Calendar, Clock, MapPin, Armchair, User, Phone, RefreshCw, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import bookingApi from '@/api/bookingApi';
+import resaleApi from '@/api/resaleApi';
+import { toast } from 'sonner';
 // Removed mockTickets
 const TICKET_TYPE_LABELS = {
   standard: 'Thường',
@@ -30,29 +33,54 @@ function CreateResaleContent() {
     user,
     isAuthenticated
   } = useAuth();
-  const { resaleListings, bookings, movies } = useData();
   const router = useNavigate();
   const [params] = useSearchParams();
-  if (!isAuthenticated) {
-    return <Navigate to='/login' replace />;
-  }
+  
+  const [realBookings, setRealBookings] = useState([]);
+  const [loadingBookings, setLoadingBookings] = useState(true);
+
   const preselectedBookingId = params.get('bookingId');
-  const [selectedTicket, setSelectedTicket] = useState(preselectedBookingId ? bookings.find(t => t.id === preselectedBookingId) ?? null : null);
-  const [selectedSeat, setSelectedSeat] = useState(preselectedBookingId && bookings.find(t => t.id === preselectedBookingId) ? bookings.find(t => t.id === preselectedBookingId).seats[0] : '');
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [selectedSeat, setSelectedSeat] = useState('');
+  
   const [resalePrice, setResalePrice] = useState('');
   const [note, setNote] = useState('');
   const [priceError, setPriceError] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  
-  const hasActiveListing = (bookingId, seat) => (resaleListings || []).some(l => l.bookingId === bookingId && l.seatNumber === seat && l.status === 'active');
 
-  // Check BR-18: one active listing per ticket seat
+  useEffect(() => {
+    if (isAuthenticated) {
+      bookingApi.getMyBookings().then(res => {
+        if (res.success) {
+          const validBookings = res.data.filter(b => b.status === 'confirmed' || b.status === 'upcoming');
+          setRealBookings(validBookings);
+          
+          if (preselectedBookingId) {
+            const preselected = validBookings.find(b => String(b.id) === String(preselectedBookingId));
+            if (preselected) {
+              setSelectedTicket(preselected);
+              const seatsArr = preselected.seatNumber ? preselected.seatNumber.split(',').map(s => s.trim()) : [];
+              if (seatsArr.length > 0) {
+                setSelectedSeat(seatsArr[0]);
+              }
+            }
+          }
+        }
+      }).catch(err => {
+        toast.error("Không thể tải danh sách vé");
+      }).finally(() => {
+        setLoadingBookings(false);
+      });
+    }
+  }, [isAuthenticated, preselectedBookingId]);
   
-  const today = new Date().toISOString().split('T')[0];
+  if (!isAuthenticated) {
+    return <Navigate to='/login' replace />;
+  }
 
-  // Filter to only eligible tickets (upcoming, showtime not started — BR-16, BR-17)
-  const eligibleTickets = bookings.filter(t => t.status === 'upcoming' && t.date >= today);
+  // Filter to only eligible tickets
+  const eligibleTickets = realBookings;
   const handleSubmit = async () => {
     if (!selectedTicket || !selectedSeat) return;
     const priceNum = Number(resalePrice);
@@ -60,14 +88,28 @@ function CreateResaleContent() {
       setPriceError('Giá phải lớn hơn 0.');
       return;
     }
-    if (hasActiveListing(selectedTicket.id, selectedSeat)) {
-      setPriceError('Ghế này đã có listing đang active. Chỉ được 1 listing mỗi vé (BR-18).');
-      return;
-    }
+    
     setSubmitting(true);
-    await new Promise(r => setTimeout(r, 1500));
-    setSubmitted(true);
-    setSubmitting(false);
+    try {
+      const payload = {
+        bookingId: parseInt(String(selectedTicket.id).replace('BK', ''), 10),
+        sellerId: user.userId,
+        seatNumber: selectedSeat,
+        askingPrice: priceNum,
+        note: note
+      };
+      const res = await resaleApi.createListing(payload);
+      if (res.success) {
+        setSubmitted(true);
+        toast.success("Đăng bán vé thành công!");
+      } else {
+        setPriceError(res.error?.message || "Lỗi khi đăng bán vé");
+      }
+    } catch (err) {
+      setPriceError(err.response?.data?.error?.message || "Lỗi khi đăng bán vé");
+    } finally {
+      setSubmitting(false);
+    }
   };
   if (submitted) {
     return <div className="container mx-auto px-4 py-16 max-w-md text-center space-y-6">
@@ -120,36 +162,32 @@ function CreateResaleContent() {
             Chọn vé muốn bán
           </h2>
 
-          {eligibleTickets.length === 0 ? <div className="text-center py-8 text-muted-foreground">
+          {loadingBookings ? <div className="py-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div> : eligibleTickets.length === 0 ? <div className="text-center py-8 text-muted-foreground">
               <AlertTriangle className="w-10 h-10 mx-auto mb-2 opacity-40" />
               <p className="text-sm">Không có vé nào đủ điều kiện đăng bán.</p>
               <p className="text-xs mt-1">Vé phải còn sắp chiếu và chưa check-in.</p>
             </div> : <div className="space-y-3">
               {eligibleTickets.map(ticket => {
-            const movie = movies.find(m => m.id === ticket.movieId);
-            const isSelected = selectedTicket?.id === ticket.id;
-            const displayDate = new Date(ticket.date).toLocaleDateString('vi-VN', {
+            const isSelected = String(selectedTicket?.id) === String(ticket.id);
+            const displayDate = ticket.showDate ? new Date(ticket.showDate).toLocaleDateString('vi-VN', {
               day: '2-digit',
               month: '2-digit',
               year: 'numeric'
-            });
+            }) : '';
             return <button key={ticket.id} onClick={() => {
               setSelectedTicket(ticket);
-              setSelectedSeat(ticket.seats[0]);
+              const seats = ticket.seatNumber ? ticket.seatNumber.split(',').map(s => s.trim()) : [];
+              setSelectedSeat(seats.length > 0 ? seats[0] : '');
               setPriceError('');
             }} className={cn('w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-colors', isSelected ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50')}>
                     <div className={cn('w-4 h-4 rounded-full border-2 shrink-0', isSelected ? 'border-primary bg-primary' : 'border-muted-foreground')} />
-                    <img src={movie?.poster} alt={movie?.title} className="w-12 rounded-lg object-cover aspect-[2/3] shrink-0" />
                     <div className="flex-1 min-w-0 text-sm">
-                      <p className="font-semibold truncate">{movie?.title}</p>
+                      <p className="font-semibold truncate">{ticket.movieTitle}</p>
                       <p className="text-muted-foreground text-xs mt-0.5">
-                        {ticket.cinema} • {displayDate} {ticket.time}
+                        {ticket.cinemaName} • {displayDate} {ticket.showTime}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Ghế: {ticket.seats.join(', ')} •{' '}
-                        <Badge className={cn('text-xs py-0', TICKET_TYPE_COLORS[ticket.ticketType])}>
-                          {TICKET_TYPE_LABELS[ticket.ticketType]}
-                        </Badge>
+                        Ghế: {ticket.seatNumber}
                       </p>
                     </div>
                   </button>;
@@ -157,16 +195,14 @@ function CreateResaleContent() {
             </div>}
 
           {/* Seat selection if multiple seats */}
-          {selectedTicket && selectedTicket.seats.length > 1 && <div className="space-y-2">
+          {selectedTicket && selectedTicket.seatNumber && selectedTicket.seatNumber.split(',').length > 1 && <div className="space-y-2">
               <Label>Chọn ghế muốn bán</Label>
               <div className="flex gap-2 flex-wrap">
-                {selectedTicket.seats.map(seat => {
-              const alreadyListed = hasActiveListing(selectedTicket.id, seat);
+                {selectedTicket.seatNumber.split(',').map(s => s.trim()).map(seat => {
               return <button key={seat} onClick={() => {
-                if (!alreadyListed) setSelectedSeat(seat);
-              }} disabled={alreadyListed} className={cn('px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors', selectedSeat === seat ? 'border-primary bg-primary/10 text-primary' : alreadyListed ? 'border-border text-muted-foreground opacity-50 cursor-not-allowed' : 'border-border hover:border-primary/50')}>
+                setSelectedSeat(seat);
+              }} className={cn('px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors', selectedSeat === seat ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/50')}>
                       {seat}
-                      {alreadyListed && <span className="ml-1 text-xs">(đã đăng)</span>}
                     </button>;
             })}
               </div>
@@ -190,7 +226,7 @@ function CreateResaleContent() {
           }} />
               {priceError && <p className="text-xs text-destructive">{priceError}</p>}
               <p className="text-xs text-muted-foreground">
-                Giá gốc: {selectedTicket.pricePerSeat.toLocaleString('vi-VN')}₫ / ghế
+                Đơn hàng tổng: {selectedTicket.totalAmount?.toLocaleString('vi-VN')}₫
               </p>
             </div>
 
@@ -244,15 +280,15 @@ function CreateResaleContent() {
             {[{
           icon: MapPin,
           label: 'Rạp',
-          value: selectedTicket.cinema
+          value: selectedTicket.cinemaName
         }, {
           icon: Calendar,
           label: 'Ngày',
-          value: new Date(selectedTicket.date).toLocaleDateString('vi-VN')
+          value: selectedTicket.showDate ? new Date(selectedTicket.showDate).toLocaleDateString('vi-VN') : ''
         }, {
           icon: Clock,
           label: 'Giờ',
-          value: selectedTicket.time
+          value: selectedTicket.showTime
         }, {
           icon: Armchair,
           label: 'Ghế',
@@ -285,11 +321,10 @@ function CreateResaleContent() {
     </div>;
 }
 export default function CreateResalePage() {
-  const { movies, resaleListings, bookings } = useData();
-  return 
+  return (
       <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
         <CreateResaleContent />
       </Suspense>
-    ;
+  );
 }
 

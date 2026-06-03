@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
-import { useData } from '@/contexts/data-context'
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,6 +13,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { RefreshCw, Search, EyeOff, Eye, SlidersHorizontal, Calendar, User, Phone, Film, MapPin, Armchair, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import resaleApi from '@/api/resaleApi';
+import { useAuth } from '@/contexts/auth-context';
+import { toast } from 'sonner';
+
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const TICKET_TYPE_LABELS = {
@@ -35,23 +38,38 @@ const STATUS_LABELS = {
   deleted: 'Deleted',
   sold: 'Sold'
 };
-const MOCK_ADMIN_ID = '2';
-const MOCK_ADMIN_NAME = 'Admin CineBook';
-
-
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-
 export default function AdminResalePage() {
-  const { resaleListings, updateResaleStatus } = useData();
-  const uniqueMovies = [...new Set((resaleListings || []).map(l => l.movieTitle))];
-  const uniqueCinemas = [...new Set((resaleListings || []).map(l => l.cinemaName))];
+  const { user } = useAuth();
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchListings = async () => {
+    try {
+      const res = await resaleApi.getAllListings({ page: 0, size: 500 });
+      if (res.data?.success) {
+        setListings(res.data.data.content);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Lỗi khi tải danh sách vé bán lại');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchListings();
+  }, []);
+
+  const uniqueMovies = [...new Set((listings || []).map(l => l.movieTitle))].filter(Boolean);
+  const uniqueCinemas = [...new Set((listings || []).map(l => l.cinemaName))].filter(Boolean);
   const [search, setSearch] = useState('');
   const [filterMovie, setFilterMovie] = useState('all');
   const [filterCinema, setFilterCinema] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
-  const listings = resaleListings || [];
 
   // Hide dialog state
   const [hideDialogOpen, setHideDialogOpen] = useState(false);
@@ -93,17 +111,34 @@ export default function AdminResalePage() {
     setReasonError('');
     setHideDialogOpen(true);
   };
-  const handleHide = () => {
+  const handleHide = async () => {
     if (!hideReason.trim()) {
       setReasonError('Vui lòng nhập lý do ẩn bài.');
       return;
     }
-    const now = new Date().toISOString();
-    updateResaleStatus(targetListing?.id, 'hidden', { hiddenReason: hideReason.trim(), hiddenByAdminId: MOCK_ADMIN_ID });
+    try {
+      await resaleApi.updateStatus(targetListing.id.replace('RSL', ''), {
+        status: 'Hidden',
+        hiddenReason: hideReason.trim(),
+        hiddenByAdminId: user?.id || 1
+      });
+      toast.success('Đã ẩn bài đăng');
+      fetchListings();
+    } catch (error) {
+      toast.error('Lỗi khi ẩn bài đăng');
+    }
     setHideDialogOpen(false);
   };
-  const handleUnhide = id => {
-    updateResaleStatus(id, 'active', { hiddenReason: undefined, hiddenByAdminId: undefined });
+  const handleUnhide = async id => {
+    try {
+      await resaleApi.updateStatus(id.replace('RSL', ''), {
+        status: 'Active'
+      });
+      toast.success('Đã khôi phục bài đăng');
+      fetchListings();
+    } catch (error) {
+      toast.error('Lỗi khi khôi phục bài đăng');
+    }
   };
   const openDetail = listing => {
     setDetailListing(listing);

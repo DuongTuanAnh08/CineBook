@@ -62,7 +62,7 @@ export default function AdminConcessionsPage() {
   const fetchConcessions = async () => {
     try {
       const res = await fnbApi.getAllProducts({ page: 0, size: 100 });
-      setConcessions(res.data?.data?.content || []);
+      setConcessions(res.data?.content || []);
     } catch (error) {
       console.error("Failed to fetch F&B products:", error);
       toast({ title: "Lỗi", description: "Không thể tải danh sách bắp nước", variant: "destructive" });

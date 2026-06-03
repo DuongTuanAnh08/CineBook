@@ -15,6 +15,9 @@ const roomApi = {
   },
   createRoom: (data) => {
     return axiosClient.post('/rooms', data);
+  },
+  updateRoomStatus: (id, status) => {
+    return axiosClient.patch(`/rooms/${id}/status`, { status });
   }
 };
 

@@ -11,6 +11,8 @@ import com.cinebook.backend.modules.showtimes.dto.ShowtimeDto;
 import com.cinebook.backend.modules.showtimes.dto.SeatStatusDto;
 import com.cinebook.backend.modules.showtimes.entity.Showtime;
 import com.cinebook.backend.modules.showtimes.repository.ShowtimeRepository;
+import com.cinebook.backend.common.exception.AppException;
+import org.springframework.http.HttpStatus;
 import com.cinebook.backend.modules.rooms.repository.SeatRepository;
 import com.cinebook.backend.modules.rooms.entity.Seat;
 import com.cinebook.backend.modules.bookings.repository.BookingSeatRepository;
@@ -42,8 +44,14 @@ public class ShowtimeService {
     private final SystemConfigService systemConfigService;
 
     @Transactional(readOnly = true)
-    public Page<ShowtimeDto> getAllShowtimes(Pageable pageable) {
-        return showtimeRepository.findAll(pageable).map(this::mapToDto);
+    public Page<ShowtimeDto> getAllShowtimes(Long movieId, Long cinemaId, java.time.LocalDate date, Pageable pageable) {
+        LocalDateTime startDate = null;
+        LocalDateTime endDate = null;
+        if (date != null) {
+            startDate = date.atStartOfDay();
+            endDate = startDate.plusDays(1);
+        }
+        return showtimeRepository.findFilteredShowtimes(movieId, cinemaId, startDate, endDate, pageable).map(this::mapToDto);
     }
 
     @Transactional(readOnly = true)
@@ -144,7 +152,7 @@ public class ShowtimeService {
 
         boolean conflict = showtimeRepository.existsConflictingShowtime(room.getRoomId(), startTime, endTimeWithBuffer);
         if (conflict) {
-            throw new RuntimeException("Showtime conflicts with an existing schedule in the same room.");
+            throw AppException.badRequest("Lịch chiếu này bị trùng thời gian với một lịch chiếu khác trong cùng phòng.");
         }
 
         Showtime showtime = Showtime.builder()

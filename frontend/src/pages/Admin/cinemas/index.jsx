@@ -35,9 +35,9 @@ export default function AdminCinemasPage() {
     setIsLoading(true);
     try {
       const res = await cinemaApi.getCinemas();
-      if (res.success && res.data) {
+      if (res.success && res.data && res.data.content) {
         // Backend returns cinemaId, name, city, address, locationMapUrl, totalRooms
-        const mappedCinemas = res.data.map(c => ({
+        const mappedCinemas = res.data.content.map(c => ({
           ...c,
           id: c.cinemaId, // map for UI
         }));
@@ -85,8 +85,11 @@ export default function AdminCinemasPage() {
       name: formData.name,
       city: formData.city,
       address: formData.address,
-      locationMapUrl: formData.locationMapUrl,
-      totalRooms: editingCinema ? editingCinema.totalRooms : 0 // Backend expects this? Or default to 0
+      latitude: formData.latitude || 0,
+      longitude: formData.longitude || 0,
+      phone: formData.phone || "",
+      operatingHours: formData.operatingHours || "",
+      status: formData.status || "Active"
     };
 
     try {

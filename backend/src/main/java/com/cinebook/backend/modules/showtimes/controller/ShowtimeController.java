@@ -16,8 +16,12 @@ public class ShowtimeController {
     private final ShowtimeService showtimeService;
 
     @GetMapping
-    public ApiResponse<Page<ShowtimeDto>> getAllShowtimes(Pageable pageable) {
-        return ApiResponse.ok(showtimeService.getAllShowtimes(pageable));
+    public ApiResponse<Page<ShowtimeDto>> getAllShowtimes(
+            @RequestParam(required = false) Long movieId,
+            @RequestParam(required = false) Long cinemaId,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate date,
+            Pageable pageable) {
+        return ApiResponse.ok(showtimeService.getAllShowtimes(movieId, cinemaId, date, pageable));
     }
 
     @GetMapping("/{id}")

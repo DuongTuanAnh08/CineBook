@@ -9,6 +9,7 @@ import com.cinebook.backend.modules.payments.entity.PaymentMethod;
 import com.cinebook.backend.modules.payments.entity.PaymentStatus;
 import com.cinebook.backend.modules.payments.repository.PaymentRepository;
 import com.cinebook.backend.modules.payments.service.VNPayService;
+import com.cinebook.backend.modules.notifications.service.NotificationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -29,8 +30,9 @@ public class PaymentController {
     private final VNPayService vnPayService;
     private final BookingRepository bookingRepository;
     private final PaymentRepository paymentRepository;
+    private final NotificationService notificationService;
 
-    @Value("${app.frontend.url:http://localhost:5173}")
+    @Value("${app.frontend.url:http://localhost:3000}")
     private String frontendUrl;
 
     @PostMapping("/create-url")
@@ -98,6 +100,12 @@ public class PaymentController {
                     Booking booking = payment.getBooking();
                     booking.setStatus(BookingStatus.Confirmed);
                     bookingRepository.save(booking);
+
+                    // Trigger notification
+                    String notificationTitle = "Thanh toán thành công";
+                    String notificationMessage = String.format("Thanh toán thành công cho đơn vé xem phim %s. Mã đặt vé: BK%03d. Cảm ơn bạn đã sử dụng dịch vụ!",
+                            booking.getShowtime().getMovie().getTitle(), booking.getId());
+                    notificationService.createNotification(booking.getCustomer().getUserId(), notificationTitle, notificationMessage);
                 } else {
                     payment.setStatus(PaymentStatus.Failed);
                     Booking booking = payment.getBooking();
@@ -121,6 +129,9 @@ public class PaymentController {
         String ip = request.getHeader("X-Forwarded-For");
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getRemoteAddr();
+        }
+        if ("0:0:0:0:0:0:0:1".equals(ip) || "[0:0:0:0:0:0:0:1]".equals(ip)) {
+            ip = "127.0.0.1";
         }
         return ip;
     }

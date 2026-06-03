@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { LayoutDashboard, Film, Calendar, MapPin, Users, Ticket, Tag, BarChart3, Settings, ChevronLeft, ChevronRight, Clapperboard, Armchair, ShoppingCart, RefreshCw, FileBarChart2, Newspaper, Shield } from 'lucide-react';
+import { LayoutDashboard, Film, Calendar, MapPin, Users, Ticket, Tag, BarChart3, Settings, ChevronLeft, ChevronRight, Clapperboard, Armchair, ShoppingCart, RefreshCw, FileBarChart2, Newspaper, Shield, Tags } from 'lucide-react';
 const sidebarGroups = [{
   title: 'Tổng quan',
   items: [{
@@ -26,6 +26,10 @@ const sidebarGroups = [{
     label: 'Tin tức',
     icon: Newspaper,
     href: '/admin/news'
+  }, {
+    label: 'Thể loại',
+    icon: Tags,
+    href: '/admin/genres'
   }, {
     label: 'Phim',
     icon: Film,
@@ -58,10 +62,6 @@ const sidebarGroups = [{
     label: 'Khuyến mãi',
     icon: Tag,
     href: '/admin/promotions'
-  }, {
-    label: 'Khách hàng',
-    icon: Users,
-    href: '/admin/customers'
   }, {
     label: 'Concession',
     icon: ShoppingCart,

@@ -14,6 +14,7 @@ import com.cinebook.backend.modules.showtimes.entity.Showtime;
 import com.cinebook.backend.modules.showtimes.repository.ShowtimeRepository;
 import com.cinebook.backend.modules.users.User;
 import com.cinebook.backend.modules.users.UserRepository;
+import com.cinebook.backend.modules.notifications.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,7 @@ public class BookingService {
     private final ShowtimeRepository showtimeRepository;
     private final SeatRepository seatRepository;
     private final SystemConfigService systemConfigService;
+    private final NotificationService notificationService;
 
     @Transactional
     public Booking createBooking(Long customerId, Long showtimeId, List<Long> seatIds) {
@@ -73,8 +75,19 @@ public class BookingService {
                 multiplier = coupleMultiplier;
             }
             
-            int basePrice = room.getBaseNormalPrice();
-            int seatPrice = BigDecimal.valueOf(basePrice).multiply(multiplier).intValue();
+            int basePrice = systemConfigService.getBasePrice().intValue();
+            
+            BigDecimal roomMultiplier = BigDecimal.ONE;
+            if ("3D".equalsIgnoreCase(room.getRoomType())) {
+                roomMultiplier = systemConfigService.getRoom3DMultiplier();
+            } else if ("IMAX".equalsIgnoreCase(room.getRoomType())) {
+                roomMultiplier = systemConfigService.getRoomIMAXMultiplier();
+            }
+            
+            int seatPrice = BigDecimal.valueOf(basePrice)
+                .multiply(roomMultiplier)
+                .multiply(multiplier)
+                .intValue();
             totalBeforeTax += seatPrice;
 
             BookingSeat bookingSeat = new BookingSeat();
@@ -96,7 +109,15 @@ public class BookingService {
         booking.setVatAmount(vatAmount);
         booking.setTotalAfterTax(totalAfterTax);
 
-        return bookingRepository.save(booking);
+        Booking savedBooking = bookingRepository.save(booking);
+
+        // Trigger notification
+        String notificationTitle = "Đặt vé thành công";
+        String notificationMessage = String.format("Vé xem phim %s của bạn đã được đặt. Vui lòng thanh toán trong vòng %d phút.",
+                showtime.getMovie().getTitle(), holdMinutes);
+        notificationService.createNotification(customer.getUserId(), notificationTitle, notificationMessage);
+
+        return savedBooking;
     }
 
     public org.springframework.data.domain.Page<com.cinebook.backend.modules.bookings.dto.BookingAdminDto> getAllBookingsAdmin(org.springframework.data.domain.Pageable pageable) {
@@ -166,7 +187,10 @@ public class BookingService {
     public List<com.cinebook.backend.modules.bookings.dto.MyBookingDto> getMyBookings(String email) {
         User customer = userRepository.findByEmailAndDeletedAtIsNull(email)
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
-        List<Booking> bookings = bookingRepository.findByCustomer_UserIdOrderByCreatedAtDesc(customer.getUserId());
+        List<Booking> bookings = bookingRepository.findByCustomer_UserIdAndStatusInOrderByCreatedAtDesc(
+                customer.getUserId(),
+                java.util.List.of(BookingStatus.Confirmed, BookingStatus.CheckedIn, BookingStatus.Cancelled)
+        );
         return bookings.stream().map(booking -> {
             List<BookingSeat> seats = bookingSeatRepository.findByBooking_Id(booking.getId());
             String seatNames = seats.stream()

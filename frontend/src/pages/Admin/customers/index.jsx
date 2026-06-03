@@ -45,7 +45,7 @@ export default function AdminCustomersPage() {
     try {
       setLoading(true);
       const res = await adminUserApi.getAllUsers({ role: 'Customer', page: 0, size: 100 });
-      setCustomers(res.data?.data?.content || []);
+      setCustomers(res.data?.content || []);
     } catch (error) {
       console.error("Failed to fetch users", error);
       toast.error('Không thể tải danh sách khách hàng');

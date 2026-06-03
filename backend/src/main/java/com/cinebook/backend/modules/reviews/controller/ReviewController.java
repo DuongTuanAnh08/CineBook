@@ -36,4 +36,18 @@ public class ReviewController {
     public ApiResponse<List<ReviewDto>> getMovieReviews(@PathVariable Long movieId) {
         return ApiResponse.ok(service.getReviewsByMovieId(movieId));
     }
+
+    @GetMapping("/admin")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('SystemAdmin', 'ScheduleManager')")
+    public ApiResponse<org.springframework.data.domain.Page<ReviewDto>> getAllReviewsAdmin(org.springframework.data.domain.Pageable pageable) {
+        return ApiResponse.ok(service.getAllReviewsAdmin(pageable));
+    }
+
+    @PutMapping("/admin/{id}/status")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('SystemAdmin')")
+    public ApiResponse<ReviewDto> updateReviewStatus(
+            @PathVariable Long id,
+            @RequestParam com.cinebook.backend.modules.reviews.entity.ReviewStatus status) {
+        return ApiResponse.ok(service.updateReviewStatus(id, status));
+    }
 }

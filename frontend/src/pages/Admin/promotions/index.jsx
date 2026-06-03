@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { Tag, Plus, Search, MoreHorizontal, Pencil, Trash2, Copy } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -32,11 +35,26 @@ export default function AdminPromotionsPage() {
   const [promos, setPromos] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Form State
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingPromo, setEditingPromo] = useState(null);
+  const [formData, setFormData] = useState({
+    code: '',
+    description: '',
+    discountType: 'Percentage',
+    discountValue: '',
+    minOrderValue: '0',
+    usageLimit: '',
+    validFrom: dayjs().format('YYYY-MM-DD'),
+    validUntil: dayjs().add(30, 'day').format('YYYY-MM-DD'),
+    status: 'Active'
+  });
+
   const fetchPromos = async () => {
     try {
       setLoading(true);
       const res = await promoApi.getAllPromos({ page: 0, size: 100 });
-      setPromos(res.data?.data?.content || []);
+      setPromos(res.data?.content || []);
     } catch (error) {
       console.error("Failed to fetch promos", error);
       toast.error('Không thể tải danh sách khuyến mãi');
@@ -60,6 +78,68 @@ export default function AdminPromotionsPage() {
     }
   };
 
+  const openAdd = () => {
+    setEditingPromo(null);
+    setFormData({
+      code: '',
+      description: '',
+      discountType: 'Percentage',
+      discountValue: '',
+      minOrderValue: '0',
+      usageLimit: '',
+      validFrom: dayjs().format('YYYY-MM-DD'),
+      validUntil: dayjs().add(30, 'day').format('YYYY-MM-DD'),
+      status: 'Active'
+    });
+    setIsDialogOpen(true);
+  };
+
+  const openEdit = (promo) => {
+    setEditingPromo(promo);
+    setFormData({
+      code: promo.code,
+      description: promo.description || '',
+      discountType: promo.discountType || 'Percentage',
+      discountValue: promo.discountValue?.toString() || '',
+      minOrderValue: promo.minOrderValue?.toString() || '0',
+      usageLimit: promo.usageLimit?.toString() || '',
+      validFrom: dayjs(promo.validFrom).format('YYYY-MM-DD'),
+      validUntil: dayjs(promo.validUntil).format('YYYY-MM-DD'),
+      status: promo.status || 'Active'
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleSave = async () => {
+    if (!formData.code || !formData.discountValue || !formData.validFrom || !formData.validUntil) {
+      toast.error("Vui lòng điền đầy đủ các trường bắt buộc");
+      return;
+    }
+
+    const payload = {
+      ...formData,
+      discountValue: Number(formData.discountValue),
+      minOrderValue: Number(formData.minOrderValue),
+      usageLimit: formData.usageLimit ? Number(formData.usageLimit) : null,
+      validFrom: formData.validFrom.includes('T') ? formData.validFrom : `${formData.validFrom}T00:00:00`,
+      validUntil: formData.validUntil.includes('T') ? formData.validUntil : `${formData.validUntil}T23:59:59`,
+    };
+
+    try {
+      if (editingPromo) {
+        await promoApi.updatePromo(editingPromo.id, payload);
+        toast.success("Cập nhật khuyến mãi thành công");
+      } else {
+        await promoApi.createPromo(payload);
+        toast.success("Thêm khuyến mãi thành công");
+      }
+      setIsDialogOpen(false);
+      fetchPromos();
+    } catch (error) {
+      toast.error(error.response?.data?.error?.message || "Lỗi khi lưu khuyến mãi");
+    }
+  };
+
   const filtered = promos.filter(p => 
     (p.code || '').toLowerCase().includes(search.toLowerCase())
   );
@@ -72,7 +152,7 @@ export default function AdminPromotionsPage() {
             <h1 className="text-3xl font-bold tracking-tight">Khuyến mãi</h1>
             <p className="text-muted-foreground mt-1">Quản lý mã giảm giá và chương trình ưu đãi</p>
           </div>
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={openAdd}>
             <Plus className="w-4 h-4" />
             Tạo khuyến mãi
           </Button>
@@ -183,7 +263,7 @@ export default function AdminPromotionsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem className="gap-2">
+                          <DropdownMenuItem className="gap-2" onClick={() => openEdit(promo)}>
                             <Pencil className="w-4 h-4" /> Chỉnh sửa
                           </DropdownMenuItem>
                           <DropdownMenuItem className="gap-2 text-destructive focus:text-destructive" onClick={() => handleDelete(promo.id)}>
@@ -197,6 +277,80 @@ export default function AdminPromotionsPage() {
             </Table>
           </CardContent>
         </Card>
+
+        {/* Add/Edit Dialog */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>{editingPromo ? 'Chỉnh sửa Khuyến mãi' : 'Tạo Khuyến mãi mới'}</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="code">Mã khuyến mãi <span className="text-destructive">*</span></Label>
+                <Input id="code" value={formData.code} onChange={e => setFormData({ ...formData, code: e.target.value.toUpperCase() })} placeholder="VD: SUMMER2026" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="discountType">Loại giảm giá</Label>
+                  <Select value={formData.discountType} onValueChange={v => setFormData({ ...formData, discountType: v })}>
+                    <SelectTrigger id="discountType"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Percentage">Theo phần trăm (%)</SelectItem>
+                      <SelectItem value="Fixed">Số tiền cố định (VNĐ)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="discountValue">Mức giảm <span className="text-destructive">*</span></Label>
+                  <Input id="discountValue" type="number" value={formData.discountValue} onChange={e => setFormData({ ...formData, discountValue: e.target.value })} placeholder={formData.discountType === 'Percentage' ? "VD: 20" : "VD: 50000"} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="minOrderValue">Đơn tối thiểu (VNĐ)</Label>
+                  <Input id="minOrderValue" type="number" value={formData.minOrderValue} onChange={e => setFormData({ ...formData, minOrderValue: e.target.value })} />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="usageLimit">Giới hạn số lần dùng</Label>
+                  <Input id="usageLimit" type="number" value={formData.usageLimit} onChange={e => setFormData({ ...formData, usageLimit: e.target.value })} placeholder="Để trống nếu không giới hạn" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="validFrom">Từ ngày <span className="text-destructive">*</span></Label>
+                  <Input id="validFrom" type="date" value={formData.validFrom} onChange={e => setFormData({ ...formData, validFrom: e.target.value })} />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="validUntil">Đến ngày <span className="text-destructive">*</span></Label>
+                  <Input id="validUntil" type="date" value={formData.validUntil} onChange={e => setFormData({ ...formData, validUntil: e.target.value })} />
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="description">Mô tả chương trình</Label>
+                <Input id="description" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="status">Trạng thái</Label>
+                <Select value={formData.status} onValueChange={v => setFormData({ ...formData, status: v })}>
+                  <SelectTrigger id="status"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Active">Đang hoạt động</SelectItem>
+                    <SelectItem value="Inactive">Không hoạt động</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Hủy</Button>
+              <Button onClick={handleSave}>{editingPromo ? 'Lưu thay đổi' : 'Tạo mới'}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     );
 }

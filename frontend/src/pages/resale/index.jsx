@@ -18,9 +18,9 @@ export default function ResaleTicketPage() {
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    resaleApi.getAllListings().then(res => {
-      if (res.success) {
-        setResaleListings(res.data);
+    resaleApi.getActiveListings().then(res => {
+      if (res.data?.success) {
+        setResaleListings(res.data.data.content);
       }
     }).catch(console.error).finally(() => setLoading(false));
   }, []);
@@ -43,8 +43,8 @@ export default function ResaleTicketPage() {
     if (filterMovie !== 'all') result = result.filter(l => l.movieTitle === filterMovie);
     if (filterCinema !== 'all') result = result.filter(l => l.cinemaName === filterCinema);
     result.sort((a, b) => {
-      if (sortBy === 'price_asc') return a.askingPrice - b.askingPrice;
-      if (sortBy === 'price_desc') return b.askingPrice - a.askingPrice;
+      if (sortBy === 'price_asc') return a.resalePrice - b.resalePrice;
+      if (sortBy === 'price_desc') return b.resalePrice - a.resalePrice;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
     return result;
@@ -133,7 +133,7 @@ export default function ResaleTicketPage() {
                         <p className="text-sm text-muted-foreground mt-0.5">#{String(listing.id).toUpperCase()}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-xl text-primary">{listing.askingPrice?.toLocaleString('vi-VN')}₫</p>
+                        <p className="font-bold text-xl text-primary">{listing.resalePrice?.toLocaleString('vi-VN')}₫</p>
                         <p className="text-xs text-muted-foreground line-through">Gốc: {listing.originalPrice?.toLocaleString('vi-VN')}₫</p>
                       </div>
                     </div>
@@ -143,13 +143,13 @@ export default function ResaleTicketPage() {
                         <Calendar className="w-4 h-4" /> {listing.showDate} {listing.showTime}
                       </div>
                       <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4" /> {listing.cinemaName} ({listing.roomName})
+                        <MapPin className="w-4 h-4" /> {listing.cinemaName}
                       </div>
                       <div className="flex items-center gap-2">
-                        <Armchair className="w-4 h-4" /> Ghế {listing.seats}
+                        <Armchair className="w-4 h-4" /> Ghế {listing.seatNumber}
                       </div>
                       <div className="flex items-center gap-2">
-                        <Ticket className="w-4 h-4" /> {listing.seats ? listing.seats.split(', ').length > 1 ? 'Nhiều ghế' : 'Ghế thường' : 'Thường'}
+                        <Ticket className="w-4 h-4" /> {listing.ticketType || 'Thường'}
                       </div>
                     </div>
 

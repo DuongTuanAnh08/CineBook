@@ -41,19 +41,21 @@ public class VNPayService {
         vnp_Params.put("vnp_Amount", String.valueOf(amount));
         vnp_Params.put("vnp_CurrCode", "VND");
         vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
-        vnp_Params.put("vnp_OrderInfo", "Thanh toan don hang " + booking.getId());
+        vnp_Params.put("vnp_OrderInfo", "Booking_" + booking.getId());
+        vnp_Params.put("vnp_OrderType", "other");
         vnp_Params.put("vnp_Locale", "vn");
         vnp_Params.put("vnp_ReturnUrl", vnpReturnUrl);
         vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
 
-        Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
+        Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+        formatter.setTimeZone(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
         String vnp_CreateDate = formatter.format(cld.getTime());
         vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
         
         // Expire time is holdExpiresAt
         if (booking.getHoldExpiresAt() != null) {
-            Calendar expireCld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
+            Calendar expireCld = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
             expireCld.setTime(java.sql.Timestamp.valueOf(booking.getHoldExpiresAt()));
             vnp_Params.put("vnp_ExpireDate", formatter.format(expireCld.getTime()));
         }
@@ -70,11 +72,11 @@ public class VNPayService {
                 //Build hash data
                 hashData.append(fieldName);
                 hashData.append('=');
-                hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
+                hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
                 //Build query
-                query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII));
+                query.append(URLEncoder.encode(fieldName, StandardCharsets.UTF_8));
                 query.append('=');
-                query.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
+                query.append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
                 if (itr.hasNext()) {
                     query.append('&');
                     hashData.append('&');
@@ -104,7 +106,7 @@ public class VNPayService {
             if ((fieldValue != null) && (fieldValue.length() > 0)) {
                 hashData.append(fieldName);
                 hashData.append('=');
-                hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
+                hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
                 if (itr.hasNext()) {
                     hashData.append('&');
                 }

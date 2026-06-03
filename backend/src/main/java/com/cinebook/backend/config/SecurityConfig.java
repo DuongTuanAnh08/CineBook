@@ -47,7 +47,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/payments/vnpay-return").permitAll()   // VNPay IPN/Return (no JWT)
                 .requestMatchers("/api/payments/vnpay/callback").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/movies/**", "/api/showtimes/**", "/api/cinemas/**", "/api/rooms/**", "/api/concessions/**", "/api/promos/**", "/api/news/**", "/api/reviews/**", "/api/configs/**", "/api/resale", "/uploads/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/movies/**", "/api/showtimes/**", "/api/cinemas/**", "/api/rooms/**", "/api/concessions/**", "/api/promos/**", "/api/news/**", "/api/reviews/**", "/api/configs/**", "/api/resale/**", "/uploads/**").permitAll()
                 // Swagger UI
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/api-docs/**", "/swagger-ui.html").permitAll()
                 
@@ -64,7 +64,7 @@ public class SecurityConfig {
                 // Customer Only
                 .requestMatchers("/api/bookings/**").hasAnyRole("Customer", "SystemAdmin", "ScheduleManager")
                 .requestMatchers("/api/payments/create-url").hasAnyRole("Customer", "SystemAdmin")
-                .requestMatchers(HttpMethod.POST, "/api/reviews/**", "/api/resale/**").hasRole("Customer")
+                .requestMatchers(HttpMethod.POST, "/api/reviews/**", "/api/resale", "/api/resale/**").hasRole("Customer")
                 
                 // All others require auth
                 .anyRequest().authenticated()

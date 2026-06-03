@@ -9,39 +9,8 @@ import { Ticket, Film, Users, DollarSign, TrendingUp, ArrowUpRight, ArrowDownRig
 import { Link } from 'react-router-dom';
 import { useEffect } from 'react';
 
-// Mock statistics
-const stats = [{
-  title: 'Tổng doanh thu',
-  value: 'Đang cập nhật',
-  change: '0%',
-  changeType: 'neutral',
-  icon: DollarSign,
-  description: 'So với tháng trước'
-}, {
-  title: 'Vé đã bán',
-  value: 'Đang cập nhật',
-  change: '0%',
-  changeType: 'neutral',
-  icon: Ticket,
-  description: 'Trong 30 ngày qua'
-}, {
-  title: 'Phim đang chiếu',
-  value: 'Đang cập nhật',
-  change: '0',
-  changeType: 'neutral',
-  icon: Film,
-  description: 'Phim mới trong tuần'
-}, {
-  title: 'Khách hàng',
-  value: 'Đang cập nhật',
-  change: '0%',
-  changeType: 'neutral',
-  icon: Users,
-  description: 'Khách hàng hoạt động'
-}];
-
-// Mock recent bookings
-const recentBookings = [];
+import { useState } from 'react';
+import dashboardApi from '@/api/dashboardApi';
 export default function AdminDashboard() {
   const {
     user,
@@ -49,9 +18,55 @@ export default function AdminDashboard() {
     isAuthenticated
   } = useAuth();
 
-  // Removed auto-set admin
+  const [kpi, setKpi] = useState({ totalRevenue: 0, totalTickets: 0, newUsers: 0 });
+  const [recentBookings, setRecentBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [kpiRes, bookingsRes] = await Promise.all([
+          dashboardApi.getKpiSummary(),
+          dashboardApi.getRecentBookings()
+        ]);
+        if (kpiRes.data?.data) {
+          setKpi(kpiRes.data.data);
+        }
+        if (bookingsRes.data?.data) {
+          setRecentBookings(bookingsRes.data.data);
+        }
+      } catch (error) {
+        console.error("Failed to load dashboard data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
   }, [isAuthenticated, user?.role]);
+
+  const stats = [{
+    title: 'Tổng doanh thu',
+    value: `${kpi.totalRevenue?.toLocaleString('vi-VN')}₫`,
+    change: '0%',
+    changeType: 'neutral',
+    icon: DollarSign,
+    description: 'Tổng doanh thu tính đến hiện tại'
+  }, {
+    title: 'Vé đã bán',
+    value: kpi.totalTickets?.toLocaleString('vi-VN'),
+    change: '0%',
+    changeType: 'neutral',
+    icon: Ticket,
+    description: 'Số vé hoàn tất'
+  }, {
+    title: 'Khách hàng mới',
+    value: kpi.newUsers?.toLocaleString('vi-VN'),
+    change: '0',
+    changeType: 'neutral',
+    icon: Users,
+    description: 'Người dùng mới đăng ký'
+  }];
   return (
     <div className="space-y-8">
         {/* Page Header */}
@@ -115,7 +130,7 @@ export default function AdminDashboard() {
                         </div>
                         <div className="text-right space-y-1">
                           <p className="font-medium">{booking.amount}</p>
-                          <Badge variant={booking.status === 'completed' ? 'default' : booking.status === 'pending' ? 'secondary' : 'destructive'} className="capitalize">
+                          <Badge variant={booking.status === 'Confirmed' ? 'default' : booking.status === 'Pending' ? 'secondary' : 'destructive'} className="capitalize">
                             {booking.status}
                           </Badge>
                         </div>

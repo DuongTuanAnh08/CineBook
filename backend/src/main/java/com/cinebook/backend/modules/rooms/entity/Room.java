@@ -40,6 +40,10 @@ public class Room {
     @Column(name = "seat_layout", columnDefinition = "JSON")
     private String seatLayout;
 
+    @Column(name = "room_type", nullable = false)
+    @Builder.Default
+    private String roomType = "2D";
+
     @Column(name = "status", nullable = false)
     @Builder.Default
     private String status = "Active";

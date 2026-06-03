@@ -53,11 +53,11 @@ export default function AdminShowtimesPage() {
         roomApi.getRooms({ page: 0, size: 100 }),
         showtimeApi.getAllShowtimes({ page: 0, size: 100 })
       ]);
-      setMovies(moviesRes.data?.data?.content || []);
-      setCinemas(cinemasRes.data?.data?.content || []);
-      setRooms(roomsRes.data?.data?.content || []);
+      setMovies(moviesRes.data?.content || []);
+      setCinemas(cinemasRes.data?.content || []);
+      setRooms(roomsRes.data?.content || []);
       
-      const mappedShowtimes = (showtimesRes.data?.data?.content || []).map(s => {
+      const mappedShowtimes = (showtimesRes.data?.content || []).map(s => {
         const dateTime = s.startTime.split('T');
         const endDateTime = s.endTime.split('T');
         return {
@@ -112,8 +112,7 @@ export default function AdminShowtimesPage() {
         movieId: Number(formData.movieId),
         cinemaId: Number(formData.cinemaId),
         roomId: Number(formData.roomId),
-        startTime: startTimeStr,
-        priceOverride: Number(formData.priceOverride)
+        startTime: startTimeStr
       };
 
       await showtimeApi.createShowtime(payload);
@@ -371,15 +370,9 @@ export default function AdminShowtimesPage() {
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
+            <div className="grid gap-2">
                 <Label>Giờ bắt đầu</Label>
                 <Input type="time" value={formData.startTime} onChange={e => setFormData({ ...formData, startTime: e.target.value })} />
-              </div>
-              <div className="grid gap-2">
-                <Label>Giá vé ưu tiên (VNĐ)</Label>
-                <Input type="number" value={formData.priceOverride} onChange={e => setFormData({ ...formData, priceOverride: e.target.value })} />
-              </div>
             </div>
           </div>
           <DialogFooter>

@@ -2,6 +2,7 @@ package com.cinebook.backend.modules.auth.dto;
 
 import lombok.Builder;
 import lombok.Data;
+import java.time.LocalDate;
 
 @Data
 @Builder
@@ -19,5 +20,8 @@ public class AuthResponse {
         private String email;
         private String role;
         private String avatarUrl;
+        private String phone;
+        private LocalDate dateOfBirth;
+        private String address;
     }
 }

@@ -16,8 +16,11 @@ public class MovieController {
     private final MovieService movieService;
 
     @GetMapping
-    public ApiResponse<Page<Movie>> getAllMovies(Pageable pageable) {
-        return ApiResponse.ok(movieService.getAllMovies(pageable));
+    public ApiResponse<Page<Movie>> getAllMovies(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search,
+            Pageable pageable) {
+        return ApiResponse.ok(movieService.getAllMovies(status, search, pageable));
     }
 
     @GetMapping("/{id}")

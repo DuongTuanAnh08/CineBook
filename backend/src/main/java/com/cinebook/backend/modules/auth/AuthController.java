@@ -82,4 +82,12 @@ public class AuthController {
         AuthResponse.UserInfo updatedUser = authService.updateProfile(userDetails.getUsername(), request);
         return ResponseEntity.ok(ApiResponse.ok(updatedUser));
     }
+
+    @GetMapping("/me")
+    @Operation(summary = "Get current user profile (UC-06)")
+    public ResponseEntity<ApiResponse<AuthResponse.UserInfo>> getCurrentUser(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        AuthResponse.UserInfo userInfo = authService.getUserInfoByEmail(userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.ok(userInfo));
+    }
 }

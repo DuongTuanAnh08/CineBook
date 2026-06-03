@@ -26,9 +26,13 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByCustomer_UserIdOrderByCreatedAtDesc(Long userId);
 
+    List<Booking> findByCustomer_UserIdAndStatusInOrderByCreatedAtDesc(Long userId, List<BookingStatus> statuses);
+
     List<Booking> findByStatusInAndCreatedAtBetween(List<BookingStatus> statuses, LocalDateTime start, LocalDateTime end);
 
     List<Booking> findByStatusInOrderByCreatedAtDesc(List<BookingStatus> statuses);
+
+    org.springframework.data.domain.Page<Booking> findAllByOrderByCreatedAtDesc(org.springframework.data.domain.Pageable pageable);
 
     @Query("SELECT m.movieId, m.title, SUM(b.totalAfterTax) " +
            "FROM Booking b " +

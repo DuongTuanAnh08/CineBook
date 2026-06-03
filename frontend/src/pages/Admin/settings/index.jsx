@@ -28,6 +28,8 @@ export default function AdminSettingsPage() {
   const [basePrice, setBasePrice] = useState(75000);
   const [seatVipMultiplier, setSeatVipMultiplier] = useState(1.5);
   const [seatCoupleMultiplier, setSeatCoupleMultiplier] = useState(2.0);
+  const [room3DMultiplier, setRoom3DMultiplier] = useState(1.2);
+  const [roomIMAXMultiplier, setRoomIMAXMultiplier] = useState(1.5);
   const [holdTime, setHoldTime] = useState(10);
   const [maxSeats, setMaxSeats] = useState(8);
 
@@ -36,34 +38,38 @@ export default function AdminSettingsPage() {
   useEffect(() => {
     configApi.getAllConfigs().then(res => {
       if (res.success) {
-        res.data.forEach(config => {
-          if (config.configKey === 'vatPercent') setVatPercent(Number(config.configValue));
-          if (config.configKey === 'weekendSurcharge') setWeekendSurcharge(Number(config.configValue));
-          if (config.configKey === 'eveningSurcharge') setEveningSurcharge(Number(config.configValue));
-          if (config.configKey === 'eveningSurchargeTime') setEveningSurchargeTime(config.configValue);
-          if (config.configKey === 'base_price') setBasePrice(Number(config.configValue));
-          if (config.configKey === 'seat_vip_multiplier') setSeatVipMultiplier(Number(config.configValue));
-          if (config.configKey === 'seat_couple_multiplier') setSeatCoupleMultiplier(Number(config.configValue));
-          if (config.configKey === 'holdTime') setHoldTime(Number(config.configValue));
-          if (config.configKey === 'maxSeats') setMaxSeats(Number(config.configValue));
-        });
+          res.data.forEach(config => {
+            if (config.configKey === 'vatPercent') setVatPercent(Number(config.configValue));
+            if (config.configKey === 'weekendSurcharge') setWeekendSurcharge(Number(config.configValue));
+            if (config.configKey === 'eveningSurcharge') setEveningSurcharge(Number(config.configValue));
+            if (config.configKey === 'eveningSurchargeTime') setEveningSurchargeTime(config.configValue);
+            if (config.configKey === 'base_price') setBasePrice(Number(config.configValue));
+            if (config.configKey === 'seat_vip_multiplier') setSeatVipMultiplier(Number(config.configValue));
+            if (config.configKey === 'seat_couple_multiplier') setSeatCoupleMultiplier(Number(config.configValue));
+            if (config.configKey === 'room_3d_multiplier') setRoom3DMultiplier(Number(config.configValue));
+            if (config.configKey === 'room_imax_multiplier') setRoomIMAXMultiplier(Number(config.configValue));
+            if (config.configKey === 'holdTime') setHoldTime(Number(config.configValue));
+            if (config.configKey === 'maxSeats') setMaxSeats(Number(config.configValue));
+          });
       }
     }).finally(() => setLoading(false));
   }, []);
 
   const handleSave = async () => {
     try {
-      await Promise.all([
-        configApi.updateConfig('vatPercent', String(vatPercent)),
-        configApi.updateConfig('weekendSurcharge', String(weekendSurcharge)),
-        configApi.updateConfig('eveningSurcharge', String(eveningSurcharge)),
-        configApi.updateConfig('eveningSurchargeTime', eveningSurchargeTime),
-        configApi.updateConfig('base_price', String(basePrice)),
-        configApi.updateConfig('seat_vip_multiplier', String(seatVipMultiplier)),
-        configApi.updateConfig('seat_couple_multiplier', String(seatCoupleMultiplier)),
-        configApi.updateConfig('holdTime', String(holdTime)),
-        configApi.updateConfig('maxSeats', String(maxSeats))
-      ]);
+        await Promise.all([
+          configApi.updateConfig('vatPercent', String(vatPercent)),
+          configApi.updateConfig('weekendSurcharge', String(weekendSurcharge)),
+          configApi.updateConfig('eveningSurcharge', String(eveningSurcharge)),
+          configApi.updateConfig('eveningSurchargeTime', eveningSurchargeTime),
+          configApi.updateConfig('base_price', String(basePrice)),
+          configApi.updateConfig('seat_vip_multiplier', String(seatVipMultiplier)),
+          configApi.updateConfig('seat_couple_multiplier', String(seatCoupleMultiplier)),
+          configApi.updateConfig('room_3d_multiplier', String(room3DMultiplier)),
+          configApi.updateConfig('room_imax_multiplier', String(roomIMAXMultiplier)),
+          configApi.updateConfig('holdTime', String(holdTime)),
+          configApi.updateConfig('maxSeats', String(maxSeats))
+        ]);
       toast({
         title: 'Thành công',
         description: 'Đã lưu thay đổi cài đặt.',
@@ -152,14 +158,24 @@ export default function AdminSettingsPage() {
                 <Label htmlFor="base-price">Giá cơ bản (₫)</Label>
                 <Input id="base-price" type="number" value={basePrice} onChange={e => setBasePrice(e.target.value)} />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="seat-vip-multiplier">Hệ số ghế VIP (x)</Label>
-                <Input id="seat-vip-multiplier" type="number" step="0.1" value={seatVipMultiplier} onChange={e => setSeatVipMultiplier(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="seat-couple-multiplier">Hệ số ghế đôi (x)</Label>
-                <Input id="seat-couple-multiplier" type="number" step="0.1" value={seatCoupleMultiplier} onChange={e => setSeatCoupleMultiplier(e.target.value)} />
-              </div>
+                  <div className="space-y-4">
+                    <div className="grid gap-2">
+                      <Label>Hệ số Ghế VIP (So với vé thường)</Label>
+                      <Input type="number" step="0.1" value={seatVipMultiplier} onChange={e => setSeatVipMultiplier(e.target.value)} />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Hệ số Ghế Đôi (So với vé thường)</Label>
+                      <Input type="number" step="0.1" value={seatCoupleMultiplier} onChange={e => setSeatCoupleMultiplier(e.target.value)} />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Hệ số Phòng 3D (So với vé thường)</Label>
+                      <Input type="number" step="0.1" value={room3DMultiplier} onChange={e => setRoom3DMultiplier(e.target.value)} />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Hệ số Phòng IMAX (So với vé thường)</Label>
+                      <Input type="number" step="0.1" value={roomIMAXMultiplier} onChange={e => setRoomIMAXMultiplier(e.target.value)} />
+                    </div>
+                  </div>
             </div>
             <Separator className="bg-border" />
             <div className="grid gap-4 sm:grid-cols-2">

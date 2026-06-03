@@ -1,5 +1,5 @@
 import React from 'react'
-import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Outlet, useLocation } from 'react-router-dom'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import { AuthProvider } from '@/contexts/auth-context'
 import { DataProvider } from '@/contexts/data-context'
@@ -39,6 +39,7 @@ import AdminConcessions from './pages/Admin/concessions/index.jsx'
 import AdminCustomers from './pages/Admin/customers/index.jsx'
 import AdminManagers from './pages/Admin/managers/index.jsx'
 import AdminMovies from './pages/Admin/movies/index.jsx'
+import AdminGenres from './pages/Admin/genres/index.jsx'
 import AdminPromotions from './pages/Admin/promotions/index.jsx'
 import AdminResale from './pages/Admin/resale/index.jsx'
 import AdminResaleReport from './pages/Admin/resale/report/index.jsx'
@@ -51,7 +52,16 @@ import { MainLayout } from '@/components/layout'
 import { AdminLayout } from '@/components/layout/admin-layout'
 import { ProtectedRoute } from '@/components/auth/protected-route'
 
-const MainLayoutWrapper = () => <MainLayout><Outlet /></MainLayout>
+const MainLayoutWrapper = () => {
+  const location = useLocation();
+  const noHeaderFooterPaths = ['/login', '/register', '/forgot-password'];
+  const hide = noHeaderFooterPaths.includes(location.pathname);
+  return (
+    <MainLayout showHeader={!hide} showFooter={!hide}>
+      <Outlet />
+    </MainLayout>
+  );
+};
 const AdminLayoutWrapper = () => (
   <ProtectedRoute allowedRoles={['admin', 'manager']}>
     <AdminLayout><Outlet /></AdminLayout>
@@ -100,6 +110,7 @@ export default function App() {
             <Route path="concessions" element={<AdminConcessions />} />
             <Route path="users" element={<ProtectedRoute allowedRoles={['admin']}><AdminCustomers /></ProtectedRoute>} />
             <Route path="managers" element={<ProtectedRoute allowedRoles={['admin']}><AdminManagers /></ProtectedRoute>} />
+            <Route path="genres" element={<AdminGenres />} />
             <Route path="movies" element={<AdminMovies />} />
             <Route path="promotions" element={<AdminPromotions />} />
             <Route path="resale" element={<ProtectedRoute allowedRoles={['admin']}><AdminResale /></ProtectedRoute>} />

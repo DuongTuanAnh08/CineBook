@@ -10,4 +10,8 @@ import java.util.List;
 @Repository
 public interface MovieRepository extends JpaRepository<Movie, Long> {
     List<Movie> findByStatusAndReleaseDateLessThanEqual(String status, LocalDate date);
+    
+    org.springframework.data.domain.Page<Movie> findByStatus(String status, org.springframework.data.domain.Pageable pageable);
+    org.springframework.data.domain.Page<Movie> findByTitleContainingIgnoreCase(String title, org.springframework.data.domain.Pageable pageable);
+    org.springframework.data.domain.Page<Movie> findByStatusAndTitleContainingIgnoreCase(String status, String title, org.springframework.data.domain.Pageable pageable);
 }

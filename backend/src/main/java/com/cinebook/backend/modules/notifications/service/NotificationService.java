@@ -31,4 +31,15 @@ public class NotificationService {
         notifications.forEach(n -> n.setIsRead(true));
         repository.saveAll(notifications);
     }
+
+    @Transactional
+    public void createNotification(Long userId, String title, String message) {
+        Notification notification = Notification.builder()
+                .userId(userId)
+                .title(title)
+                .message(message)
+                .isRead(false)
+                .build();
+        repository.save(notification);
+    }
 }

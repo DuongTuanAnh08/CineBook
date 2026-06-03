@@ -1,44 +1,28 @@
 import axiosClient from './axiosClient';
 
 const resaleApi = {
-    getAllListings: () => {
-        return axiosClient.get('/resale');
+    getAllListings: (params) => {
+        return axiosClient.get('/resale/admin/all', { params });
     },
-    
-    getAllListingsAdmin: () => {
-        return axiosClient.get('/resale/admin');
+
+    getActiveListings: (params) => {
+        return axiosClient.get('/resale/active', { params });
+    },
+
+    getMyListings: (sellerId, params) => {
+        return axiosClient.get('/resale/my-listings', { params: { sellerId, ...params } });
     },
 
     createListing: (data) => {
         return axiosClient.post('/resale', data);
     },
 
-    hideListing: (id, adminId, reason) => {
-        return axiosClient.put(`/resale/${id}/hide`, null, {
-            params: { adminId, reason }
-        });
+    updateStatus: (id, data) => {
+        return axiosClient.put(`/resale/${id}/status`, data);
     },
 
-    unhideListing: (id, adminId) => {
-        return axiosClient.put(`/resale/${id}/unhide`, null, {
-            params: { adminId }
-        });
-    },
-
-    getMyListings: (sellerId) => {
-        return axiosClient.get('/resale/my-listings', { params: { sellerId } });
-    },
-
-    updateListing: (id, sellerId, askingPrice, note) => {
-        return axiosClient.put(`/resale/${id}`, null, {
-            params: { sellerId, askingPrice, note }
-        });
-    },
-
-    deleteListing: (id, sellerId) => {
-        return axiosClient.delete(`/resale/${id}`, {
-            params: { sellerId }
-        });
+    deleteListing: (id) => {
+        return axiosClient.delete(`/resale/${id}`);
     }
 };
 

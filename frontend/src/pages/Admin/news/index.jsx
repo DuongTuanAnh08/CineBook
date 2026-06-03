@@ -33,7 +33,7 @@ export default function AdminNews() {
   const fetchNews = async () => {
     try {
       const res = await newsApi.getAllArticles({ page: 0, size: 100 });
-      setNews(res.data?.data?.content || []);
+      setNews(res.data?.content || []);
     } catch (error) {
       console.error("Failed to fetch news:", error);
       toast.error('Không thể tải danh sách tin tức');
@@ -79,11 +79,20 @@ export default function AdminNews() {
     }
 
     try {
+      const payload = {
+        title: formData.title,
+        summary: formData.summary,
+        content: formData.content,
+        category: "Tin tức",
+        imageUrl: formData.thumbnailUrl,
+        status: formData.status
+      };
+      
       if (editingNews) {
-        await newsApi.updateArticle(editingNews.id, formData);
+        await newsApi.updateArticle(editingNews.id, payload);
         toast.success('Cập nhật tin tức thành công');
       } else {
-        await newsApi.createArticle(formData, user?.id);
+        await newsApi.createArticle(payload, user?.id);
         toast.success('Thêm tin tức thành công');
       }
       setIsDialogOpen(false);

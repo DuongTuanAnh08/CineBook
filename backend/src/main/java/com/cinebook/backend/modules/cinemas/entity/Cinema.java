@@ -43,6 +43,9 @@ public class Cinema {
     @Builder.Default
     private String status = "Active";
 
+    @org.hibernate.annotations.Formula("(SELECT COUNT(*) FROM Rooms r WHERE r.cinema_id = cinema_id)")
+    private Integer totalRooms;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 

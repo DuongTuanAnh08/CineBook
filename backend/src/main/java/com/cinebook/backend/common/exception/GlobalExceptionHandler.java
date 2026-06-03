@@ -40,6 +40,13 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("ACCESS_DENIED", "You do not have permission to access this resource."));
     }
 
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<?>> handleDataIntegrityViolation(org.springframework.dao.DataIntegrityViolationException ex) {
+        log.warn("Data integrity violation: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("DUPLICATE_ENTRY", "Dữ liệu đã tồn tại hoặc vi phạm ràng buộc cơ sở dữ liệu. Vui lòng kiểm tra lại."));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<?>> handleGeneral(Exception ex) {
         log.error("Unhandled exception", ex);

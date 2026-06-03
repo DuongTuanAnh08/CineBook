@@ -21,8 +21,8 @@ export default function AdminManagersPage() {
   const fetchManagers = async () => {
     try {
       setLoading(true);
-backen      const res = await adminUserApi.getAllUsers({ role: 'ScheduleManager', page: 0, size: 100 });
-      setManagers(res.data?.content || res.data?.data?.content || []);
+      const res = await adminUserApi.getAllUsers({ role: 'ScheduleManager', page: 0, size: 100 });
+      setManagers(res.data?.content || res.data?.content || []);
     } catch (error) {
       toast.error('Không thể tải danh sách quản trị viên');
     } finally {
