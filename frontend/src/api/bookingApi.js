@@ -14,6 +14,10 @@ const bookingApi = {
     createBooking: (data) => {
         return axiosClient.post('/bookings', data);
     },
+    
+    holdSeats: (data) => {
+        return axiosClient.post('/bookings/hold-seats', data);
+    },
 
     getMyBookings: () => {
         return axiosClient.get('/bookings/my-bookings');

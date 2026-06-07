@@ -45,8 +45,13 @@ export default function LoginPage() {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     if (credentialResponse.credential) {
-      await loginWithGoogle(credentialResponse.credential);
-      router('/');
+      try {
+        setError('');
+        await loginWithGoogle(credentialResponse.credential);
+        router('/');
+      } catch (err) {
+        setError(err.message || 'Đăng nhập bằng Google thất bại.');
+      }
     }
   };
 

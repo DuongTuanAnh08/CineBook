@@ -83,10 +83,24 @@ export function AuthProvider({ children }) {
     setAuthState(prev => ({ ...prev, isLoading: true }))
     try {
       const response = await authApi.verifyOtp({ email, otp });
-      if (response.success) {
-         setAuthState(prev => ({ ...prev, isLoading: false }))
+      if (response.success && response.data) {
+        const { accessToken, refreshToken, user: userData } = response.data;
+        
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        
+        let uiRole = 'user';
+        if (userData.role === 'SystemAdmin') uiRole = 'admin';
+        else if (userData.role === 'ScheduleManager') uiRole = 'manager';
+
+        // Map fullName to name for frontend components
+        const finalUser = { ...userData, id: userData.userId, role: uiRole, name: userData.fullName || "User" };
+        localStorage.setItem('user', JSON.stringify(finalUser));
+        
+        setAuthState({ user: finalUser, isAuthenticated: true, isLoading: false })
       } else {
-         throw new Error(response.error?.message || "Xác minh thất bại");
+        setAuthState(prev => ({ ...prev, isLoading: false }))
+        throw new Error(response.error?.message || "Xác minh thất bại");
       }
     } catch (error) {
       setAuthState(prev => ({ ...prev, isLoading: false }))
@@ -108,19 +122,31 @@ export function AuthProvider({ children }) {
   const loginWithGoogle = useCallback(async (credential) => {
     setAuthState(prev => ({ ...prev, isLoading: true }))
     try {
-      const decoded = jwtDecode(credential)
-      const user = {
-        id: decoded.sub, // Google unique ID
-        name: decoded.name,
-        email: decoded.email,
-        avatar: decoded.picture,
-        role: 'user', // Default to user
-        provider: 'google'
+      const response = await authApi.googleLogin({ idToken: credential });
+      
+      if (response.success && response.data) {
+        const { accessToken, refreshToken, user: userData } = response.data;
+        
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        
+        let uiRole = 'user';
+        if (userData.role === 'SystemAdmin') uiRole = 'admin';
+        else if (userData.role === 'ScheduleManager') uiRole = 'manager';
+
+        // Map fullName to name for frontend components
+        const finalUser = { ...userData, id: userData.userId, role: uiRole, name: userData.fullName || "User" };
+        localStorage.setItem('user', JSON.stringify(finalUser));
+        
+        setAuthState({ user: finalUser, isAuthenticated: true, isLoading: false })
+      } else {
+        setAuthState(prev => ({ ...prev, isLoading: false }))
+        throw new Error(response.error?.message || "Đăng nhập Google thất bại");
       }
-      setAuthState({ user, isAuthenticated: true, isLoading: false })
     } catch (error) {
+      setAuthState(prev => ({ ...prev, isLoading: false }))
       console.error("Google Login Error:", error);
-      setAuthState({ user: null, isAuthenticated: false, isLoading: false })
+      throw new Error(error.error?.message || error.message || "Đăng nhập Google thất bại");
     }
   }, [])
 

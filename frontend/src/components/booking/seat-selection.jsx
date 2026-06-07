@@ -70,7 +70,7 @@ export function SeatSelection({
         id: s.seatId.toString(),
         label: s.seatLabel,
         type: s.seatType.toLowerCase(),
-        status: s.status === 'Booked' ? 'booked' : 'available',
+        status: s.status === 'Booked' ? 'booked' : s.status === 'Held' ? 'held' : 'available',
         price: s.price
       });
     });
