@@ -13,6 +13,10 @@ import com.cinebook.backend.modules.showtimes.entity.Showtime;
 import com.cinebook.backend.modules.showtimes.repository.ShowtimeRepository;
 import com.cinebook.backend.modules.users.User;
 import com.cinebook.backend.modules.users.UserRepository;
+import com.cinebook.backend.modules.bookings.dto.FnBItemRequest;
+import com.cinebook.backend.modules.bookings.repository.FnBOrderItemRepository;
+import com.cinebook.backend.modules.fnb.repository.FnBProductRepository;
+import com.cinebook.backend.modules.notifications.service.NotificationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -42,6 +47,12 @@ class BookingServiceTest {
     private SeatRepository seatRepository;
     @Mock
     private SystemConfigService systemConfigService;
+    @Mock
+    private NotificationService notificationService;
+    @Mock
+    private FnBOrderItemRepository fnbOrderItemRepository;
+    @Mock
+    private FnBProductRepository fnbProductRepository;
 
     @InjectMocks
     private BookingService bookingService;
@@ -82,7 +93,7 @@ class BookingServiceTest {
         
         when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
 
-        Booking response = bookingService.createBooking(1L, 1L, Collections.singletonList(10L));
+        Booking response = bookingService.createBooking(1L, 1L, Collections.singletonList(10L), List.of());
 
         assertNotNull(response);
         assertEquals(99L, response.getId());

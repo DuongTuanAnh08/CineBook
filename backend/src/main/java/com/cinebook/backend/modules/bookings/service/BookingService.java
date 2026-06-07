@@ -239,9 +239,10 @@ public class BookingService {
             List<FnBOrderItem> fnbOrderItems = fnbOrderItemRepository.findByBookingId(booking.getId());
             List<FnBItemDto> fnbItemDtos = fnbOrderItems.stream().map(item -> FnBItemDto.builder()
                     .productId(item.getProduct().getId())
-                    .name(item.getProduct().getName())
-                    .price(item.getUnitPrice())
+                    .productName(item.getProduct().getName())
+                    .unitPrice(item.getUnitPrice())
                     .quantity(item.getQuantity())
+                    .subtotal(item.getUnitPrice() * item.getQuantity())
                     .build()).collect(java.util.stream.Collectors.toList());
 
             return (com.cinebook.backend.modules.bookings.dto.MyBookingDto) com.cinebook.backend.modules.bookings.dto.MyBookingDto.builder()
@@ -272,9 +273,10 @@ public class BookingService {
         List<FnBOrderItem> fnbOrderItems = fnbOrderItemRepository.findByBookingId(booking.getId());
         List<FnBItemDto> fnbItemDtos = fnbOrderItems.stream().map(item -> FnBItemDto.builder()
                 .productId(item.getProduct().getId())
-                .name(item.getProduct().getName())
-                .price(item.getUnitPrice())
+                .productName(item.getProduct().getName())
+                .unitPrice(item.getUnitPrice())
                 .quantity(item.getQuantity())
+                .subtotal(item.getUnitPrice() * item.getQuantity())
                 .build()).collect(java.util.stream.Collectors.toList());
 
         return com.cinebook.backend.modules.bookings.dto.MyBookingDto.builder()
