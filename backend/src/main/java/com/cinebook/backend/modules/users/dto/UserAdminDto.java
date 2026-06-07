@@ -24,4 +24,6 @@ public class UserAdminDto {
     private UserStatus status;
     private UserRole role;
     private LocalDateTime lockedUntil;
+    private Long cinemaId;
+    private String cinemaName;
 }

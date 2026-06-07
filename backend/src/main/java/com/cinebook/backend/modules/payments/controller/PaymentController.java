@@ -15,6 +15,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -36,6 +37,7 @@ public class PaymentController {
     private String frontendUrl;
 
     @PostMapping("/create-url")
+    @PreAuthorize("hasRole('Customer')")
     public ResponseEntity<ApiResponse<String>> createUrl(@RequestParam Long bookingId, HttpServletRequest request) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));

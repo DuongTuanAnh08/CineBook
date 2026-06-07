@@ -7,6 +7,7 @@ import com.cinebook.backend.modules.movies.service.MovieService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -29,16 +30,19 @@ public class MovieController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('SystemAdmin')")
     public ApiResponse<Movie> createMovie(@RequestBody MovieRequest request) {
         return ApiResponse.ok(movieService.createMovie(request));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SystemAdmin', 'ScheduleManager')")
     public ApiResponse<Movie> updateMovie(@PathVariable Long id, @RequestBody MovieRequest request) {
         return ApiResponse.ok(movieService.updateMovie(id, request));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('SystemAdmin')")
     public ApiResponse<String> deleteMovie(@PathVariable Long id) {
         movieService.deleteMovie(id);
         return ApiResponse.ok("Movie deleted successfully");

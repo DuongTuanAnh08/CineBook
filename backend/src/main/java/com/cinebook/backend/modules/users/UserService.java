@@ -7,6 +7,8 @@ import com.cinebook.backend.modules.bookings.repository.BookingRepository;
 import com.cinebook.backend.modules.users.dto.UserAdminDto;
 import com.cinebook.backend.modules.users.dto.CreateManagerDto;
 import com.cinebook.backend.common.enums.UserRole;
+import com.cinebook.backend.modules.cinemas.repository.CinemaRepository;
+import com.cinebook.backend.modules.cinemas.entity.Cinema;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CinemaRepository cinemaRepository;
 
     public Page<UserAdminDto> getUsersByRole(UserRole role, Pageable pageable) {
         Page<User> users = userRepository.findByRoleAndDeletedAtIsNull(role, pageable);
@@ -39,6 +42,8 @@ public class UserService {
                     .lockedUntil(user.getLockedUntil())
                     .totalBookings(totalBookings)
                     .totalSpent(totalSpent != null ? totalSpent : 0)
+                    .cinemaId(user.getCinema() != null ? user.getCinema().getCinemaId() : null)
+                    .cinemaName(user.getCinema() != null ? user.getCinema().getName() : null)
                     .build();
         });
     }
@@ -57,8 +62,11 @@ public class UserService {
                     .phone(user.getPhone())
                     .createdAt(user.getCreatedAt())
                     .status(user.getStatus())
+                    .role(user.getRole())
                     .totalBookings(totalBookings)
                     .totalSpent(totalSpent)
+                    .cinemaId(user.getCinema() != null ? user.getCinema().getCinemaId() : null)
+                    .cinemaName(user.getCinema() != null ? user.getCinema().getName() : null)
                     .build();
         });
     }
@@ -83,6 +91,8 @@ public class UserService {
                 .lockedUntil(user.getLockedUntil())
                 .totalBookings(totalBookings)
                 .totalSpent(totalSpent != null ? totalSpent : 0)
+                .cinemaId(user.getCinema() != null ? user.getCinema().getCinemaId() : null)
+                .cinemaName(user.getCinema() != null ? user.getCinema().getName() : null)
                 .build();
     }
 
@@ -121,6 +131,12 @@ public class UserService {
         manager.setRole(UserRole.ScheduleManager);
         manager.setStatus(UserStatus.Active);
         
+        if (dto.getCinemaId() != null) {
+            Cinema cinema = cinemaRepository.findById(dto.getCinemaId())
+                    .orElseThrow(() -> AppException.badRequest("Cinema not found"));
+            manager.setCinema(cinema);
+        }
+        
         userRepository.save(manager);
         
         return UserAdminDto.builder()
@@ -133,6 +149,8 @@ public class UserService {
                 .role(manager.getRole())
                 .totalBookings(0)
                 .totalSpent(0)
+                .cinemaId(manager.getCinema() != null ? manager.getCinema().getCinemaId() : null)
+                .cinemaName(manager.getCinema() != null ? manager.getCinema().getName() : null)
                 .build();
     }
 

@@ -14,6 +14,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import promoApi from '../../../api/promoApi';
 import dayjs from 'dayjs';
+import { useAuth } from '@/contexts/auth-context';
 
 const STATUS_CONFIG = {
   Active: {
@@ -31,6 +32,8 @@ const STATUS_CONFIG = {
 };
 
 export default function AdminPromotionsPage() {
+  const { user } = useAuth();
+  const role = user?.role || 'admin';
   const [search, setSearch] = useState('');
   const [promos, setPromos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -152,10 +155,12 @@ export default function AdminPromotionsPage() {
             <h1 className="text-3xl font-bold tracking-tight">Khuyến mãi</h1>
             <p className="text-muted-foreground mt-1">Quản lý mã giảm giá và chương trình ưu đãi</p>
           </div>
-          <Button className="gap-2" onClick={openAdd}>
-            <Plus className="w-4 h-4" />
-            Tạo khuyến mãi
-          </Button>
+          {role !== 'manager' && (
+            <Button className="gap-2" onClick={openAdd}>
+              <Plus className="w-4 h-4" />
+              Tạo khuyến mãi
+            </Button>
+          )}
         </div>
 
         {/* Stats */}
@@ -204,7 +209,7 @@ export default function AdminPromotionsPage() {
                   <TableHead>Lượt dùng</TableHead>
                   <TableHead>Thời hạn</TableHead>
                   <TableHead>Trạng thái</TableHead>
-                  <TableHead className="w-12" />
+                  {role !== 'manager' && <TableHead className="w-12" />}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -255,23 +260,25 @@ export default function AdminPromotionsPage() {
                         {STATUS_CONFIG[promo.status]?.label || promo.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="w-8 h-8">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem className="gap-2" onClick={() => openEdit(promo)}>
-                            <Pencil className="w-4 h-4" /> Chỉnh sửa
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2 text-destructive focus:text-destructive" onClick={() => handleDelete(promo.id)}>
-                            <Trash2 className="w-4 h-4" /> Xóa
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+                    {role !== 'manager' && (
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="w-8 h-8">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem className="gap-2" onClick={() => openEdit(promo)}>
+                              <Pencil className="w-4 h-4" /> Chỉnh sửa
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="gap-2 text-destructive focus:text-destructive" onClick={() => handleDelete(promo.id)}>
+                              <Trash2 className="w-4 h-4" /> Xóa
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    )}
                   </TableRow>)}
               </TableBody>
             </Table>

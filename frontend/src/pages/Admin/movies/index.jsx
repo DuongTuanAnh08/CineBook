@@ -18,8 +18,11 @@ import { toast } from 'sonner';
 import movieApi from '@/api/movieApi';
 import uploadApi from '@/api/uploadApi';
 import genreApi from '@/api/genreApi';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function AdminMoviesPage() {
+  const { user } = useAuth();
+  const role = user?.role || 'admin';
   const [movies, setMovies] = useState([]);
   const [allGenres, setAllGenres] = useState([]);
   const [search, setSearch] = useState('');
@@ -199,10 +202,12 @@ export default function AdminMoviesPage() {
             <h1 className="text-3xl font-bold tracking-tight">Quản lý Phim</h1>
             <p className="text-muted-foreground mt-1">Quản lý danh sách phim đang chiếu và sắp chiếu</p>
           </div>
-          <Button className="gap-2" onClick={openAdd}>
-            <Plus className="w-4 h-4" />
-            Thêm phim mới
-          </Button>
+          {role !== 'manager' && (
+            <Button className="gap-2" onClick={openAdd}>
+              <Plus className="w-4 h-4" />
+              Thêm phim mới
+            </Button>
+          )}
         </div>
 
         {/* Stats */}
@@ -255,7 +260,7 @@ export default function AdminMoviesPage() {
                   <TableHead>Thời lượng</TableHead>
                   <TableHead>Đánh giá</TableHead>
                   <TableHead>Trạng thái</TableHead>
-                  <TableHead className="w-12" />
+                  {role !== 'manager' && <TableHead className="w-12" />}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -287,23 +292,25 @@ export default function AdminMoviesPage() {
                         {movie.status === 'now_showing' ? 'Đang chiếu' : 'Sắp chiếu'}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="w-8 h-8">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem className="gap-2" onClick={() => openEdit(movie)}>
-                            <Pencil className="w-4 h-4" /> Chỉnh sửa
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2 text-destructive focus:text-destructive" onClick={() => confirmDelete(movie.id)}>
-                            <Trash2 className="w-4 h-4" /> Xóa
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+                    {role !== 'manager' && (
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="w-8 h-8">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem className="gap-2" onClick={() => openEdit(movie)}>
+                              <Pencil className="w-4 h-4" /> Chỉnh sửa
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="gap-2 text-destructive focus:text-destructive" onClick={() => confirmDelete(movie.id)}>
+                              <Trash2 className="w-4 h-4" /> Xóa phim
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    )}
                   </TableRow>)}
               </TableBody>
             </Table>

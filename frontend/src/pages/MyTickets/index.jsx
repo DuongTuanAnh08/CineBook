@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Ticket, Calendar, Clock, MapPin, Armchair, Download, Search, QrCode, RefreshCw, Star, MessageSquare } from 'lucide-react';
+import { Ticket, Calendar, Clock, MapPin, Armchair, Download, Search, QrCode, RefreshCw, Star, MessageSquare, ShoppingCart } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -247,6 +247,20 @@ export default function MyTicketsPage() {
 
                         <Separator className="bg-border" />
 
+                        {ticket.fnbItems && ticket.fnbItems.length > 0 && (
+                          <div className="space-y-1 mb-3">
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                              <ShoppingCart className="w-3.5 h-3.5" /> Bắp nước
+                            </p>
+                            {ticket.fnbItems.map(fnb => (
+                              <div key={fnb.productId} className="flex justify-between text-xs text-muted-foreground pl-4">
+                                <span>{fnb.name} ×{fnb.quantity}</span>
+                                <span>{(fnb.price * fnb.quantity).toLocaleString('vi-VN')}₫</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
                         <div className="flex items-center justify-between">
                           <span className="font-bold text-primary">
                             {ticket.totalAmount?.toLocaleString('vi-VN')}₫
@@ -384,6 +398,18 @@ export default function MyTicketsPage() {
                       <span className="font-medium text-primary">{selectedTicket.seatNumber}</span>
                     </div>
                   </div>
+                  {selectedTicket.fnbItems && selectedTicket.fnbItems.length > 0 && (
+                    <div className="text-sm text-left bg-primary/5 border border-primary/20 p-3 rounded-lg mt-3">
+                      <p className="text-xs font-medium text-primary uppercase mb-2 flex items-center gap-1">
+                        <ShoppingCart className="w-3.5 h-3.5" /> Bắp nước kèm theo
+                      </p>
+                      {selectedTicket.fnbItems.map(fnb => (
+                        <div key={fnb.productId} className="flex justify-between text-sm mb-1">
+                          <span>{fnb.name} <span className="text-muted-foreground text-xs ml-1">×{fnb.quantity}</span></span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -422,6 +448,18 @@ export default function MyTicketsPage() {
                     <span className="font-semibold text-lg">{selectedTicket.seatNumber}</span>
                   </div>
                 </div>
+
+                {selectedTicket.fnbItems && selectedTicket.fnbItems.length > 0 && (
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <span className="text-gray-500 text-sm block mb-2">Đồ ăn & Thức uống</span>
+                    {selectedTicket.fnbItems.map(fnb => (
+                      <div key={fnb.productId} className="flex justify-between items-center mb-1">
+                        <span className="text-sm">{fnb.name} ×{fnb.quantity}</span>
+                        <span className="text-sm">{(fnb.price * fnb.quantity).toLocaleString('vi-VN')} VNĐ</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex justify-between items-center mb-2">

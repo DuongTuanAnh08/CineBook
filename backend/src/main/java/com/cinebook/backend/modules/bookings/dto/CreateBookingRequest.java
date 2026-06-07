@@ -15,4 +15,7 @@ public class CreateBookingRequest {
     
     @NotEmpty(message = "seatIds must not be empty")
     private List<Long> seatIds;
+
+    @jakarta.validation.Valid
+    private List<FnBItemRequest> fnbItems;
 }

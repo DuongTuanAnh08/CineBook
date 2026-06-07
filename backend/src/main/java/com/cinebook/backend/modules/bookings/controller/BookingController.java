@@ -23,7 +23,8 @@ public class BookingController {
         Booking booking = bookingService.createBooking(
                 request.getCustomerId(),
                 request.getShowtimeId(),
-                request.getSeatIds()
+                request.getSeatIds(),
+                request.getFnbItems()
         );
         java.util.Map<String, Object> data = new java.util.HashMap<>();
         data.put("id", booking.getId());

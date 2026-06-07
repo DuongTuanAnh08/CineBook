@@ -5,17 +5,20 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Shield, Plus, Search, Trash2 } from 'lucide-react';
+import { Shield, Plus, Search, Trash2, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import adminUserApi from '@/api/adminUserApi';
+import cinemaApi from '@/api/cinemaApi';
 
 export default function AdminManagersPage() {
   const [managers, setManagers] = useState([]);
+  const [cinemas, setCinemas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({ fullName: '', email: '', phone: '', password: '' });
+  const [formData, setFormData] = useState({ fullName: '', email: '', phone: '', password: '', cinemaId: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchManagers = async () => {
@@ -30,8 +33,18 @@ export default function AdminManagersPage() {
     }
   };
 
+  const fetchCinemas = async () => {
+    try {
+      const res = await cinemaApi.getAllCinemas();
+      setCinemas(res.data || []);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
     fetchManagers();
+    fetchCinemas();
   }, []);
 
   const handleCreateManager = async () => {
@@ -40,10 +53,14 @@ export default function AdminManagersPage() {
     }
     try {
       setIsSubmitting(true);
-      await adminUserApi.createManager(formData);
+      const payload = { ...formData };
+      if (payload.cinemaId === 'none' || !payload.cinemaId) {
+        delete payload.cinemaId;
+      }
+      await adminUserApi.createManager(payload);
       toast.success('Thêm Manager thành công');
       setIsDialogOpen(false);
-      setFormData({ fullName: '', email: '', phone: '', password: '' });
+      setFormData({ fullName: '', email: '', phone: '', password: '', cinemaId: '' });
       fetchManagers();
     } catch (error) {
       toast.error(error.response?.data?.error?.message || 'Có lỗi xảy ra khi thêm Manager');
@@ -104,6 +121,20 @@ export default function AdminManagersPage() {
                   <Label>Số điện thoại</Label>
                   <Input value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="0901234567" />
                 </div>
+                <div className="space-y-2">
+                  <Label>Cơ sở / Rạp chiếu</Label>
+                  <Select value={formData.cinemaId} onValueChange={(val) => setFormData({...formData, cinemaId: val})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="-- Không gán rạp --" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">-- Không gán rạp --</SelectItem>
+                      {cinemas.map(c => (
+                        <SelectItem key={c.cinemaId} value={c.cinemaId.toString()}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Hủy</Button>
@@ -131,6 +162,7 @@ export default function AdminManagersPage() {
                 <TableRow>
                   <TableHead>Họ tên</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Cơ sở quản lý</TableHead>
                   <TableHead>Số điện thoại</TableHead>
                   <TableHead>Ngày tạo</TableHead>
                   <TableHead className="w-16" />
@@ -150,6 +182,16 @@ export default function AdminManagersPage() {
                       </div>
                     </TableCell>
                     <TableCell>{manager.email}</TableCell>
+                    <TableCell>
+                      {manager.cinemaName ? (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium">
+                          <MapPin className="w-3 h-3" />
+                          {manager.cinemaName}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground text-xs italic">Toàn hệ thống</span>
+                      )}
+                    </TableCell>
                     <TableCell>{manager.phone || '-'}</TableCell>
                     <TableCell>{manager.createdAt ? new Date(manager.createdAt).toLocaleDateString('vi-VN') : '-'}</TableCell>
                     <TableCell>

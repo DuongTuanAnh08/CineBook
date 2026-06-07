@@ -129,7 +129,11 @@ function PaymentContent() {
       const payload = {
         customerId: user?.userId || user?.id,
         showtimeId: Number(showtimeId),
-        seatIds: seats.map(s => Number(s))
+        seatIds: seats.map(s => Number(s)),
+        fnbItems: concessions.map(c => ({
+          productId: Number(c.id),
+          quantity: Number(c.qty)
+        }))
       };
       
       const res = await bookingApi.createBooking(payload);

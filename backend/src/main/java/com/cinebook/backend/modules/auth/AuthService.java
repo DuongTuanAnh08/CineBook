@@ -7,8 +7,10 @@ import com.cinebook.backend.modules.auth.dto.*;
 import com.cinebook.backend.modules.auth.entity.OtpToken;
 import com.cinebook.backend.modules.auth.entity.OtpToken.OtpType;
 import com.cinebook.backend.modules.auth.entity.RefreshToken;
+import com.cinebook.backend.modules.auth.entity.PendingUser;
 import com.cinebook.backend.modules.auth.repository.OtpTokenRepository;
 import com.cinebook.backend.modules.auth.repository.RefreshTokenRepository;
+import com.cinebook.backend.modules.auth.repository.PendingUserRepository;
 import com.cinebook.backend.modules.users.User;
 import com.cinebook.backend.modules.users.UserRepository;
 import com.cinebook.backend.security.JwtUtil;
@@ -40,6 +42,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final OtpTokenRepository otpTokenRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final PendingUserRepository pendingUserRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final EmailService emailService;
@@ -49,22 +52,25 @@ public class AuthService {
         if (userRepository.existsByEmailAndDeletedAtIsNull(request.getEmail())) {
             throw AppException.conflict("Email is already registered. Please login or reset your password.");
         }
-        User user = User.builder()
-                .fullName(request.getFullName())
-                .email(request.getEmail())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .phone(request.getPhone())
-                .dateOfBirth(request.getDateOfBirth())
-                .role(UserRole.Customer)
-                .status(UserStatus.Inactive) // Inactive until OTP verified
-                .failedLoginAttempts(0)
-                .build();
-        userRepository.save(user);
 
         String otp = generateOtp();
-        saveOtp(user, otp, OtpType.EmailVerification);
+        String hashedOtp = passwordEncoder.encode(otp);
 
-        emailService.sendVerificationOtp(user.getEmail(), otp);
+        PendingUser pendingUser = pendingUserRepository.findByEmail(request.getEmail())
+                .orElse(new PendingUser());
+
+        pendingUser.setFullName(request.getFullName());
+        pendingUser.setEmail(request.getEmail());
+        pendingUser.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        pendingUser.setPhone(request.getPhone());
+        pendingUser.setDateOfBirth(request.getDateOfBirth());
+        pendingUser.setOtpCode(hashedOtp);
+        pendingUser.setOtpExpiresAt(LocalDateTime.now().plusMinutes(OTP_VALIDITY_MINUTES));
+        pendingUser.setOtpRetryCount(0);
+
+        pendingUserRepository.save(pendingUser);
+
+        emailService.sendVerificationOtp(pendingUser.getEmail(), otp);
         log.info("[DEV MODE] OTP for {} : {}", request.getEmail(), otp);
 
         return "Registration successful. Please check your email (or console in dev mode) for OTP verification.";
@@ -72,27 +78,36 @@ public class AuthService {
 
     @Transactional
     public String verifyOtp(VerifyOtpRequest request) {
-        User user = userRepository.findByEmailAndDeletedAtIsNull(request.getEmail())
-                .orElseThrow(() -> AppException.notFound("User not found."));
+        PendingUser pendingUser = pendingUserRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> AppException.badRequest("No pending registration found for this email."));
 
-        OtpToken otp = otpTokenRepository.findTopByUserAndTokenTypeAndIsUsedFalseOrderByCreatedAtDesc(
-                user, OtpType.EmailVerification)
-                .orElseThrow(() -> AppException.badRequest("No valid OTP found. Please request a new one."));
-
-        if (otp.isUsed()) throw AppException.badRequest("OTP already used.");
-        if (otp.getExpiresAt().isBefore(LocalDateTime.now())) throw AppException.badRequest("OTP has expired. Please request a new one.");
-        if (otp.getRetryCount() >= MAX_OTP_RETRIES) throw AppException.badRequest("Too many OTP attempts. Please request a new OTP.");
-
-        if (!passwordEncoder.matches(request.getOtp(), otp.getTokenValue())) {
-            otp.setRetryCount(otp.getRetryCount() + 1);
-            otpTokenRepository.save(otp);
-            throw AppException.badRequest("Incorrect OTP. " + (MAX_OTP_RETRIES - otp.getRetryCount()) + " attempts remaining.");
+        if (pendingUser.getOtpExpiresAt().isBefore(LocalDateTime.now())) {
+            throw AppException.badRequest("OTP has expired. Please register again.");
+        }
+        if (pendingUser.getOtpRetryCount() >= MAX_OTP_RETRIES) {
+            throw AppException.badRequest("Too many OTP attempts. Please register again.");
         }
 
-        otp.setUsed(true);
-        otpTokenRepository.save(otp);
-        user.setStatus(UserStatus.Active);
+        if (!passwordEncoder.matches(request.getOtp(), pendingUser.getOtpCode())) {
+            pendingUser.setOtpRetryCount(pendingUser.getOtpRetryCount() + 1);
+            pendingUserRepository.save(pendingUser);
+            throw AppException.badRequest("Incorrect OTP. " + (MAX_OTP_RETRIES - pendingUser.getOtpRetryCount()) + " attempts remaining.");
+        }
+
+        // OTP Valid -> Move to User
+        User user = User.builder()
+                .fullName(pendingUser.getFullName())
+                .email(pendingUser.getEmail())
+                .passwordHash(pendingUser.getPasswordHash())
+                .phone(pendingUser.getPhone())
+                .dateOfBirth(pendingUser.getDateOfBirth())
+                .role(UserRole.Customer)
+                .status(UserStatus.Active)
+                .failedLoginAttempts(0)
+                .build();
+
         userRepository.save(user);
+        pendingUserRepository.delete(pendingUser);
 
         return "Email verified successfully. You can now login.";
     }

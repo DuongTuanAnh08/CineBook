@@ -3,7 +3,12 @@ package com.cinebook.backend.modules.notifications.controller;
 import com.cinebook.backend.common.response.ApiResponse;
 import com.cinebook.backend.modules.notifications.entity.Notification;
 import com.cinebook.backend.modules.notifications.service.NotificationService;
+import com.cinebook.backend.modules.users.User;
+import com.cinebook.backend.modules.users.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,25 +18,35 @@ import java.util.List;
 @RequiredArgsConstructor
 public class NotificationController {
     private final NotificationService service;
+    private final UserRepository userRepository;
 
+    /**
+     * Lấy thông báo của user đang đăng nhập từ JWT token.
+     * userId được lấy từ SecurityContext để tránh IDOR.
+     */
     @GetMapping
-    public ApiResponse<List<Notification>> getUserNotifications(@RequestParam(required = false) Long userId) {
-        // In real app, userId should come from token via Spring Security context.
-        // For testing we allow passing it, but default to 1 if null.
-        Long targetUserId = userId != null ? userId : 1L;
-        return ApiResponse.ok(service.getNotificationsForUser(targetUserId));
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<List<Notification>> getUserNotifications(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User user = userRepository.findByEmailAndDeletedAtIsNull(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return ApiResponse.ok(service.getNotificationsForUser(user.getUserId()));
     }
 
     @PutMapping("/{id}/read")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<Void> markAsRead(@PathVariable Long id) {
         service.markAsRead(id);
         return ApiResponse.ok(null);
     }
 
     @PutMapping("/read-all")
-    public ApiResponse<Void> markAllAsRead(@RequestParam(required = false) Long userId) {
-        Long targetUserId = userId != null ? userId : 1L;
-        service.markAllAsRead(targetUserId);
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<Void> markAllAsRead(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User user = userRepository.findByEmailAndDeletedAtIsNull(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        service.markAllAsRead(user.getUserId());
         return ApiResponse.ok(null);
     }
 }

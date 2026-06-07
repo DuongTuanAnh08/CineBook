@@ -17,4 +17,6 @@ public class CreateManagerDto {
     private String password;
 
     private String phone;
+
+    private Long cinemaId;
 }

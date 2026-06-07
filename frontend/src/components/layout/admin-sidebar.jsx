@@ -104,17 +104,16 @@ export function AdminSidebar({
     if (role === 'admin') return group;
     
     if (role === 'manager') {
-      const allowedPathsForManager = [
-        '/admin',
-        '/admin/movies',
-        '/admin/showtimes',
-        '/admin/cinemas',
-        '/admin/rooms',
-        '/admin/seats',
-        '/admin/bookings',
-        '/admin/promotions',
-        '/admin/concessions',
-      ];
+        const allowedPathsForManager = [
+          '/admin',
+          '/admin/movies',
+          '/admin/showtimes',
+          '/admin/rooms',
+          '/admin/seats',
+          '/admin/bookings',
+          '/admin/promotions',
+          '/admin/concessions',
+        ];
       return {
         ...group,
         items: group.items.filter(item => allowedPathsForManager.includes(item.href))

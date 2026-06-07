@@ -4,10 +4,14 @@ import com.cinebook.backend.common.response.ApiResponse;
 import com.cinebook.backend.modules.reviews.dto.ReviewDto;
 import com.cinebook.backend.modules.reviews.dto.ReviewRequest;
 import com.cinebook.backend.modules.reviews.entity.Review;
+import com.cinebook.backend.modules.reviews.entity.ReviewStatus;
 import com.cinebook.backend.modules.reviews.service.ReviewService;
 import lombok.RequiredArgsConstructor;
-import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -17,6 +21,7 @@ public class ReviewController {
     private final ReviewService service;
 
     @PostMapping
+    @PreAuthorize("hasRole('Customer')")
     public ApiResponse<Review> create(@RequestBody ReviewRequest request) {
         try {
             Review review = service.createReview(
@@ -38,16 +43,16 @@ public class ReviewController {
     }
 
     @GetMapping("/admin")
-    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('SystemAdmin', 'ScheduleManager')")
-    public ApiResponse<org.springframework.data.domain.Page<ReviewDto>> getAllReviewsAdmin(org.springframework.data.domain.Pageable pageable) {
+    @PreAuthorize("hasAnyRole('SystemAdmin', 'ScheduleManager')")
+    public ApiResponse<Page<ReviewDto>> getAllReviewsAdmin(Pageable pageable) {
         return ApiResponse.ok(service.getAllReviewsAdmin(pageable));
     }
 
     @PutMapping("/admin/{id}/status")
-    @org.springframework.security.access.prepost.PreAuthorize("hasRole('SystemAdmin')")
+    @PreAuthorize("hasRole('SystemAdmin')")
     public ApiResponse<ReviewDto> updateReviewStatus(
             @PathVariable Long id,
-            @RequestParam com.cinebook.backend.modules.reviews.entity.ReviewStatus status) {
+            @RequestParam ReviewStatus status) {
         return ApiResponse.ok(service.updateReviewStatus(id, status));
     }
 }

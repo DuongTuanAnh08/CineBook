@@ -6,6 +6,7 @@ import com.cinebook.backend.modules.config.entity.SystemConfig;
 import com.cinebook.backend.modules.config.service.SystemConfigService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,11 +19,13 @@ public class SystemConfigController {
     private final SystemConfigService systemConfigService;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('SystemAdmin', 'ScheduleManager')")
     public ApiResponse<List<SystemConfig>> getAllConfigs() {
         return ApiResponse.ok(systemConfigService.getAllConfigs());
     }
 
     @PutMapping("/{configKey}")
+    @PreAuthorize("hasRole('SystemAdmin')")
     public ApiResponse<SystemConfig> updateConfig(
             @PathVariable String configKey,
             @RequestBody @Valid SystemConfigUpdateRequest request) {

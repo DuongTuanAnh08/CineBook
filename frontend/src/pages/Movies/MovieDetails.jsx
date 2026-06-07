@@ -28,14 +28,25 @@ import { ShowtimeList } from '@/components/movies/showtime-list'
 import { useData } from '@/contexts/data-context'
 import { useEffect } from 'react'
 import reviewApi from '@/api/reviewApi'
-import { MessageSquare } from 'lucide-react'
+import { MessageSquare, Send } from 'lucide-react'
+import { useAuth } from '@/contexts/auth-context'
+import bookingApi from '@/api/bookingApi'
+import { Textarea } from '@/components/ui/textarea'
+import { toast } from 'sonner'
 
 export default function MovieDetailPage() {
   const { movies, showtimes } = useData();
+  const { user } = useAuth();
   const { id } = useParams()
   const movie = movies.find((m) => String(m.id) === String(id) || String(m.movieId) === String(id))
   const [trailerOpen, setTrailerOpen] = useState(false)
   const [reviews, setReviews] = useState([]);
+  
+  const [hasWatched, setHasWatched] = useState(false);
+  const [bookingId, setBookingId] = useState(null);
+  const [myRating, setMyRating] = useState(0);
+  const [myComment, setMyComment] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (movie && (movie.id || movie.movieId)) {
@@ -50,8 +61,67 @@ export default function MovieDetailPage() {
         }
       };
       fetchReviews();
+
+      if (user) {
+        const checkWatched = async () => {
+          try {
+            const res = await bookingApi.getMyTickets();
+            if (res.success && res.data) {
+              const watchedTicket = res.data.find(t => 
+                String(t.movieId) === String(movie.movieId || movie.id) && 
+                (t.status === 'Paid' || t.status === 'Completed')
+              );
+              if (watchedTicket) {
+                setHasWatched(true);
+                // Parse the id back to number because DTO uses String id
+                setBookingId(Number(watchedTicket.id) || watchedTicket.bookingId);
+              }
+            }
+          } catch (error) {
+            console.error('Failed to check watched status', error);
+          }
+        };
+        checkWatched();
+      }
     }
-  }, [movie]);
+  }, [movie, user]);
+
+  const handleSubmitReview = async () => {
+    if (myRating === 0) {
+      toast.error('Vui lòng chọn số sao đánh giá');
+      return;
+    }
+    if (!myComment.trim()) {
+      toast.error('Vui lòng nhập nội dung đánh giá');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await reviewApi.createReview({
+        customerId: user.id,
+        movieId: movie.movieId || movie.id,
+        bookingId: bookingId,
+        rating: myRating,
+        comment: myComment
+      });
+
+      if (res.success) {
+        toast.success('Gửi đánh giá thành công!');
+        setMyRating(0);
+        setMyComment("");
+        // Refresh reviews
+        const refreshRes = await reviewApi.getMovieReviews(movie.movieId || movie.id);
+        if (refreshRes.success) setReviews(refreshRes.data || []);
+      } else {
+        toast.error(res.error?.message || 'Có lỗi xảy ra');
+      }
+    } catch (error) {
+      toast.error('Có lỗi xảy ra khi gửi đánh giá');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const movieShowtimes = useMemo(() => {
     if (!movie || movie.status !== 'now_showing') return [];
@@ -312,6 +382,43 @@ export default function MovieDetailPage() {
             <Card className="border-border/50">
               <CardContent className="p-6">
                 <div className="space-y-6">
+                  {/* Write Review Section */}
+                  {hasWatched && !reviews.some(r => String(r.customerId) === String(user?.id)) && (
+                    <div className="mb-8 border-b border-border/50 pb-6">
+                      <h3 className="mb-4 text-lg font-semibold">Viết đánh giá của bạn</h3>
+                      <div className="flex flex-col gap-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">Đánh giá:</span>
+                          <div className="flex gap-1 cursor-pointer">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Star
+                                key={i}
+                                onClick={() => setMyRating(i + 1)}
+                                className={`size-5 transition-colors ${i < myRating ? 'fill-accent text-accent' : 'fill-muted text-muted hover:text-accent/50'}`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <Textarea
+                          placeholder="Chia sẻ cảm nhận của bạn về bộ phim..."
+                          value={myComment}
+                          onChange={(e) => setMyComment(e.target.value)}
+                          className="min-h-[100px]"
+                        />
+                        <div className="flex justify-end">
+                          <Button 
+                            onClick={handleSubmitReview} 
+                            disabled={isSubmitting}
+                            className="bg-primary hover:bg-primary/90"
+                          >
+                            <Send className="mr-2 size-4" />
+                            {isSubmitting ? 'Đang gửi...' : 'Gửi đánh giá'}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {reviews.length === 0 ? (
                     <div className="text-center text-muted-foreground py-8">
                       Chưa có đánh giá nào cho phim này.

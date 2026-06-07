@@ -15,6 +15,12 @@ import com.cinebook.backend.modules.showtimes.repository.ShowtimeRepository;
 import com.cinebook.backend.modules.users.User;
 import com.cinebook.backend.modules.users.UserRepository;
 import com.cinebook.backend.modules.notifications.service.NotificationService;
+import com.cinebook.backend.modules.bookings.entity.FnBOrderItem;
+import com.cinebook.backend.modules.bookings.repository.FnBOrderItemRepository;
+import com.cinebook.backend.modules.fnb.entity.FnBProduct;
+import com.cinebook.backend.modules.fnb.repository.FnBProductRepository;
+import com.cinebook.backend.modules.bookings.dto.FnBItemRequest;
+import com.cinebook.backend.modules.bookings.dto.FnBItemDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,9 +41,11 @@ public class BookingService {
     private final SeatRepository seatRepository;
     private final SystemConfigService systemConfigService;
     private final NotificationService notificationService;
+    private final FnBOrderItemRepository fnbOrderItemRepository;
+    private final FnBProductRepository fnbProductRepository;
 
     @Transactional
-    public Booking createBooking(Long customerId, Long showtimeId, List<Long> seatIds) {
+    public Booking createBooking(Long customerId, Long showtimeId, List<Long> seatIds, List<FnBItemRequest> fnbItems) {
         User customer = userRepository.findById(customerId)
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
 
@@ -104,12 +112,43 @@ public class BookingService {
         int totalAfterTax = totalBeforeTax + vatAmount;
 
         booking.setTotalTicketsAmount(totalBeforeTax);
-        booking.setSubTotal(totalBeforeTax); // Assuming subTotal includes total_fnb_amount which is 0 for now
+        booking.setSubTotal(totalBeforeTax); // Base subtotal (tickets)
         booking.setTotalBeforeTax(totalBeforeTax);
         booking.setVatAmount(vatAmount);
         booking.setTotalAfterTax(totalAfterTax);
 
         Booking savedBooking = bookingRepository.save(booking);
+
+        int totalFnbAmount = 0;
+        if (fnbItems != null && !fnbItems.isEmpty()) {
+            List<FnBOrderItem> fnbOrderItems = new ArrayList<>();
+            for (FnBItemRequest fnbReq : fnbItems) {
+                FnBProduct product = fnbProductRepository.findById(fnbReq.getProductId())
+                        .orElseThrow(() -> new RuntimeException("Product not found: " + fnbReq.getProductId()));
+                
+                FnBOrderItem fnbOrderItem = new FnBOrderItem();
+                fnbOrderItem.setBookingId(savedBooking.getId());
+                fnbOrderItem.setProduct(product);
+                fnbOrderItem.setQuantity(fnbReq.getQuantity());
+                fnbOrderItem.setUnitPrice(product.getPrice());
+                fnbOrderItems.add(fnbOrderItem);
+
+                totalFnbAmount += (product.getPrice() * fnbReq.getQuantity());
+            }
+            fnbOrderItemRepository.saveAll(fnbOrderItems);
+            
+            // Re-calculate totals with F&B included
+            int newTotalBeforeTax = totalBeforeTax + totalFnbAmount;
+            int newVatAmount = BigDecimal.valueOf(newTotalBeforeTax).multiply(vatRate).setScale(0, RoundingMode.HALF_UP).intValue();
+            int newTotalAfterTax = newTotalBeforeTax + newVatAmount;
+            
+            savedBooking.setTotalFnbAmount(totalFnbAmount);
+            savedBooking.setSubTotal(newTotalBeforeTax);
+            savedBooking.setTotalBeforeTax(newTotalBeforeTax);
+            savedBooking.setVatAmount(newVatAmount);
+            savedBooking.setTotalAfterTax(newTotalAfterTax);
+            savedBooking = bookingRepository.save(savedBooking);
+        }
 
         // Trigger notification
         String notificationTitle = "Đặt vé thành công";
@@ -197,6 +236,14 @@ public class BookingService {
                     .map(s -> s.getSeat().getSeatLabel())
                     .collect(java.util.stream.Collectors.joining(", "));
 
+            List<FnBOrderItem> fnbOrderItems = fnbOrderItemRepository.findByBookingId(booking.getId());
+            List<FnBItemDto> fnbItemDtos = fnbOrderItems.stream().map(item -> FnBItemDto.builder()
+                    .productId(item.getProduct().getId())
+                    .name(item.getProduct().getName())
+                    .price(item.getUnitPrice())
+                    .quantity(item.getQuantity())
+                    .build()).collect(java.util.stream.Collectors.toList());
+
             return (com.cinebook.backend.modules.bookings.dto.MyBookingDto) com.cinebook.backend.modules.bookings.dto.MyBookingDto.builder()
                     .id("BK" + String.format("%03d", booking.getId()))
                     .movieId(booking.getShowtime().getMovie().getMovieId())
@@ -209,6 +256,7 @@ public class BookingService {
                     .totalAmount(booking.getTotalAfterTax())
                     .status(booking.getStatus().name().toLowerCase())
                     .checkedIn(booking.getStatus() == BookingStatus.CheckedIn)
+                    .fnbItems(fnbItemDtos)
                     .build();
         }).collect(java.util.stream.Collectors.toList());
     }
@@ -220,6 +268,14 @@ public class BookingService {
         String seatNames = seats.stream()
                 .map(s -> s.getSeat().getSeatLabel())
                 .collect(java.util.stream.Collectors.joining(", "));
+
+        List<FnBOrderItem> fnbOrderItems = fnbOrderItemRepository.findByBookingId(booking.getId());
+        List<FnBItemDto> fnbItemDtos = fnbOrderItems.stream().map(item -> FnBItemDto.builder()
+                .productId(item.getProduct().getId())
+                .name(item.getProduct().getName())
+                .price(item.getUnitPrice())
+                .quantity(item.getQuantity())
+                .build()).collect(java.util.stream.Collectors.toList());
 
         return com.cinebook.backend.modules.bookings.dto.MyBookingDto.builder()
                 .id("BK" + String.format("%03d", booking.getId()))
@@ -233,6 +289,7 @@ public class BookingService {
                 .totalAmount(booking.getTotalAfterTax())
                 .status(booking.getStatus().name().toLowerCase())
                 .checkedIn(booking.getStatus() == BookingStatus.CheckedIn)
+                .fnbItems(fnbItemDtos)
                 .build();
     }
 }

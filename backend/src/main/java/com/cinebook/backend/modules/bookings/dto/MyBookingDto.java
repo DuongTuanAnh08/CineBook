@@ -17,4 +17,5 @@ public class MyBookingDto {
     private Integer totalAmount;
     private String status;
     private Boolean checkedIn;
+    private java.util.List<FnBItemDto> fnbItems;
 }

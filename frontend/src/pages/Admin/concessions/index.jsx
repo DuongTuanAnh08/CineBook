@@ -178,10 +178,12 @@ export default function AdminConcessionsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Bắp & Nước</h1>
           <p className="text-muted-foreground mt-1">Quản lý các mặt hàng đồ ăn thức uống tại rạp</p>
         </div>
-        <Button onClick={openAdd} className="gap-2 shrink-0">
-          <Plus className="w-4 h-4" />
-          Thêm mặt hàng
-        </Button>
+        {user?.role !== 'manager' && (
+          <Button onClick={openAdd} className="gap-2 shrink-0">
+            <Plus className="w-4 h-4" />
+            Thêm mặt hàng
+          </Button>
+        )}
       </div>
 
       {/* Stats/Summary */}
@@ -239,7 +241,7 @@ export default function AdminConcessionsPage() {
                 <TableHead>Loại</TableHead>
                 <TableHead>Đơn giá</TableHead>
                 <TableHead>Trạng thái</TableHead>
-                <TableHead className="w-24 text-right">Thao tác</TableHead>
+                {user?.role !== 'manager' && <TableHead className="w-24 text-right">Thao tác</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -276,16 +278,18 @@ export default function AdminConcessionsPage() {
                       {item.status === 'Active' ? 'Đang bán' : 'Tạm dừng'}
                     </button>
                   </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(item)} title="Chỉnh sửa">
-                        <Pencil className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteConfirmId(item.id)} title="Xóa">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </TableCell>
+                  {user?.role !== 'manager' && (
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(item)} title="Chỉnh sửa">
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteConfirmId(item.id)} title="Xóa">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
               {filtered.length === 0 && (
