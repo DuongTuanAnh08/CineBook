@@ -42,6 +42,21 @@ public class ReviewController {
         return ApiResponse.ok(service.getReviewsByMovieId(movieId));
     }
 
+    @GetMapping("/booking/{bookingId}")
+    @PreAuthorize("hasRole('Customer')")
+    public ApiResponse<ReviewDto> getReviewByBooking(
+            @PathVariable Long bookingId,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+        // userDetails.getUsername() is the email, we can use SecurityUtil or assume the service checks the token.
+        // Actually, let's just pass bookingId to service and let it check the currently authenticated user if needed.
+        // Or simpler: just let service return the review for this booking.
+        try {
+            return ApiResponse.ok(service.getReviewByBookingId(bookingId));
+        } catch (Exception e) {
+            return ApiResponse.error("NOT_FOUND", e.getMessage());
+        }
+    }
+
     @GetMapping("/admin")
     @PreAuthorize("hasAnyRole('SystemAdmin', 'ScheduleManager')")
     public ApiResponse<Page<ReviewDto>> getAllReviewsAdmin(Pageable pageable) {

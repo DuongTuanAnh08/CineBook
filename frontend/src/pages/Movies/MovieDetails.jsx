@@ -69,12 +69,14 @@ export default function MovieDetailPage() {
             if (res.success && res.data) {
               const watchedTicket = res.data.find(t => 
                 String(t.movieId) === String(movie.movieId || movie.id) && 
-                (t.status === 'Paid' || t.status === 'Completed')
+                (t.status === 'Paid' || t.status === 'Completed' || t.status === 'paid' || t.status === 'completed')
               );
               if (watchedTicket) {
                 setHasWatched(true);
-                // Parse the id back to number because DTO uses String id
-                setBookingId(Number(watchedTicket.id) || watchedTicket.bookingId);
+                const rawBookingId = typeof watchedTicket.id === 'string' && watchedTicket.id.startsWith('BK') 
+                  ? parseInt(watchedTicket.id.replace('BK', ''), 10) 
+                  : watchedTicket.id;
+                setBookingId(Number(rawBookingId));
               }
             }
           } catch (error) {

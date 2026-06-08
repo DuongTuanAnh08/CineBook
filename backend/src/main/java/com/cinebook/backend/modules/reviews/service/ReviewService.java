@@ -16,16 +16,39 @@ import java.util.stream.Collectors;
 public class ReviewService {
     private final ReviewRepository repository;
     private final UserRepository userRepository;
+    private final com.cinebook.backend.modules.bookings.repository.BookingRepository bookingRepository;
 
     public Review createReview(Long customerId, Long movieId, Long bookingId, Integer rating, String comment) {
-        Review review = Review.builder()
-                .customerId(customerId)
-                .movieId(movieId)
-                .bookingId(bookingId)
-                .rating(rating)
-                .comment(comment)
-                .status(ReviewStatus.Active)
-                .build();
+        com.cinebook.backend.modules.bookings.entity.Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy vé."));
+        
+        if (!booking.getCustomer().getId().equals(customerId)) {
+            throw new RuntimeException("Bạn không có quyền đánh giá vé này.");
+        }
+
+        if (booking.getShowtime().getEndTime().isAfter(java.time.LocalDateTime.now())) {
+            throw new RuntimeException("Suất chiếu chưa kết thúc, bạn chưa thể đánh giá.");
+        }
+
+        // Kiểm tra xem đã đánh giá chưa, nếu rồi thì cập nhật
+        java.util.Optional<Review> existingReview = repository.findByBookingIdAndCustomerId(bookingId, customerId);
+        
+        Review review;
+        if (existingReview.isPresent()) {
+            review = existingReview.get();
+            review.setRating(rating);
+            review.setComment(comment);
+        } else {
+            review = Review.builder()
+                    .customerId(customerId)
+                    .movieId(movieId)
+                    .bookingId(bookingId)
+                    .rating(rating)
+                    .comment(comment)
+                    .status(ReviewStatus.Active)
+                    .build();
+        }
+        
         return repository.save(review);
     }
 
@@ -39,6 +62,12 @@ public class ReviewService {
 
     public org.springframework.data.domain.Page<ReviewDto> getAllReviewsAdmin(org.springframework.data.domain.Pageable pageable) {
         return repository.findAll(pageable).map(this::mapToDto);
+    }
+
+    public ReviewDto getReviewByBookingId(Long bookingId) {
+        Review review = repository.findByBookingId(bookingId)
+                .orElseThrow(() -> new RuntimeException("Chưa có đánh giá cho vé này."));
+        return mapToDto(review);
     }
 
     public ReviewDto updateReviewStatus(Long id, ReviewStatus status) {

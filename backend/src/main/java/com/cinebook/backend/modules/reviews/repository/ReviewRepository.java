@@ -19,4 +19,10 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     java.util.List<Object[]> findTopMoviesByRating(@Param("status") com.cinebook.backend.modules.reviews.entity.ReviewStatus status, org.springframework.data.domain.Pageable pageable);
 
     java.util.List<Review> findByMovieIdOrderByCreatedAtDesc(Long movieId);
+    
+    java.util.Optional<Review> findByBookingIdAndCustomerId(Long bookingId, Long customerId);
+    
+    java.util.Optional<Review> findByCustomerIdAndMovieIdAndBookingId(Long customerId, Long movieId, Long bookingId);
+    
+    java.util.Optional<Review> findByBookingId(Long bookingId);
 }

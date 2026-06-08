@@ -43,7 +43,11 @@ export function BookingSummary({
   return <div className="bg-card border border-border rounded-xl overflow-hidden">
       {/* Timer */}
       <div className="p-4 border-b border-border">
-        <BookingTimer initialMinutes={15} onExpire={onTimerExpire} />
+        <BookingTimer 
+          initialMinutes={15} 
+          onExpire={onTimerExpire} 
+          isStarted={selectedSeats.length > 0}
+        />
       </div>
 
       {/* Movie Info */}

@@ -22,6 +22,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
 import { useRef } from 'react';
+import { ReviewModal } from '@/components/reviews/ReviewModal';
 
 const STATUS = {
   upcoming: {
@@ -38,11 +39,26 @@ const STATUS = {
   }
 };
 
-const mapStatus = (backendStatus) => {
-  if (!backendStatus) return 'upcoming';
-  if (backendStatus === 'confirmed') return 'upcoming';
-  if (backendStatus === 'checkedin') return 'used';
-  if (backendStatus === 'cancelled') return 'cancelled';
+const mapStatus = (ticket) => {
+  if (!ticket) return 'upcoming';
+  const backendStatus = ticket.status;
+  if (backendStatus === 'Cancelled' || backendStatus === 'Failed' || backendStatus === 'Refunded' || backendStatus === 'cancelled') return 'cancelled';
+  
+  if (ticket.checkedIn || backendStatus === 'Completed' || backendStatus === 'checkedin') return 'used';
+  
+  // Also check if show time has passed
+  if (ticket.showDate && ticket.showTime) {
+    // format: showDate: "YYYY-MM-DD", showTime: "HH:mm"
+    const [hours, minutes] = ticket.showTime.split(':');
+    const showDateTime = new Date(ticket.showDate);
+    showDateTime.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+    // Let's add ~2 hours to showtime to consider it 'finished'
+    const endDateTime = new Date(showDateTime.getTime() + 2 * 60 * 60 * 1000);
+    if (new Date() > endDateTime) {
+      return 'used';
+    }
+  }
+
   return 'upcoming';
 };
 
@@ -72,8 +88,6 @@ export default function MyTicketsPage() {
   // Review state
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
-  const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
-  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   
   // QR & PDF state
   const [isQrOpen, setIsQrOpen] = useState(false);
@@ -103,7 +117,7 @@ export default function MyTicketsPage() {
   }
   
   const filtered = myTickets.filter(t => {
-    const status = mapStatus(t.status);
+    const status = mapStatus(t);
     const matchTab = tab === 'all' || status === tab;
     const matchSearch = String(t.id).toLowerCase().includes(search.toLowerCase()) || (t.movieTitle ?? '').toLowerCase().includes(search.toLowerCase());
     return matchTab && matchSearch;
@@ -131,34 +145,7 @@ export default function MyTicketsPage() {
 
   const openReviewModal = (ticket) => {
     setSelectedTicket(ticket);
-    setReviewForm({ rating: 5, comment: '' });
     setIsReviewOpen(true);
-  };
-
-  const handleSubmitReview = async () => {
-    if (!selectedTicket) return;
-    setIsSubmittingReview(true);
-    try {
-      const payload = {
-        customerId: null, // Let backend or api client resolve this via token if needed, or we pass user.id. Since user is in context:
-        movieId: selectedTicket.movieId || 1, // fallback for mock
-        bookingId: selectedTicket.id,
-        rating: reviewForm.rating,
-        comment: reviewForm.comment
-      };
-      
-      const res = await reviewApi.createReview(payload);
-      if (res.success) {
-        toast.success("Đánh giá thành công!");
-        setIsReviewOpen(false);
-      } else {
-        toast.error("Lỗi: " + res.error?.message);
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.error?.message || "Không thể gửi đánh giá");
-    } finally {
-      setIsSubmittingReview(false);
-    }
   };
   
   return (
@@ -182,7 +169,7 @@ export default function MyTicketsPage() {
           {TABS.map(t => <button key={t.id} onClick={() => setTab(t.id)} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${tab === t.id ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'}`}>
               {t.label}
               {t.id !== 'all' && <span className="ml-1.5 opacity-70">
-                  {myTickets.filter(x => mapStatus(x.status) === t.id).length}
+                  {myTickets.filter(x => mapStatus(x) === t.id).length}
                 </span>}
             </button>)}
         </div>
@@ -202,7 +189,7 @@ export default function MyTicketsPage() {
             <p>Không có vé nào.</p>
           </div> : <div className="space-y-4">
             {filtered.map(ticket => {
-          const statusKey = mapStatus(ticket.status);
+          const statusKey = mapStatus(ticket);
           const status = STATUS[statusKey];
           const displayDate = ticket.showDate ? new Date(ticket.showDate).toLocaleDateString('vi-VN', {
             weekday: 'short',
@@ -312,58 +299,14 @@ export default function MyTicketsPage() {
         })}
           </div>}
 
-        <Dialog open={isReviewOpen} onOpenChange={setIsReviewOpen}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Đánh giá phim</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="text-center mb-2 font-medium text-lg">
-                {selectedTicket?.movieTitle}
-              </div>
-              
-              <div className="flex flex-col items-center gap-2">
-                <Label>Chất lượng phim</Label>
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setReviewForm({ ...reviewForm, rating: star })}
-                      className="p-1 focus:outline-none transition-transform hover:scale-110"
-                    >
-                      <Star
-                        className={`w-8 h-8 ${
-                          reviewForm.rating >= star
-                            ? 'fill-accent text-accent'
-                            : 'fill-muted text-muted-foreground/30'
-                        }`}
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid gap-2 mt-4">
-                <Label htmlFor="comment">Cảm nhận của bạn (Tùy chọn)</Label>
-                <Textarea 
-                  id="comment" 
-                  placeholder="Chia sẻ cảm nhận về bộ phim này..." 
-                  value={reviewForm.comment}
-                  onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
-                  rows={4}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsReviewOpen(false)} disabled={isSubmittingReview}>Hủy</Button>
-              <Button onClick={handleSubmitReview} disabled={isSubmittingReview}>
-                {isSubmittingReview ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <Star className="w-4 h-4 mr-2" />}
-                Gửi đánh giá
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <ReviewModal 
+          isOpen={isReviewOpen} 
+          onClose={() => setIsReviewOpen(false)} 
+          booking={selectedTicket}
+          onReviewSuccess={() => {
+            // Optional: Handle state update if needed, like marking ticket as reviewed
+          }}
+        />
 
         {/* QR Code Dialog */}
         <Dialog open={isQrOpen} onOpenChange={setIsQrOpen}>

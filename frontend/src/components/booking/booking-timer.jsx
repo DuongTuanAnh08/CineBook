@@ -5,7 +5,8 @@ import { cn } from '@/lib/utils';
 import { useCountdown } from '@/hooks/use-countdown';
 export function BookingTimer({
   initialMinutes = 15,
-  onExpire
+  onExpire,
+  isStarted = true
 }) {
   const {
     formattedTime,
@@ -14,7 +15,8 @@ export function BookingTimer({
     isExpired
   } = useCountdown({
     initialMinutes,
-    onExpire
+    onExpire,
+    isStarted
   });
   if (isExpired) {
     return <div className="flex items-center gap-2 px-4 py-2 bg-destructive/20 border border-destructive rounded-lg">

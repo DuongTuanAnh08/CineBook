@@ -3,10 +3,13 @@
 import { useState, useEffect, useCallback } from 'react';
 export function useCountdown({
   initialMinutes,
-  onExpire
+  onExpire,
+  isStarted = true
 }) {
   const [totalSeconds, setTotalSeconds] = useState(initialMinutes * 60);
   useEffect(() => {
+    if (!isStarted) return;
+    
     if (totalSeconds <= 0) {
       onExpire?.();
       return;
@@ -21,7 +24,7 @@ export function useCountdown({
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [totalSeconds, onExpire]);
+  }, [totalSeconds, onExpire, isStarted]);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   const isExpired = totalSeconds <= 0;

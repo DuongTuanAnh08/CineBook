@@ -6,6 +6,9 @@ const reviewApi = {
     },
     createReview(data) {
         return axiosClient.post('/reviews', data);
+    },
+    getReviewByBookingId(bookingId) {
+        return axiosClient.get(`/reviews/booking/${bookingId}`);
     }
 };
 
