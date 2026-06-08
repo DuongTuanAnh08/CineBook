@@ -100,6 +100,14 @@ function BookingContent() {
   const currentTotal = currentSubtotal + currentVatAmount;
 
   const handleConfirm = selectedSeats => {
+    if (selectedSeats.length > 8) {
+      toast({
+        title: 'Lỗi',
+        description: 'Bạn chỉ được chọn tối đa 8 ghế cho mỗi giao dịch.',
+        variant: 'destructive'
+      });
+      return;
+    }
     toast({
       title: 'Đã chọn ghế!',
       description: `${selectedSeats.length} ghế: ${selectedSeats.map(s => s.id).join(', ')}`
@@ -163,7 +171,7 @@ function BookingContent() {
       </div>
 
       {/* Seat Selection */}
-      <SeatSelection showtimeId={showtimeId} movieId={movie.id} movieTitle={movie.title} moviePoster={movie.poster} cinemaName={cinema.name} roomName={room} showDate={date} showTime={time} pricing={dynamicPricing} onConfirm={handleConfirm} onCancel={() => router(-1)} />
+      <SeatSelection showtimeId={showtimeId} movieId={movie.id} movieTitle={movie.title} moviePoster={movie.poster} cinemaName={cinema.name} roomName={room} showDate={date} showTime={time} pricing={dynamicPricing} onConfirm={handleConfirm} onCancel={() => router(-1)} maxSeats={8} />
 
       {/* Concession Sheet (UC-43) */}
       <Sheet open={concessionOpen} onOpenChange={setConcessionOpen}>

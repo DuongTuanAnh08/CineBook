@@ -22,7 +22,7 @@ public class ReviewService {
         com.cinebook.backend.modules.bookings.entity.Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy vé."));
         
-        if (!booking.getCustomer().getId().equals(customerId)) {
+        if (!booking.getCustomer().getUserId().equals(customerId)) {
             throw new RuntimeException("Bạn không có quyền đánh giá vé này.");
         }
 

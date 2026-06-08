@@ -30,6 +30,15 @@ public class EmailService {
     }
 
     @Async
+    public void sendResetPasswordOtp(String to, String otp) {
+        String subject = "CineBook - Reset Your Password";
+        String content = "<h1>Reset Your Password</h1>"
+                + "<p>Your password reset OTP is: <strong>" + otp + "</strong></p>"
+                + "<p>This OTP will expire in 5 minutes.</p>";
+        sendHtmlEmail(to, subject, content);
+    }
+
+    @Async
     public void sendTempPassword(String to, String tempPassword) {
         String subject = "CineBook - Temporary Password";
         String content = "<h1>Password Reset</h1>"

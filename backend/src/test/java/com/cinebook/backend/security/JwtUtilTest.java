@@ -3,6 +3,7 @@ package com.cinebook.backend.security;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
+import io.jsonwebtoken.Claims;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -37,5 +38,16 @@ class JwtUtilTest {
     @Test
     void testValidateInvalidToken() {
         assertFalse(jwtUtil.validateToken("invalid.token.here"));
+    }
+
+    @Test
+    void testGenerateResetPasswordToken() {
+        String token = jwtUtil.generateResetPasswordToken("reset@example.com");
+        assertNotNull(token);
+        assertTrue(jwtUtil.validateToken(token));
+
+        Claims claims = jwtUtil.parseToken(token);
+        assertEquals("reset@example.com", claims.getSubject());
+        assertEquals("RESET_PASSWORD", claims.get("purpose", String.class));
     }
 }

@@ -35,8 +35,8 @@ export default function AdminManagersPage() {
 
   const fetchCinemas = async () => {
     try {
-      const res = await cinemaApi.getAllCinemas();
-      setCinemas(res.data || []);
+      const res = await cinemaApi.getCinemas({ page: 0, size: 100 });
+      setCinemas(res.data?.content || []);
     } catch (error) {
       console.error(error);
     }
@@ -48,22 +48,22 @@ export default function AdminManagersPage() {
   }, []);
 
   const handleCreateManager = async () => {
-    if (!formData.fullName || !formData.email || !formData.password) {
-      return toast.error('Vui lòng điền đầy đủ thông tin bắt buộc');
+    if (!formData.fullName || !formData.email || !formData.password || !formData.cinemaId || formData.cinemaId === 'none') {
+      return toast.error('Vui lòng điền đầy đủ thông tin bắt buộc (Họ tên, Email, Mật khẩu và Rạp chiếu)');
     }
     try {
       setIsSubmitting(true);
-      const payload = { ...formData };
-      if (payload.cinemaId === 'none' || !payload.cinemaId) {
-        delete payload.cinemaId;
-      }
+      const payload = { 
+        ...formData,
+        cinemaId: Number(formData.cinemaId)
+      };
       await adminUserApi.createManager(payload);
       toast.success('Thêm Manager thành công');
       setIsDialogOpen(false);
       setFormData({ fullName: '', email: '', phone: '', password: '', cinemaId: '' });
       fetchManagers();
     } catch (error) {
-      toast.error(error.response?.data?.error?.message || 'Có lỗi xảy ra khi thêm Manager');
+      toast.error(error.error?.message || error.message || 'Có lỗi xảy ra khi thêm Manager');
     } finally {
       setIsSubmitting(false);
     }
@@ -122,13 +122,12 @@ export default function AdminManagersPage() {
                   <Input value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="0901234567" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Cơ sở / Rạp chiếu</Label>
+                  <Label>Cơ sở / Rạp chiếu *</Label>
                   <Select value={formData.cinemaId} onValueChange={(val) => setFormData({...formData, cinemaId: val})}>
                     <SelectTrigger>
-                      <SelectValue placeholder="-- Không gán rạp --" />
+                      <SelectValue placeholder="-- Chọn cơ sở / rạp chiếu --" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">-- Không gán rạp --</SelectItem>
                       {cinemas.map(c => (
                         <SelectItem key={c.cinemaId} value={c.cinemaId.toString()}>{c.name}</SelectItem>
                       ))}

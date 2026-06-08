@@ -14,6 +14,7 @@ import com.cinebook.backend.modules.auth.repository.PendingUserRepository;
 import com.cinebook.backend.modules.users.User;
 import com.cinebook.backend.modules.users.UserRepository;
 import com.cinebook.backend.security.JwtUtil;
+import io.jsonwebtoken.Claims;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -192,17 +193,69 @@ public class AuthService {
 
     @Transactional
     public void forgotPassword(ForgotPasswordRequest request) {
-        // Return generic message regardless to prevent email enumeration
-        userRepository.findByEmailAndDeletedAtIsNull(request.getEmail()).ifPresent(user -> {
-            String tempPassword = generateTempPassword();
-            otpTokenRepository.invalidateAllForUser(user, OtpType.TempPassword);
-            saveOtp(user, tempPassword, OtpType.TempPassword);
-            user.setPasswordHash(passwordEncoder.encode(tempPassword));
-            userRepository.save(user);
-            
-            emailService.sendTempPassword(user.getEmail(), tempPassword);
-            log.info("[DEV MODE] Temp password for {} : {}", request.getEmail(), tempPassword);
-        });
+        User user = userRepository.findByEmailAndDeletedAtIsNull(request.getEmail())
+                .orElseThrow(() -> AppException.notFound("Email không tồn tại trong hệ thống."));
+        
+        String otp = generateOtp();
+        saveOtp(user, otp, OtpType.PasswordReset, 5);
+        
+        emailService.sendResetPasswordOtp(user.getEmail(), otp);
+        log.info("[DEV MODE] Reset password OTP for {} : {}", request.getEmail(), otp);
+    }
+
+    @Transactional
+    public String verifyForgotPasswordOtp(VerifyForgotOtpRequest request) {
+        User user = userRepository.findByEmailAndDeletedAtIsNull(request.getEmail())
+                .orElseThrow(() -> AppException.notFound("Email không tồn tại trong hệ thống."));
+
+        OtpToken otpToken = otpTokenRepository.findTopByUserAndTokenTypeAndIsUsedFalseOrderByCreatedAtDesc(user, OtpType.PasswordReset)
+                .orElseThrow(() -> AppException.badRequest("Mã xác nhận không tồn tại hoặc đã được sử dụng."));
+
+        if (otpToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw AppException.badRequest("Mã xác nhận đã hết hạn.");
+        }
+
+        if (otpToken.getRetryCount() >= MAX_OTP_RETRIES) {
+            throw AppException.badRequest("Vượt quá số lần thử mã xác nhận tối đa.");
+        }
+
+        if (!passwordEncoder.matches(request.getOtpCode(), otpToken.getTokenValue())) {
+            otpToken.setRetryCount(otpToken.getRetryCount() + 1);
+            otpTokenRepository.save(otpToken);
+            throw AppException.badRequest("Mã xác nhận không chính xác. Còn lại " + (MAX_OTP_RETRIES - otpToken.getRetryCount()) + " lần thử.");
+        }
+
+        // MANDATORY SECURITY ACTION: Immediately delete/invalidate the OTP from the database
+        otpTokenRepository.delete(otpToken);
+        otpTokenRepository.flush();
+
+        return jwtUtil.generateResetPasswordToken(user.getEmail());
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        Claims claims;
+        try {
+            claims = jwtUtil.parseToken(request.getToken());
+        } catch (Exception e) {
+            throw AppException.badRequest("Mã khôi phục không hợp lệ hoặc đã hết hạn.");
+        }
+
+        String email = claims.getSubject();
+        String purpose = claims.get("purpose", String.class);
+
+        if (email == null || !email.equalsIgnoreCase(request.getEmail()) || !"RESET_PASSWORD".equals(purpose)) {
+            throw AppException.badRequest("Mã khôi phục không hợp lệ.");
+        }
+
+        User user = userRepository.findByEmailAndDeletedAtIsNull(request.getEmail())
+                .orElseThrow(() -> AppException.notFound("Email không tồn tại trong hệ thống."));
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        // Revoke all refresh tokens for security
+        refreshTokenRepository.revokeAllByUser(user);
     }
 
     @Transactional
@@ -358,12 +411,16 @@ public class AuthService {
     }
 
     private void saveOtp(User user, String otp, OtpType type) {
+        saveOtp(user, otp, type, OTP_VALIDITY_MINUTES);
+    }
+
+    private void saveOtp(User user, String otp, OtpType type, int validityMinutes) {
         otpTokenRepository.invalidateAllForUser(user, type);
         OtpToken token = OtpToken.builder()
                 .user(user)
                 .tokenType(type)
                 .tokenValue(passwordEncoder.encode(otp)) // Store hashed
-                .expiresAt(LocalDateTime.now().plusMinutes(OTP_VALIDITY_MINUTES))
+                .expiresAt(LocalDateTime.now().plusMinutes(validityMinutes))
                 .isUsed(false)
                 .retryCount(0)
                 .build();

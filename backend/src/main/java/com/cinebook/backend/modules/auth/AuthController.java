@@ -56,10 +56,25 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    @Operation(summary = "Send temp password (UC-03)")
+    @Operation(summary = "Send forgot password OTP (UC-03)")
     public ResponseEntity<ApiResponse<String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         authService.forgotPassword(request);
-        return ResponseEntity.ok(ApiResponse.ok("If this email is registered, a temporary password has been sent."));
+        return ResponseEntity.ok(ApiResponse.ok("Mã xác thực OTP đã được gửi đến email của bạn."));
+    }
+
+    @PostMapping("/verify-forgot-password-otp")
+    @Operation(summary = "Verify forgot password OTP")
+    public ResponseEntity<ApiResponse<VerifyForgotOtpResponse>> verifyForgotPasswordOtp(
+            @Valid @RequestBody VerifyForgotOtpRequest request) {
+        String resetToken = authService.verifyForgotPasswordOtp(request);
+        return ResponseEntity.ok(ApiResponse.ok(new VerifyForgotOtpResponse(resetToken)));
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "Reset password using token")
+    public ResponseEntity<ApiResponse<String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.ok(ApiResponse.ok("Mật khẩu của bạn đã được đặt lại thành công."));
     }
 
     @PostMapping("/change-password")

@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Film, Eye, EyeOff, Loader2, CheckCircle2, ArrowLeft, KeyRound } from 'lucide-react';
-const MOCK_OTP = '123456';
+import authApi from '@/api/authApi';
 export default function ForgotPasswordPage() {
   const router = useNavigate();
   const [step, setStep] = useState('email');
@@ -20,6 +20,8 @@ export default function ForgotPasswordPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [resetToken, setResetToken] = useState('');
+
   const handleSendOtp = async e => {
     e.preventDefault();
     setError('');
@@ -33,23 +35,43 @@ export default function ForgotPasswordPage() {
       return;
     }
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(r => setTimeout(r, 1200));
-    setIsLoading(false);
-    setStep('otp');
+    try {
+      const response = await authApi.forgotPassword({ email });
+      if (response.success) {
+        setStep('otp');
+      } else {
+        setError(response.error?.message || 'Có lỗi xảy ra khi gửi mã OTP.');
+      }
+    } catch (err) {
+      setError(err.error?.message || err.message || 'Có lỗi xảy ra khi gửi mã OTP.');
+    } finally {
+      setIsLoading(false);
+    }
   };
+
   const handleVerifyOtp = async e => {
     e.preventDefault();
     setError('');
-    if (otp !== MOCK_OTP) {
-      setError('Mã OTP không đúng. Thử: 123456');
+    if (!otp || otp.length !== 6) {
+      setError('Mã OTP phải có đúng 6 chữ số.');
       return;
     }
     setIsLoading(true);
-    await new Promise(r => setTimeout(r, 800));
-    setIsLoading(false);
-    setStep('reset');
+    try {
+      const response = await authApi.verifyForgotPasswordOtp({ email, otpCode: otp });
+      if (response.success && response.data?.resetToken) {
+        setResetToken(response.data.resetToken);
+        setStep('reset');
+      } else {
+        setError(response.error?.message || 'Xác minh OTP thất bại.');
+      }
+    } catch (err) {
+      setError(err.error?.message || err.message || 'Mã OTP không đúng hoặc đã hết hạn.');
+    } finally {
+      setIsLoading(false);
+    }
   };
+
   const handleResetPassword = async e => {
     e.preventDefault();
     setError('');
@@ -66,10 +88,18 @@ export default function ForgotPasswordPage() {
       return;
     }
     setIsLoading(true);
-    // Simulate API call to reset password
-    await new Promise(r => setTimeout(r, 1200));
-    setIsLoading(false);
-    setStep('success');
+    try {
+      const response = await authApi.resetPassword({ email, token: resetToken, newPassword: password });
+      if (response.success) {
+        setStep('success');
+      } else {
+        setError(response.error?.message || 'Đặt lại mật khẩu thất bại.');
+      }
+    } catch (err) {
+      setError(err.error?.message || err.message || 'Đặt lại mật khẩu thất bại.');
+    } finally {
+      setIsLoading(false);
+    }
   };
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12">
@@ -131,12 +161,6 @@ export default function ForgotPasswordPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="rounded-lg bg-primary/10 border border-primary/20 px-4 py-3 text-sm text-center mb-4">
-                  <p className="text-muted-foreground">Mã OTP demo:</p>
-                  <p className="text-2xl font-mono font-bold text-primary tracking-widest mt-1">
-                    {MOCK_OTP}
-                  </p>
-                </div>
                 <form onSubmit={handleVerifyOtp} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="otp">Mã OTP</Label>
