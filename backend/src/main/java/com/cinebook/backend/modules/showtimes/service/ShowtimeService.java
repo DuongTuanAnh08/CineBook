@@ -146,18 +146,19 @@ public class ShowtimeService {
         }
 
         // Create or update hold
+        int holdMinutes = systemConfigService.getSeatHoldMinutes();
         if (existingHold.isEmpty()) {
             SeatHold newHold = SeatHold.builder()
                     .showtime(showtime)
                     .seat(seat)
                     .user(user)
-                    .expiresAt(LocalDateTime.now().plusMinutes(5)) // Hold for 5 minutes
+                    .expiresAt(LocalDateTime.now().plusMinutes(holdMinutes))
                     .build();
             seatHoldRepository.save(newHold);
         } else {
             // Refresh hold
             SeatHold hold = existingHold.get();
-            hold.setExpiresAt(LocalDateTime.now().plusMinutes(5));
+            hold.setExpiresAt(LocalDateTime.now().plusMinutes(holdMinutes));
             seatHoldRepository.save(hold);
         }
     }
