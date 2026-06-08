@@ -9,6 +9,13 @@ const reviewApi = {
     },
     getReviewByBookingId(bookingId) {
         return axiosClient.get(`/reviews/booking/${bookingId}`);
+    },
+    getAllReviewsAdmin(params) {
+        return axiosClient.get('/reviews/admin', { params });
+    },
+    updateReviewStatus(id, status) {
+        // use PUT /api/reviews/admin/{id}/status?status={status}
+        return axiosClient.put(`/reviews/admin/${id}/status`, null, { params: { status } });
     }
 };
 

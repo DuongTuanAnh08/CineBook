@@ -30,6 +30,7 @@ import {
 } from 'lucide-react'
 
 const mainNavItems = [
+  { label: 'Mua Vé', href: '/booking' },
   { label: 'Phim Đang Chiếu', href: '/movies/now-showing' },
   { label: 'Phim Sắp Chiếu', href: '/movies/coming-soon' },
   { label: 'Rạp Chiếu', href: '/cinemas' },

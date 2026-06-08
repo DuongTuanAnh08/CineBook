@@ -47,6 +47,7 @@ import AdminRooms from './pages/Admin/rooms/index.jsx'
 import AdminSeats from './pages/Admin/seats/index.jsx'
 import AdminSettings from './pages/Admin/settings/index.jsx'
 import AdminShowtimes from './pages/Admin/showtimes/index.jsx'
+import AdminReviews from './pages/Admin/reviews/index.jsx'
 
 import { MainLayout } from '@/components/layout'
 import { AdminLayout } from '@/components/layout/admin-layout'
@@ -85,6 +86,7 @@ export default function App() {
             <Route path="/movies/coming-soon" element={<ComingSoonPage />} />
             <Route path="/movies/:id" element={<MovieDetailPage />} />
             <Route path="/booking/success" element={<ProtectedRoute allowedRoles={['user', 'admin', 'manager']}><BookingSuccess /></ProtectedRoute>} />
+            <Route path="/booking" element={<ProtectedRoute allowedRoles={['user', 'admin', 'manager']}><BookingFlow /></ProtectedRoute>} />
             <Route path="/booking/:movieId" element={<ProtectedRoute allowedRoles={['user', 'admin', 'manager']}><BookingFlow /></ProtectedRoute>} />
             <Route path="/payment" element={<ProtectedRoute allowedRoles={['user', 'admin', 'manager']}><PaymentPage /></ProtectedRoute>} />
             <Route path="/payment/result" element={<VNPayResultPage />} />
@@ -119,6 +121,7 @@ export default function App() {
             <Route path="seats" element={<AdminSeats />} />
             <Route path="settings" element={<ProtectedRoute allowedRoles={['admin']}><AdminSettings /></ProtectedRoute>} />
             <Route path="showtimes" element={<AdminShowtimes />} />
+            <Route path="reviews" element={<ProtectedRoute allowedRoles={['admin']}><AdminReviews /></ProtectedRoute>} />
           </Route>
         </Routes>
         </BrowserRouter>

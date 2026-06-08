@@ -14,6 +14,7 @@ export function ReviewModal({ isOpen, onClose, booking, onReviewSuccess }) {
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasExisting, setHasExisting] = useState(false);
 
   const extractBookingId = (id) => {
     if (typeof id === 'string' && id.startsWith('BK')) {
@@ -33,10 +34,12 @@ export function ReviewModal({ isOpen, onClose, booking, onReviewSuccess }) {
           if (res.success && res.data) {
             setRating(res.data.rating);
             setComment(res.data.comment);
+            setHasExisting(true);
           }
         } catch (error) {
           // It's normal if it returns 404/NOT_FOUND meaning no review yet
           console.log("No existing review found.");
+          setHasExisting(false);
         } finally {
           setIsLoading(false);
         }
@@ -46,6 +49,7 @@ export function ReviewModal({ isOpen, onClose, booking, onReviewSuccess }) {
       setRating(0);
       setComment('');
       setHoverRating(0);
+      setHasExisting(false);
     }
   }, [isOpen, booking]);
 
@@ -67,7 +71,7 @@ export function ReviewModal({ isOpen, onClose, booking, onReviewSuccess }) {
       });
 
       if (res.success) {
-        toast.success("Đánh giá của bạn đã được ghi nhận.");
+        toast.success(hasExisting ? "Đánh giá của bạn đã được cập nhật." : "Đánh giá của bạn đã được ghi nhận.");
         onReviewSuccess?.(res.data);
         onClose();
       } else {
@@ -84,7 +88,7 @@ export function ReviewModal({ isOpen, onClose, booking, onReviewSuccess }) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Đánh giá Phim</DialogTitle>
+          <DialogTitle>{hasExisting ? "Cập nhật Đánh giá" : "Đánh giá Phim"}</DialogTitle>
           <DialogDescription>
             Chia sẻ cảm nhận của bạn về bộ phim này.
           </DialogDescription>
@@ -130,7 +134,7 @@ export function ReviewModal({ isOpen, onClose, booking, onReviewSuccess }) {
             Hủy
           </Button>
           <Button onClick={handleSubmit} disabled={isSubmitting || isLoading}>
-            {isSubmitting ? "Đang gửi..." : "Gửi đánh giá"}
+            {isSubmitting ? "Đang xử lý..." : (hasExisting ? "Cập nhật đánh giá" : "Gửi đánh giá")}
           </Button>
         </DialogFooter>
       </DialogContent>
