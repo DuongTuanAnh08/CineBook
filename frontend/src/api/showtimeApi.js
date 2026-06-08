@@ -10,11 +10,19 @@ const showtimeApi = {
     },
 
     getSeats: (id) => {
-        return axiosClient.get(`/showtimes/${id}/seats`);
+        return axiosClient.get(`/showtimes/${id}/seats?t=${new Date().getTime()}`);
     },
 
     createShowtime: (data) => {
         return axiosClient.post('/showtimes', data);
+    },
+
+    holdSeat: (showtimeId, seatId) => {
+        return axiosClient.post(`/showtimes/${showtimeId}/seats/${seatId}/hold`);
+    },
+
+    releaseSeat: (showtimeId, seatId) => {
+        return axiosClient.delete(`/showtimes/${showtimeId}/seats/${seatId}/hold`);
     }
 };
 

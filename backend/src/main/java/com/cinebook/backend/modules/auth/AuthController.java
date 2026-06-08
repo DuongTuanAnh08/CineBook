@@ -90,4 +90,11 @@ public class AuthController {
         AuthResponse.UserInfo userInfo = authService.getUserInfoByEmail(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.ok(userInfo));
     }
+
+    @PostMapping("/google-login")
+    @Operation(summary = "Login with Google ID Token (UC-02b)")
+    public ResponseEntity<ApiResponse<AuthResponse>> googleLogin(@Valid @RequestBody GoogleLoginRequest request) {
+        AuthResponse response = authService.googleLogin(request.getIdToken());
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
 }

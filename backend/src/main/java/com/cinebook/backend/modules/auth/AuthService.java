@@ -14,8 +14,13 @@ import com.cinebook.backend.modules.auth.repository.PendingUserRepository;
 import com.cinebook.backend.modules.users.User;
 import com.cinebook.backend.modules.users.UserRepository;
 import com.cinebook.backend.security.JwtUtil;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +43,9 @@ public class AuthService {
     private static final int LOCK_DURATION_MINUTES = 30;
     private static final int OTP_VALIDITY_MINUTES = 10;
     private static final int MAX_OTP_RETRIES = 3;
+
+    @Value("${app.google.client-id:}")
+    private String googleClientId;
 
     private final UserRepository userRepository;
     private final OtpTokenRepository otpTokenRepository;
@@ -250,6 +258,54 @@ public class AuthService {
                 .dateOfBirth(user.getDateOfBirth())
                 .address(user.getAddress())
                 .build();
+    }
+
+    // =========== Google OAuth ===========
+
+    @Transactional
+    public AuthResponse googleLogin(String idToken) {
+        try {
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
+                    new NetHttpTransport(), GsonFactory.getDefaultInstance())
+                    .setAudience(java.util.Collections.singletonList(googleClientId))
+                    .build();
+
+            GoogleIdToken googleIdToken = verifier.verify(idToken);
+            if (googleIdToken == null) {
+                throw AppException.badRequest("Invalid Google ID token.");
+            }
+
+            GoogleIdToken.Payload payload = googleIdToken.getPayload();
+            String googleUid = payload.getSubject();
+            String email = payload.getEmail();
+            String fullName = (String) payload.get("name");
+            String avatarUrl = (String) payload.get("picture");
+
+            // Find by googleUid first, then by email
+            User user = userRepository.findByGoogleUidAndDeletedAtIsNull(googleUid)
+                    .or(() -> userRepository.findByEmailAndDeletedAtIsNull(email)
+                            .map(u -> { u.setGoogleUid(googleUid); return u; }))
+                    .orElseGet(() -> User.builder()
+                            .email(email)
+                            .fullName(fullName != null ? fullName : email)
+                            .passwordHash(passwordEncoder.encode(java.util.UUID.randomUUID().toString()))
+                            .googleUid(googleUid)
+                            .avatarUrl(avatarUrl)
+                            .role(UserRole.Customer)
+                            .status(UserStatus.Active)
+                            .failedLoginAttempts(0)
+                            .build());
+
+            user.setLastLoginAt(java.time.LocalDateTime.now());
+            userRepository.save(user);
+
+            return buildAuthResponse(user);
+        } catch (AppException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Google login failed", e);
+            throw new AppException("INTERNAL_ERROR", "Google login failed: " + e.getMessage(), org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     // =========== Private Helpers ===========

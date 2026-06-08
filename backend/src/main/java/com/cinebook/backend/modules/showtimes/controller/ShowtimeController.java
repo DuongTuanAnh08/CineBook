@@ -40,6 +40,26 @@ public class ShowtimeController {
         return ApiResponse.ok(showtimeService.getSeatsByShowtime(id));
     }
 
+    @PostMapping("/{id}/seats/{seatId}/hold")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<String> holdSeat(
+            @PathVariable Long id,
+            @PathVariable Long seatId,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+        showtimeService.holdSeat(id, seatId, userDetails.getUsername());
+        return ApiResponse.ok("Seat held successfully");
+    }
+
+    @DeleteMapping("/{id}/seats/{seatId}/hold")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<String> releaseSeat(
+            @PathVariable Long id,
+            @PathVariable Long seatId,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+        showtimeService.releaseSeat(id, seatId, userDetails.getUsername());
+        return ApiResponse.ok("Seat released successfully");
+    }
+
     @PostMapping
     @PreAuthorize("hasAnyRole('SystemAdmin', 'ScheduleManager')")
     public ApiResponse<ShowtimeDto> createShowtime(@RequestBody ShowtimeRequest request) {

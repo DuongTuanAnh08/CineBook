@@ -18,6 +18,10 @@ import com.cinebook.backend.modules.rooms.entity.Seat;
 import com.cinebook.backend.modules.bookings.repository.BookingSeatRepository;
 import com.cinebook.backend.modules.bookings.entity.BookingSeat;
 import com.cinebook.backend.modules.config.service.SystemConfigService;
+import com.cinebook.backend.modules.showtimes.repository.SeatHoldRepository;
+import com.cinebook.backend.modules.showtimes.entity.SeatHold;
+import com.cinebook.backend.modules.users.UserRepository;
+import com.cinebook.backend.modules.users.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -41,6 +45,8 @@ public class ShowtimeService {
     private final RoomRepository roomRepository;
     private final SeatRepository seatRepository;
     private final BookingSeatRepository bookingSeatRepository;
+    private final SeatHoldRepository seatHoldRepository;
+    private final UserRepository userRepository;
     private final SystemConfigService systemConfigService;
 
     @Transactional(readOnly = true)
@@ -89,18 +95,78 @@ public class ShowtimeService {
                 .map(bs -> bs.getSeat().getSeatId())
                 .collect(Collectors.toSet());
 
+        List<SeatHold> activeHolds = seatHoldRepository.findActiveHoldsByShowtime(showtimeId, LocalDateTime.now());
+        java.util.Map<Long, Long> heldSeatMap = activeHolds.stream()
+                .collect(Collectors.toMap(h -> h.getSeat().getSeatId(), h -> h.getUser().getUserId()));
+
         return allSeats.stream().map(seat -> {
             boolean isBooked = bookedSeatIds.contains(seat.getSeatId());
+            String status = "Available";
+            Long heldByUserId = null;
+
+            if (isBooked) {
+                status = "Booked";
+            } else if (heldSeatMap.containsKey(seat.getSeatId())) {
+                status = "Held";
+                heldByUserId = heldSeatMap.get(seat.getSeatId());
+            }
+
             return SeatStatusDto.builder()
                     .seatId(seat.getSeatId())
                     .rowLabel(seat.getRowLabel())
                     .colNumber(seat.getColNumber())
                     .seatLabel(seat.getSeatLabel())
                     .seatType(seat.getSeatType().name())
-                    .status(isBooked ? "Booked" : "Available")
+                    .status(status)
+                    .heldByUserId(heldByUserId)
                     .price(calculateTicketPrice(showtime, seat))
                     .build();
         }).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void holdSeat(Long showtimeId, Long seatId, String username) {
+        Showtime showtime = showtimeRepository.findById(showtimeId)
+                .orElseThrow(() -> new RuntimeException("Showtime not found"));
+        Seat seat = seatRepository.findById(seatId)
+                .orElseThrow(() -> new RuntimeException("Seat not found"));
+        User user = userRepository.findByEmailAndDeletedAtIsNull(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Check if booked
+        List<BookingSeat> bookedSeats = bookingSeatRepository.findBookedSeatsByShowtime(showtimeId);
+        if (bookedSeats.stream().anyMatch(bs -> bs.getSeat().getSeatId().equals(seatId))) {
+            throw AppException.badRequest("Ghế này đã được người khác đặt.");
+        }
+
+        // Check if held by someone else
+        java.util.Optional<SeatHold> existingHold = seatHoldRepository.findActiveHoldBySeat(showtimeId, seatId, LocalDateTime.now());
+        if (existingHold.isPresent() && !existingHold.get().getUser().getUserId().equals(user.getUserId())) {
+            throw AppException.badRequest("Ghế này đang được người khác giữ.");
+        }
+
+        // Create or update hold
+        if (existingHold.isEmpty()) {
+            SeatHold newHold = SeatHold.builder()
+                    .showtime(showtime)
+                    .seat(seat)
+                    .user(user)
+                    .expiresAt(LocalDateTime.now().plusMinutes(5)) // Hold for 5 minutes
+                    .build();
+            seatHoldRepository.save(newHold);
+        } else {
+            // Refresh hold
+            SeatHold hold = existingHold.get();
+            hold.setExpiresAt(LocalDateTime.now().plusMinutes(5));
+            seatHoldRepository.save(hold);
+        }
+    }
+
+    @Transactional
+    public void releaseSeat(Long showtimeId, Long seatId, String username) {
+        User user = userRepository.findByEmailAndDeletedAtIsNull(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        seatHoldRepository.deleteUserHold(showtimeId, seatId, user.getUserId());
     }
 
     private Integer calculateTicketPrice(Showtime showtime, Seat seat) {

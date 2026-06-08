@@ -36,22 +36,33 @@ export function SeatSelection({
   const [isLoadingSeats, setIsLoadingSeats] = useState(false);
   const [realSeats, setRealSeats] = useState(null);
   const { toast } = useToast();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    if (showtimeId) {
-      setIsLoadingSeats(true);
-      showtimeApi.getSeats(showtimeId)
-        .then(res => {
-          if (res.success) {
-            setRealSeats(res.data);
-          }
-        })
-        .catch(err => console.error("Failed to load seats", err))
-        .finally(() => setIsLoadingSeats(false));
-    }
+    let interval;
+    const loadSeats = () => {
+      if (showtimeId) {
+        showtimeApi.getSeats(showtimeId)
+          .then(res => {
+            if (res.success) {
+              setRealSeats(res.data);
+            }
+          })
+          .catch(err => console.error("Failed to load seats", err));
+      }
+    };
+
+    setIsLoadingSeats(true);
+    loadSeats();
+    setIsLoadingSeats(false);
+
+    interval = setInterval(loadSeats, 5000);
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [showtimeId]);
 
   // Generate seat layout
@@ -68,9 +79,10 @@ export function SeatSelection({
       if (!grouped[s.rowLabel]) grouped[s.rowLabel] = [];
       grouped[s.rowLabel].push({
         id: s.seatId.toString(),
+        seatId: s.seatId, // Keep numerical ID for API calls
         label: s.seatLabel,
         type: s.seatType.toLowerCase(),
-        status: s.status === 'Booked' ? 'booked' : s.status === 'Held' ? 'held' : 'available',
+        status: s.status === 'Booked' ? 'booked' : (s.status === 'Held' ? (s.heldByUserId == user?.userId ? 'available' : 'held') : 'available'),
         price: s.price
       });
     });
@@ -85,7 +97,7 @@ export function SeatSelection({
     return newLayout;
   }, [realSeats, seatLayout]);
 
-  const handleSeatSelect = useCallback(seat => {
+  const handleSeatSelect = useCallback(async seat => {
     if (!isAuthenticated) {
       toast({
         title: 'Yêu cầu đăng nhập',
@@ -96,30 +108,45 @@ export function SeatSelection({
       return;
     }
 
-    setSelectedSeats(prev => {
-      const isSelected = prev.some(s => s.id === seat.id);
-      if (isSelected) {
-        // Deselect
-        return prev.filter(s => s.id !== seat.id);
+    const isSelected = selectedSeats.some(s => s.id === seat.id);
+    
+    if (isSelected) {
+      // Deselect
+      setSelectedSeats(prev => prev.filter(s => s.id !== seat.id));
+      try {
+        await showtimeApi.releaseSeat(showtimeId, seat.seatId);
+      } catch (err) {
+        console.error("Failed to release seat", err);
       }
-
+    } else {
       // Check max seats limit
-      if (prev.length >= maxSeats) {
+      if (selectedSeats.length >= maxSeats) {
         toast({
           title: 'Đã đạt giới hạn ghế',
           description: `Bạn chỉ có thể chọn tối đa ${maxSeats} ghế`,
           variant: 'destructive'
         });
-        return prev;
+        return;
       }
 
-      // Select
-      return [...prev, {
-        ...seat,
-        status: 'selected'
-      }];
-    });
-  }, [maxSeats, toast]);
+      // API Call to hold seat
+      try {
+        await showtimeApi.holdSeat(showtimeId, seat.seatId);
+        setSelectedSeats(prev => [...prev, { ...seat, status: 'selected' }]);
+      } catch (err) {
+        toast({
+          title: 'Không thể chọn ghế',
+          description: err?.response?.data?.error?.message || 'Ghế này đã có người chọn.',
+          variant: 'destructive'
+        });
+        
+        // Refresh seats if collision happened
+        showtimeApi.getSeats(showtimeId).then(res => {
+          if (res.success) setRealSeats(res.data);
+        });
+      }
+    }
+  }, [maxSeats, toast, isAuthenticated, navigate, location.pathname, selectedSeats, showtimeId]);
   const handleConfirm = useCallback(() => {
     if (selectedSeats.length === 0) {
       toast({

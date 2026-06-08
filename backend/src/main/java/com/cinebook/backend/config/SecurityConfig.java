@@ -39,7 +39,12 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
-            .headers(headers -> headers.contentSecurityPolicy(csp -> csp.policyDirectives("frame-ancestors 'none'")))
+            .headers(headers -> headers
+                .contentSecurityPolicy(csp -> csp.policyDirectives("frame-ancestors 'none'"))
+                .addHeaderWriter((request, response) ->
+                    response.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups")
+                )
+            )
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
@@ -55,6 +60,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/dashboard/**", "/api/config/**").hasRole("SystemAdmin")
                 .requestMatchers(HttpMethod.PUT, "/api/resale/*/hide").hasRole("SystemAdmin")
                 
+                // Allow anyone authenticated to hold/release seats
+                .requestMatchers(HttpMethod.POST, "/api/showtimes/*/seats/*/hold").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/showtimes/*/seats/*/hold").authenticated()
+
                 // SystemAdmin & ScheduleManager (Management)
                 .requestMatchers("/api/bookings/admin/**", "/api/admin/users/**").hasAnyRole("SystemAdmin", "ScheduleManager")
                 .requestMatchers(HttpMethod.POST, "/api/movies/**", "/api/cinemas/**", "/api/rooms/**", "/api/showtimes/**", "/api/fnb/**", "/api/news/**", "/api/promos/**").hasAnyRole("SystemAdmin", "ScheduleManager")

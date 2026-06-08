@@ -3,6 +3,7 @@ package com.cinebook.backend.modules.bookings.scheduler;
 import com.cinebook.backend.modules.bookings.entity.Booking;
 import com.cinebook.backend.modules.bookings.entity.BookingStatus;
 import com.cinebook.backend.modules.bookings.repository.BookingRepository;
+import com.cinebook.backend.modules.showtimes.repository.SeatHoldRepository;
 import com.cinebook.backend.modules.notifications.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,12 +20,14 @@ import java.util.List;
 public class BookingScheduler {
 
     private final BookingRepository bookingRepository;
+    private final SeatHoldRepository seatHoldRepository;
     private final NotificationService notificationService;
 
     @Scheduled(fixedRate = 60000)
     @Transactional
     public void expirePendingBookings() {
         LocalDateTime now = LocalDateTime.now();
+        seatHoldRepository.deleteExpiredHolds(now);
         List<Booking> pendingBookings = bookingRepository.findByStatusAndHoldExpiresAtBefore(BookingStatus.Pending, now);
         
         if (!pendingBookings.isEmpty()) {

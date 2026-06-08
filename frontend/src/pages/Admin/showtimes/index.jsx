@@ -20,7 +20,13 @@ import cinemaApi from '../../../api/cinemaApi';
 import roomApi from '../../../api/roomApi';
 import showtimeApi from '../../../api/showtimeApi';
 
-const TODAY = new Date().toISOString().split('T')[0];
+const getLocalYYYYMMDD = () => {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().split('T')[0];
+};
+
+const TODAY = getLocalYYYYMMDD();
 
 export default function AdminShowtimesPage() {
   const { toast } = useToast();
@@ -118,6 +124,7 @@ export default function AdminShowtimesPage() {
       await showtimeApi.createShowtime(payload);
       toast({ title: "Thành công", description: "Đã thêm suất chiếu mới" });
       setIsDialogOpen(false);
+      setSelectedDate(formData.date); // Tự động chuyển bộ lọc về ngày vừa tạo
       fetchData(); // Reload
     } catch (error) {
       setErrorMsg(error.response?.data?.error?.message || error.message || "Đã có lỗi xảy ra");
@@ -370,9 +377,15 @@ export default function AdminShowtimesPage() {
               </div>
             </div>
             
-            <div className="grid gap-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label>Ngày chiếu</Label>
+                <Input type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
+              </div>
+              <div className="grid gap-2">
                 <Label>Giờ bắt đầu</Label>
                 <Input type="time" value={formData.startTime} onChange={e => setFormData({ ...formData, startTime: e.target.value })} />
+              </div>
             </div>
           </div>
           <DialogFooter>
