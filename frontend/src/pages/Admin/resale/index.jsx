@@ -49,8 +49,8 @@ export default function AdminResalePage() {
   const fetchListings = async () => {
     try {
       const res = await resaleApi.getAllListings({ page: 0, size: 500 });
-      if (res.data?.success) {
-        setListings(res.data.data.content);
+      if (res.success) {
+        setListings(res.data.content);
       }
     } catch (error) {
       console.error(error);
@@ -296,8 +296,13 @@ export default function AdminResalePage() {
                       </TableCell>
                       <TableCell className="text-xs">
                         <div>
-                          <p>Ghế {listing.seatNumber}</p>
+                          <p>Ghế bán {listing.seatNumber}</p>
                           <p className="text-muted-foreground">{TICKET_TYPE_LABELS[listing.ticketType]}</p>
+                          {listing.includesFnb && (
+                            <p className="text-xs text-primary font-medium flex items-center gap-1 mt-0.5">
+                              <RefreshCw className="w-3 h-3" /> Kèm bắp nước
+                            </p>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="text-xs">
@@ -305,7 +310,7 @@ export default function AdminResalePage() {
                         <p className="text-muted-foreground line-through">{listing.originalPrice.toLocaleString('vi-VN')}₫</p>
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {new Date(listing.createdAt).toLocaleDateString('vi-VN')}
+                        {listing.createdAt ? new Date(listing.createdAt).toLocaleDateString('vi-VN') : '—'}
                       </TableCell>
                       <TableCell>
                         <Badge className={cn('text-xs border', STATUS_STYLES[listing.status])}>
@@ -405,11 +410,15 @@ export default function AdminResalePage() {
           }, {
             icon: Calendar,
             label: 'Ngày chiếu',
-            value: `${new Date(detailListing.showDate).toLocaleDateString('vi-VN')} ${detailListing.showTime}`
+            value: detailListing?.showDate ? `${new Date(detailListing.showDate).toLocaleDateString('vi-VN')} ${detailListing.showTime}` : '—'
           }, {
             icon: Armchair,
-            label: 'Ghế',
+            label: 'Ghế bán',
             value: `${detailListing.seatNumber} (${TICKET_TYPE_LABELS[detailListing.ticketType]})`
+          }, {
+            icon: RefreshCw,
+            label: 'Bắp nước',
+            value: detailListing.includesFnb ? 'Có kèm bắp nước' : 'Không'
           }, {
             icon: User,
             label: 'Người bán',

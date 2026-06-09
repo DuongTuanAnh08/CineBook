@@ -19,13 +19,13 @@ export default function ResaleTicketPage() {
   
   useEffect(() => {
     resaleApi.getActiveListings().then(res => {
-      if (res.data?.success) {
-        setResaleListings(res.data.data.content);
+      if (res.success) {
+        setResaleListings(res.data.content);
       }
     }).catch(console.error).finally(() => setLoading(false));
   }, []);
 
-  const activeListings = (resaleListings || []).filter(l => l.status === 'Active');
+  const activeListings = (resaleListings || []).filter(l => l.status?.toLowerCase() === 'active');
   const uniqueMovies = [...new Set(activeListings.map(l => l.movieTitle))];
   const uniqueCinemas = [...new Set(activeListings.map(l => l.cinemaName))];
   
@@ -151,6 +151,11 @@ export default function ResaleTicketPage() {
                       <div className="flex items-center gap-2">
                         <Ticket className="w-4 h-4" /> {listing.ticketType || 'Thường'}
                       </div>
+                      {listing.includesFnb && (
+                        <div className="flex items-center gap-2 text-primary font-medium">
+                          <RefreshCw className="w-4 h-4" /> Kèm bắp nước
+                        </div>
+                      )}
                     </div>
 
                     <Separator className="bg-border" />

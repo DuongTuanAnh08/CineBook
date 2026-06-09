@@ -8,6 +8,9 @@ export default defineConfig({
   server: {
     port: 3000,
     strictPort: true, // Thêm dòng này nếu muốn báo lỗi khi port 3000 đã bị chiếm (thay vì tự động nhảy sang 3001)
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups'
+    }
   },
   resolve: {
     alias: {

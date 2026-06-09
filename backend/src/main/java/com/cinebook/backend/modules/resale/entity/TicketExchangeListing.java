@@ -36,6 +36,12 @@ public class TicketExchangeListing {
     @Column(name = "facebook_url", length = 300)
     private String facebookUrl;
 
+    @Column(length = 500)
+    private String seats;
+
+    @Column(name = "includes_fnb", nullable = false)
+    private Boolean includesFnb = false;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ListingStatus status;

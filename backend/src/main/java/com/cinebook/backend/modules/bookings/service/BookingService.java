@@ -245,6 +245,25 @@ public class BookingService {
                     .subtotal(item.getUnitPrice() * item.getQuantity())
                     .build()).collect(java.util.stream.Collectors.toList());
 
+            String bookingCode = "BK" + String.format("%03d", booking.getId());
+            List<com.cinebook.backend.modules.bookings.dto.TicketDto> ticketDtos = seats.stream().map(s -> com.cinebook.backend.modules.bookings.dto.TicketDto.builder()
+                    .seatLabel(s.getSeat().getSeatLabel())
+                    .seatType(s.getSeatType().name())
+                    .price(s.getPriceAtBooking())
+                    .ticketCode(bookingCode + "-" + s.getSeat().getSeatLabel())
+                    .qrCodeValue(bookingCode + "-" + s.getSeat().getSeatLabel())
+                    .build()).collect(java.util.stream.Collectors.toList());
+
+            if (!fnbItemDtos.isEmpty()) {
+                ticketDtos.add(com.cinebook.backend.modules.bookings.dto.TicketDto.builder()
+                        .seatLabel("Bắp nước")
+                        .seatType("FNB")
+                        .price(booking.getTotalFnbAmount())
+                        .ticketCode(bookingCode + "-FNB")
+                        .qrCodeValue(bookingCode + "-FNB")
+                        .build());
+            }
+
             return (com.cinebook.backend.modules.bookings.dto.MyBookingDto) com.cinebook.backend.modules.bookings.dto.MyBookingDto.builder()
                     .id("BK" + String.format("%03d", booking.getId()))
                     .movieId(booking.getShowtime().getMovie().getMovieId())
@@ -258,6 +277,7 @@ public class BookingService {
                     .status(booking.getStatus().name().toLowerCase())
                     .checkedIn(booking.getStatus() == BookingStatus.CheckedIn)
                     .fnbItems(fnbItemDtos)
+                    .tickets(ticketDtos)
                     .build();
         }).collect(java.util.stream.Collectors.toList());
     }
@@ -279,6 +299,25 @@ public class BookingService {
                 .subtotal(item.getUnitPrice() * item.getQuantity())
                 .build()).collect(java.util.stream.Collectors.toList());
 
+        String bookingCode = "BK" + String.format("%03d", booking.getId());
+        List<com.cinebook.backend.modules.bookings.dto.TicketDto> ticketDtos = seats.stream().map(s -> com.cinebook.backend.modules.bookings.dto.TicketDto.builder()
+                .seatLabel(s.getSeat().getSeatLabel())
+                .seatType(s.getSeatType().name())
+                .price(s.getPriceAtBooking())
+                .ticketCode(bookingCode + "-" + s.getSeat().getSeatLabel())
+                .qrCodeValue(bookingCode + "-" + s.getSeat().getSeatLabel())
+                .build()).collect(java.util.stream.Collectors.toList());
+
+        if (!fnbItemDtos.isEmpty()) {
+            ticketDtos.add(com.cinebook.backend.modules.bookings.dto.TicketDto.builder()
+                    .seatLabel("Bắp nước")
+                    .seatType("FNB")
+                    .price(booking.getTotalFnbAmount())
+                    .ticketCode(bookingCode + "-FNB")
+                    .qrCodeValue(bookingCode + "-FNB")
+                    .build());
+        }
+
         return com.cinebook.backend.modules.bookings.dto.MyBookingDto.builder()
                 .id("BK" + String.format("%03d", booking.getId()))
                 .movieId(booking.getShowtime().getMovie().getMovieId())
@@ -292,6 +331,7 @@ public class BookingService {
                 .status(booking.getStatus().name().toLowerCase())
                 .checkedIn(booking.getStatus() == BookingStatus.CheckedIn)
                 .fnbItems(fnbItemDtos)
+                .tickets(ticketDtos)
                 .build();
     }
 }

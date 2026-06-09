@@ -51,8 +51,8 @@ export default function MyResaleListingsPage() {
   const fetchListings = async () => {
     try {
       const res = await resaleApi.getMyListings(user.id, { page: 0, size: 100 });
-      if (res.data?.success) {
-        setListings(res.data.data.content);
+      if (res.success) {
+        setListings(res.data.content.filter(l => l.status?.toLowerCase() !== 'deleted'));
       }
     } catch (error) {
       console.error(error);
@@ -83,19 +83,41 @@ export default function MyResaleListingsPage() {
     setSelectedListing(listing);
     setDeleteDialogOpen(true);
   };
-  const handleSaveEdit = () => {
-    // Note: Creating/Updating listings requires another API.
-    // For now, this is just mocked in UI. 
-    toast.success('Tính năng cập nhật bài đăng đang được phát triển');
-    setEditDialogOpen(false);
+  const handleSaveEdit = async () => {
+    try {
+      const priceNum = parseInt(editPrice, 10);
+      if (isNaN(priceNum) || priceNum <= 0) {
+        setPriceError('Giá bán phải hợp lệ');
+        return;
+      }
+      
+      const payload = {
+        askingPrice: priceNum,
+        note: editNote
+      };
+      
+      const res = await resaleApi.updateListing(selectedListing.id.replace('RSL', ''), payload);
+      if (res.success) {
+        toast.success('Cập nhật bài đăng thành công');
+        setEditDialogOpen(false);
+        fetchListings();
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Có lỗi xảy ra khi cập nhật bài đăng');
+    }
   };
   const handleDelete = async () => {
     try {
-      await resaleApi.deleteListing(selectedListing.id.replace('RSL', ''));
-      toast.success('Đã xóa bài đăng');
-      fetchListings();
+      const res = await resaleApi.deleteListing(selectedListing.id.replace('RSL', ''));
+      if (res.success) {
+        toast.success('Đã gỡ bài đăng');
+        fetchListings();
+      } else {
+        toast.error(res.error?.message || 'Lỗi khi gỡ bài đăng');
+      }
     } catch (error) {
-      toast.error('Lỗi khi xóa bài đăng');
+      toast.error('Lỗi khi gỡ bài đăng');
     }
     setDeleteDialogOpen(false);
   };
@@ -135,12 +157,12 @@ export default function MyResaleListingsPage() {
             </Button>
           </div> : <div className="space-y-4">
             {listings.map(listing => {
-          const displayDate = new Date(listing.showDate).toLocaleDateString('vi-VN', {
+          const displayDate = listing.showDate ? new Date(listing.showDate).toLocaleDateString('vi-VN', {
             weekday: 'short',
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'
-          });
+          }) : '—';
           const listingStatus = listing.status?.toLowerCase() || 'active';
           const isExpired = listingStatus === 'expired';
           const isAdminHidden = listingStatus === 'hidden';
@@ -184,8 +206,14 @@ export default function MyResaleListingsPage() {
                           </div>
                           <div className="flex items-center gap-1">
                             <Armchair className="w-3 h-3" />
-                            Ghế {listing.seatNumber}
+                            Ghế bán {listing.seatNumber}
                           </div>
+                          {listing.includesFnb && (
+                            <div className="flex items-center gap-1 text-primary">
+                              <RefreshCw className="w-3 h-3" />
+                              Kèm bắp nước
+                            </div>
+                          )}
                         </div>
 
                         <Separator className="bg-border" />

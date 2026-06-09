@@ -57,6 +57,33 @@ public class ResaleListingService {
             throw AppException.forbidden("You do not own this booking");
         }
 
+        // Prevent duplicate seats or FNB
+        java.util.List<TicketExchangeListing> existingListings = resaleListingRepository.findByBookingIdAndStatusIn(
+            request.getBookingId(), 
+            java.util.Arrays.asList(ListingStatus.Active, ListingStatus.Hidden)
+        );
+        
+        if (request.getIncludesFnb() != null && request.getIncludesFnb()) {
+            boolean fnbAlreadyListed = existingListings.stream().anyMatch(l -> l.getIncludesFnb() != null && l.getIncludesFnb());
+            if (fnbAlreadyListed) {
+                throw AppException.badRequest("FNB is already included in another active listing.");
+            }
+        }
+        
+        if (request.getSeats() != null && !request.getSeats().isEmpty()) {
+            java.util.List<String> requestedSeats = java.util.Arrays.asList(request.getSeats().split("\\s*,\\s*"));
+            for (TicketExchangeListing l : existingListings) {
+                if (l.getSeats() != null && !l.getSeats().isEmpty()) {
+                    java.util.List<String> listedSeats = java.util.Arrays.asList(l.getSeats().split("\\s*,\\s*"));
+                    for (String rs : requestedSeats) {
+                        if (listedSeats.contains(rs)) {
+                            throw AppException.badRequest("Seat " + rs + " is already listed.");
+                        }
+                    }
+                }
+            }
+        }
+
         TicketExchangeListing listing = TicketExchangeListing.builder()
                 .bookingId(request.getBookingId())
                 .sellerId(request.getSellerId())
@@ -64,6 +91,8 @@ public class ResaleListingService {
                 .note(request.getNote())
                 .phone(request.getPhone())
                 .facebookUrl(request.getFacebookUrl())
+                .seats(request.getSeats())
+                .includesFnb(request.getIncludesFnb() != null ? request.getIncludesFnb() : false)
                 .status(ListingStatus.Active)
                 .build();
 
@@ -92,6 +121,21 @@ public class ResaleListingService {
     }
 
     @Transactional
+    public ResaleListingResponse updateListing(Long id, com.cinebook.backend.modules.resale.dto.ResaleListingUpdateRequest request) {
+        TicketExchangeListing listing = resaleListingRepository.findById(id)
+                .orElseThrow(() -> AppException.notFound("Listing not found"));
+
+        if (request.getAskingPrice() != null) {
+            listing.setAskingPrice(request.getAskingPrice());
+        }
+        if (request.getNote() != null) {
+            listing.setNote(request.getNote());
+        }
+
+        return mapToResponse(resaleListingRepository.save(listing));
+    }
+
+    @Transactional
     public void deleteListing(Long id) {
         TicketExchangeListing listing = resaleListingRepository.findById(id)
                 .orElseThrow(() -> AppException.notFound("Listing not found"));
@@ -109,7 +153,7 @@ public class ResaleListingService {
         String showDate = "";
         String showTime = "";
         Integer originalPrice = 0;
-        String seats = "";
+        String seats = listing.getSeats();
         String ticketType = "standard";
 
         if (booking != null) {
@@ -131,15 +175,17 @@ public class ResaleListingService {
 
             List<BookingSeat> bookingSeats = bookingSeatRepository.findByBooking_Id(booking.getId());
             if (bookingSeats != null && !bookingSeats.isEmpty()) {
-                StringBuilder seatBuilder = new StringBuilder();
-                for (BookingSeat bs : bookingSeats) {
-                    Seat seat = bs.getSeat();
-                    if (seat != null) {
-                        if (seatBuilder.length() > 0) seatBuilder.append(", ");
-                        seatBuilder.append(seat.getSeatLabel());
+                if (seats == null || seats.isEmpty()) {
+                    StringBuilder seatBuilder = new StringBuilder();
+                    for (BookingSeat bs : bookingSeats) {
+                        Seat seat = bs.getSeat();
+                        if (seat != null) {
+                            if (seatBuilder.length() > 0) seatBuilder.append(", ");
+                            seatBuilder.append(seat.getSeatLabel());
+                        }
                     }
+                    seats = seatBuilder.toString();
                 }
-                seats = seatBuilder.toString();
                 // Just take the first seat type
                 if (bookingSeats.get(0).getSeatType() != null) {
                     ticketType = bookingSeats.get(0).getSeatType().name().toLowerCase();
@@ -159,6 +205,7 @@ public class ResaleListingService {
                 .ticketType(ticketType)
                 .originalPrice(originalPrice)
                 .resalePrice(listing.getAskingPrice())
+                .includesFnb(listing.getIncludesFnb() != null ? listing.getIncludesFnb() : false)
                 .sellerName(seller != null ? seller.getFullName() : "Unknown")
                 .sellerPhone(listing.getPhone() != null ? listing.getPhone() : (seller != null ? seller.getPhone() : ""))
                 .note(listing.getNote())

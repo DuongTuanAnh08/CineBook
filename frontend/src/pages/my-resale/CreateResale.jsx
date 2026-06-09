@@ -38,10 +38,12 @@ function CreateResaleContent() {
   
   const [realBookings, setRealBookings] = useState([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
+  const [activeResaleListings, setActiveResaleListings] = useState([]);
 
   const preselectedBookingId = params.get('bookingId');
   const [selectedTicket, setSelectedTicket] = useState(null);
-  const [selectedSeat, setSelectedSeat] = useState('');
+  const [selectedSeats, setSelectedSeats] = useState([]);
+  const [includesFnb, setIncludesFnb] = useState(false);
   
   const [resalePrice, setResalePrice] = useState('');
   const [note, setNote] = useState('');
@@ -50,20 +52,63 @@ function CreateResaleContent() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      bookingApi.getMyBookings().then(res => {
-        if (res.success) {
-          const validBookings = res.data.filter(b => b.status === 'confirmed' || b.status === 'upcoming');
+    if (isAuthenticated && user?.userId) {
+      Promise.all([
+        bookingApi.getMyBookings(),
+        resaleApi.getMyListings(user.userId, { page: 0, size: 100 })
+      ]).then(([bookingsRes, listingsRes]) => {
+        if (bookingsRes.success) {
+          const now = new Date();
+          
+          const activeListings = listingsRes.success && listingsRes.data?.content 
+            ? listingsRes.data.content.filter(l => l.status?.toLowerCase() !== 'deleted' && l.status?.toLowerCase() !== 'cancelled')
+            : [];
+          setActiveResaleListings(activeListings);
+
+          const listedSeatsMap = {};
+          const listedFnbMap = {};
+          activeListings.forEach(l => {
+            const bIdNum = parseInt(String(l.bookingId).replace('BK', ''), 10);
+            if (!listedSeatsMap[bIdNum]) listedSeatsMap[bIdNum] = [];
+            if (l.seatNumber) {
+              listedSeatsMap[bIdNum].push(...l.seatNumber.split(',').map(s => s.trim()));
+            }
+            if (l.includesFnb) {
+              listedFnbMap[bIdNum] = true;
+            }
+          });
+
+          const validBookings = bookingsRes.data.filter(b => {
+            const isConfirmed = b.status === 'confirmed' || b.status === 'upcoming';
+            if (!isConfirmed) return false;
+            
+            const bIdNum = parseInt(String(b.id).replace('BK', ''), 10);
+            const listedSeats = listedSeatsMap[bIdNum] || [];
+            const hasFnb = b.fnbItems && b.fnbItems.length > 0;
+            const fnbListed = listedFnbMap[bIdNum] || false;
+            
+            const totalSeats = b.seatNumber ? b.seatNumber.split(',').map(s => s.trim()) : [];
+            const availableSeats = totalSeats.filter(s => !listedSeats.includes(s));
+            
+            // Filter out if no seats are available AND no fnb available
+            if (availableSeats.length === 0 && (!hasFnb || fnbListed)) return false;
+            
+            if (b.showDate && b.showTime) {
+                const [year, month, day] = b.showDate.split('-');
+                const [hours, minutes] = b.showTime.split(':');
+                const showDateTime = new Date(year, parseInt(month, 10) - 1, day, hours, minutes, 0);
+                return showDateTime > now;
+            }
+            return true;
+          });
           setRealBookings(validBookings);
           
           if (preselectedBookingId) {
-            const preselected = validBookings.find(b => String(b.id) === String(preselectedBookingId));
+              const preselected = validBookings.find(b => String(b.id) === String(preselectedBookingId));
             if (preselected) {
               setSelectedTicket(preselected);
-              const seatsArr = preselected.seatNumber ? preselected.seatNumber.split(',').map(s => s.trim()) : [];
-              if (seatsArr.length > 0) {
-                setSelectedSeat(seatsArr[0]);
-              }
+              setSelectedSeats([]);
+              setIncludesFnb(false);
             }
           }
         }
@@ -73,7 +118,7 @@ function CreateResaleContent() {
         setLoadingBookings(false);
       });
     }
-  }, [isAuthenticated, preselectedBookingId]);
+  }, [isAuthenticated, user?.userId, preselectedBookingId]);
   
   if (!isAuthenticated) {
     return <Navigate to='/login' replace />;
@@ -81,8 +126,24 @@ function CreateResaleContent() {
 
   // Filter to only eligible tickets
   const eligibleTickets = realBookings;
+  
+  const getListedItems = (ticket) => {
+    if (!ticket) return { seats: [], fnb: false };
+    const bIdNum = parseInt(String(ticket.id).replace('BK', ''), 10);
+    const listedSeats = [];
+    let fnbListed = false;
+    
+    activeResaleListings.forEach(l => {
+      if (parseInt(String(l.bookingId).replace('BK', ''), 10) === bIdNum) {
+        if (l.seatNumber) listedSeats.push(...l.seatNumber.split(',').map(s => s.trim()));
+        if (l.includesFnb) fnbListed = true;
+      }
+    });
+    
+    return { seats: listedSeats, fnb: fnbListed };
+  };
   const handleSubmit = async () => {
-    if (!selectedTicket || !selectedSeat) return;
+    if (!selectedTicket || (selectedSeats.length === 0 && !includesFnb)) return;
     const priceNum = Number(resalePrice);
     if (!resalePrice || isNaN(priceNum) || priceNum <= 0) {
       setPriceError('Giá phải lớn hơn 0.');
@@ -94,7 +155,8 @@ function CreateResaleContent() {
       const payload = {
         bookingId: parseInt(String(selectedTicket.id).replace('BK', ''), 10),
         sellerId: user.userId,
-        seatNumber: selectedSeat,
+        seats: selectedSeats.join(', '),
+        includesFnb: includesFnb,
         askingPrice: priceNum,
         note: note
       };
@@ -169,15 +231,19 @@ function CreateResaleContent() {
             </div> : <div className="space-y-3">
               {eligibleTickets.map(ticket => {
             const isSelected = String(selectedTicket?.id) === String(ticket.id);
-            const displayDate = ticket.showDate ? new Date(ticket.showDate).toLocaleDateString('vi-VN', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric'
-            }) : '';
+            let displayDate = '';
+            if (ticket.showDate) {
+              const [y, m, d] = ticket.showDate.split('-');
+              displayDate = new Date(y, parseInt(m, 10) - 1, d).toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+              });
+            }
             return <button key={ticket.id} onClick={() => {
               setSelectedTicket(ticket);
-              const seats = ticket.seatNumber ? ticket.seatNumber.split(',').map(s => s.trim()) : [];
-              setSelectedSeat(seats.length > 0 ? seats[0] : '');
+              setSelectedSeats([]);
+              setIncludesFnb(false);
               setPriceError('');
             }} className={cn('w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-colors', isSelected ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50')}>
                     <div className={cn('w-4 h-4 rounded-full border-2 shrink-0', isSelected ? 'border-primary bg-primary' : 'border-muted-foreground')} />
@@ -195,18 +261,47 @@ function CreateResaleContent() {
             </div>}
 
           {/* Seat selection if multiple seats */}
-          {selectedTicket && selectedTicket.seatNumber && selectedTicket.seatNumber.split(',').length > 1 && <div className="space-y-2">
-              <Label>Chọn ghế muốn bán</Label>
-              <div className="flex gap-2 flex-wrap">
-                {selectedTicket.seatNumber.split(',').map(s => s.trim()).map(seat => {
-              return <button key={seat} onClick={() => {
-                setSelectedSeat(seat);
-              }} className={cn('px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors', selectedSeat === seat ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/50')}>
-                      {seat}
-                    </button>;
-            })}
-              </div>
-            </div>}
+          {selectedTicket && (
+            <div className="space-y-4">
+              {selectedTicket.seatNumber && (() => {
+                const { seats: listedSeats } = getListedItems(selectedTicket);
+                return (
+                  <div className="space-y-2">
+                    <Label>Chọn ghế muốn bán</Label>
+                    <div className="flex gap-2 flex-wrap">
+                      {selectedTicket.seatNumber.split(',').map(s => s.trim()).map(seat => {
+                        const isListed = listedSeats.includes(seat);
+                        const isSelected = selectedSeats.includes(seat);
+                        return <button key={seat} disabled={isListed} onClick={() => {
+                          if (isSelected) {
+                            setSelectedSeats(selectedSeats.filter(s => s !== seat));
+                          } else {
+                            setSelectedSeats([...selectedSeats, seat]);
+                          }
+                        }} className={cn('px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors', isListed ? 'border-muted bg-muted text-muted-foreground opacity-50 cursor-not-allowed' : isSelected ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/50')}>
+                            {seat} {isListed && '(Đã đăng)'}
+                          </button>;
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+              
+              {selectedTicket.tickets?.some(t => t.seatType === 'FNB') && (() => {
+                const { fnb: fnbListed } = getListedItems(selectedTicket);
+                return (
+                  <div className="space-y-2">
+                    <Label>Bắp nước đi kèm</Label>
+                    <div className="flex gap-2">
+                      <button disabled={fnbListed} onClick={() => setIncludesFnb(!includesFnb)} className={cn('px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors', fnbListed ? 'border-muted bg-muted text-muted-foreground opacity-50 cursor-not-allowed' : includesFnb ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/50')}>
+                        Bán kèm Bắp Nước ({selectedTicket.totalFnbAmount?.toLocaleString('vi-VN')}₫) {fnbListed && '(Đã đăng)'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -284,15 +379,22 @@ function CreateResaleContent() {
         }, {
           icon: Calendar,
           label: 'Ngày',
-          value: selectedTicket.showDate ? new Date(selectedTicket.showDate).toLocaleDateString('vi-VN') : ''
+          value: selectedTicket.showDate ? (() => {
+            const [y, m, d] = selectedTicket.showDate.split('-');
+            return new Date(y, parseInt(m, 10) - 1, d).toLocaleDateString('vi-VN');
+          })() : ''
         }, {
           icon: Clock,
           label: 'Giờ',
           value: selectedTicket.showTime
         }, {
           icon: Armchair,
-          label: 'Ghế',
-          value: selectedSeat
+          label: 'Ghế bán',
+          value: selectedSeats.length > 0 ? selectedSeats.join(', ') : 'Không'
+        }, {
+          icon: RefreshCw,
+          label: 'Bắp nước',
+          value: includesFnb ? 'Có kèm' : 'Không'
         }, {
           icon: RefreshCw,
           label: 'Giá bán',
@@ -308,7 +410,7 @@ function CreateResaleContent() {
               </div>)}
           </div>
 
-          <Button className="w-full gap-2" size="lg" onClick={handleSubmit} disabled={submitting || !selectedSeat || !resalePrice}>
+          <Button className="w-full gap-2" size="lg" onClick={handleSubmit} disabled={submitting || (selectedSeats.length === 0 && !includesFnb) || !resalePrice}>
             {submitting ? <>
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Đang đăng...

@@ -1232,31 +1232,79 @@
       "name": "5. Resale",
       "item": [
         {
-          "name": "5.1 List Active Resales",
+          "name": "5.1 List All Resales (Admin)",
           "request": {
             "method": "GET",
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/resale/active",
+              "raw": "{{base_url}}/resale/admin/all?page=0&size=10",
               "host": [
-                "{{baseUrl}}"
+                "{{base_url}}"
+              ],
+              "path": [
+                "resale",
+                "admin",
+                "all"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "5.2 List Active Resales",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/resale/active?page=0&size=10",
+              "host": [
+                "{{base_url}}"
               ],
               "path": [
                 "resale",
                 "active"
               ],
-              "query": []
-            },
-            "header": []
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
           }
         },
         {
-          "name": "5.2 Get My Resales",
+          "name": "5.3 Get My Resales",
           "request": {
             "method": "GET",
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/resale/my-listings?sellerId=1",
+              "raw": "{{base_url}}/resale/my-listings?sellerId=1&page=0&size=10",
               "host": [
-                "{{baseUrl}}"
+                "{{base_url}}"
               ],
               "path": [
                 "resale",
@@ -1266,83 +1314,177 @@
                 {
                   "key": "sellerId",
                   "value": "1"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
                 }
               ]
             },
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}",
-                "type": "text"
-              }
-            ]
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
           }
         },
         {
-          "name": "5.3 Create Resale Ticket",
+          "name": "5.4 Create Resale Listing",
           "request": {
             "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
-              "raw": "{{baseUrl}}/resale",
+              "raw": "{{base_url}}/resale",
               "host": [
-                "{{baseUrl}}"
+                "{{base_url}}"
               ],
               "path": [
                 "resale"
-              ],
-              "query": []
+              ]
             },
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bookingId\": 1,\n  \"sellerId\": 1,\n  \"askingPrice\": 50000,\n  \"note\": \"Busy\",\n  \"phone\": \"0912345678\",\n  \"facebookUrl\": \"fb.com/abc\"\n}",
+              "raw": "{\n  \"bookingId\": 1,\n  \"sellerId\": 1,\n  \"askingPrice\": 150000,\n  \"note\": \"Bán vé VIP\",\n  \"phone\": \"0901234567\",\n  \"facebookUrl\": \"https://fb.com/user\",\n  \"seats\": \"C1, C2\",\n  \"includesFnb\": true\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
             }
           }
         },
         {
-          "name": "5.4 Hide Resale Ticket (Admin)",
+          "name": "5.5 Update Resale Status",
           "request": {
             "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
-              "raw": "{{baseUrl}}/resale/1/hide?reason=Spam",
+              "raw": "{{base_url}}/resale/1/status",
               "host": [
-                "{{baseUrl}}"
+                "{{base_url}}"
               ],
               "path": [
                 "resale",
                 "1",
-                "hide"
-              ],
-              "query": [
-                {
-                  "key": "reason",
-                  "value": "Spam"
-                }
+                "status"
               ]
             },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Hidden\",\n  \"hiddenReason\": \"Spam\",\n  \"hiddenByAdminId\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "5.6 Update Resale Listing (Price & Note)",
+          "request": {
+            "method": "PUT",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{token}}",
-                "type": "text"
+                "key": "Content-Type",
+                "value": "application/json"
               }
-            ]
+            ],
+            "url": {
+              "raw": "{{base_url}}/resale/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "resale",
+                "1"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"askingPrice\": 100000,\n  \"note\": \"Giảm giá bán gấp\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "5.7 Delete Resale Listing",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/resale/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "resale",
+                "1"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
           }
         }
       ]

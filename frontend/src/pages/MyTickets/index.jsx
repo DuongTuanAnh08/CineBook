@@ -48,10 +48,9 @@ const mapStatus = (ticket) => {
   
   // Also check if show time has passed
   if (ticket.showDate && ticket.showTime) {
-    // format: showDate: "YYYY-MM-DD", showTime: "HH:mm"
+    const [year, month, day] = ticket.showDate.split('-');
     const [hours, minutes] = ticket.showTime.split(':');
-    const showDateTime = new Date(ticket.showDate);
-    showDateTime.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+    const showDateTime = new Date(year, parseInt(month, 10) - 1, day, parseInt(hours, 10), parseInt(minutes, 10), 0);
     // Let's add ~2 hours to showtime to consider it 'finished'
     const endDateTime = new Date(showDateTime.getTime() + 2 * 60 * 60 * 1000);
     if (new Date() > endDateTime) {
@@ -91,6 +90,7 @@ export default function MyTicketsPage() {
   
   // QR & PDF state
   const [isQrOpen, setIsQrOpen] = useState(false);
+  const [currentTicketIdx, setCurrentTicketIdx] = useState(0);
   const ticketRef = useRef(null);
   
   useEffect(() => {
@@ -103,8 +103,8 @@ export default function MyTicketsPage() {
           if (bookingsRes.success) {
             setMyTickets(bookingsRes.data);
           }
-          if (listingsRes.data?.success) {
-            setMyListings(listingsRes.data.data.content);
+          if (listingsRes.success && listingsRes.data?.content) {
+            setMyListings(listingsRes.data.content);
           }
         })
         .catch(err => console.error('Failed to fetch data:', err))
@@ -254,25 +254,63 @@ export default function MyTicketsPage() {
                           </span>
                           <div className="flex gap-2 flex-wrap justify-end">
                             {statusKey === 'upcoming' && <>
-                                <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={() => { setSelectedTicket(ticket); setIsQrOpen(true); }}>
+                                <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={() => { setSelectedTicket(ticket); setCurrentTicketIdx(0); setIsQrOpen(true); }}>
                                   <QrCode className="w-3 h-3" /> Xem vé
                                 </Button>
                                 {/* UC-45: Only show resell if not checked-in and showtime not started */}
                                 {!ticket.checkedIn && (() => {
-                                  const ticketIdNum = parseInt(String(ticket.id).replace('BK', ''), 10);
-                                  const isListed = myListings.some(l => parseInt(String(l.bookingId).replace('BK', ''), 10) === ticketIdNum && l.status?.toLowerCase() !== 'deleted' && l.status?.toLowerCase() !== 'cancelled');
+                                  // Hide resell button if showtime has passed
+                                  let hasStarted = false;
+                                  if (ticket.showDate && ticket.showTime) {
+                                    const [year, month, day] = ticket.showDate.split('-');
+                                    const [hours, minutes] = ticket.showTime.split(':');
+                                    const showDateTime = new Date(year, parseInt(month, 10) - 1, day, hours, minutes, 0);
+                                    if (new Date() >= showDateTime) {
+                                      hasStarted = true;
+                                    }
+                                  }
                                   
-                                  if (isListed) {
-                                    return (
-                                      <Button size="sm" variant="outline" className="h-7 gap-1 text-xs border-muted text-muted-foreground bg-muted/50 cursor-not-allowed" disabled title="Vé này đã được đăng bán">
-                                        <RefreshCw className="w-3 h-3" /> Đã đăng bán
-                                      </Button>
-                                    );
+                                  if (hasStarted) return null;
+
+                                  const ticketIdNum = parseInt(String(ticket.id).replace('BK', ''), 10);
+                                  const activeListingsForTicket = myListings.filter(l => 
+                                    parseInt(String(l.bookingId).replace('BK', ''), 10) === ticketIdNum && 
+                                    l.status?.toLowerCase() !== 'deleted' && 
+                                    l.status?.toLowerCase() !== 'cancelled'
+                                  );
+
+                                  if (activeListingsForTicket.length > 0) {
+                                    // Check if EVERYTHING is listed
+                                    const totalSeats = ticket.seatNumber ? ticket.seatNumber.split(',').map(s => s.trim()) : [];
+                                    const hasFnb = ticket.fnbItems && ticket.fnbItems.length > 0;
+                                    
+                                    let listedSeats = [];
+                                    let fnbListed = false;
+                                    
+                                    activeListingsForTicket.forEach(l => {
+                                      if (l.seatNumber) {
+                                        listedSeats.push(...l.seatNumber.split(',').map(s => s.trim()));
+                                      }
+                                      if (l.includesFnb) {
+                                        fnbListed = true;
+                                      }
+                                    });
+                                    
+                                    const allSeatsListed = totalSeats.every(s => listedSeats.includes(s));
+                                    const allFnbListed = hasFnb ? fnbListed : true;
+                                    
+                                    if (allSeatsListed && allFnbListed) {
+                                      return (
+                                        <Button size="sm" variant="outline" className="h-7 gap-1 text-xs border-muted text-muted-foreground bg-muted/50 cursor-not-allowed" disabled title="Vé này đã được đăng bán toàn bộ">
+                                          <RefreshCw className="w-3 h-3" /> Đã đăng bán hết
+                                        </Button>
+                                      );
+                                    }
                                   }
                                   return (
                                     <Button size="sm" variant="outline" className="h-7 gap-1 text-xs border-amber-500/50 text-amber-400 hover:bg-amber-500/10" asChild>
                                       <Link to={`/my-resale/create?bookingId=${ticket.id}`}>
-                                        <RefreshCw className="w-3 h-3" /> Đăng bán lại
+                                        <RefreshCw className="w-3 h-3" /> {activeListingsForTicket.length > 0 ? "Bán phần còn lại" : "Đăng bán lại"}
                                       </Link>
                                     </Button>
                                   );
@@ -314,14 +352,41 @@ export default function MyTicketsPage() {
             <DialogHeader>
               <DialogTitle className="text-center">Vé điện tử</DialogTitle>
             </DialogHeader>
-            {selectedTicket && (
-              <div className="flex flex-col items-center gap-4 py-6">
-                <div className="p-4 bg-white rounded-xl">
-                  <QRCodeSVG value={selectedTicket.id} size={200} level="M" />
+            {selectedTicket && (() => {
+              const tickets = selectedTicket.tickets || [{
+                ticketCode: selectedTicket.id,
+                qrCodeValue: selectedTicket.id,
+                seatLabel: selectedTicket.seatNumber
+              }];
+              const currentTicket = tickets[currentTicketIdx] || tickets[0];
+              
+              return (
+              <div className="flex flex-col items-center gap-4 py-2">
+                <div className="p-4 bg-white rounded-xl shadow-sm border">
+                  <QRCodeSVG value={currentTicket.qrCodeValue} size={200} level="M" />
                 </div>
+                
+                {tickets.length > 1 && (
+                  <div className="flex items-center gap-4 my-1">
+                    <Button variant="outline" size="sm" className="h-8 w-8 p-0" 
+                      onClick={() => setCurrentTicketIdx(prev => Math.max(0, prev - 1))}
+                      disabled={currentTicketIdx === 0}>
+                      {'<'}
+                    </Button>
+                    <span className="text-sm font-medium">
+                      Vé {currentTicketIdx + 1} / {tickets.length}
+                    </span>
+                    <Button variant="outline" size="sm" className="h-8 w-8 p-0"
+                      onClick={() => setCurrentTicketIdx(prev => Math.min(tickets.length - 1, prev + 1))}
+                      disabled={currentTicketIdx === tickets.length - 1}>
+                      {'>'}
+                    </Button>
+                  </div>
+                )}
+
                 <div className="text-center space-y-1 w-full">
                   <h3 className="font-bold text-xl">{selectedTicket.movieTitle}</h3>
-                  <p className="text-sm text-muted-foreground font-mono">{selectedTicket.id}</p>
+                  <p className="text-sm text-muted-foreground font-mono">{currentTicket.ticketCode}</p>
                   <Separator className="my-2" />
                   <div className="grid grid-cols-2 text-sm gap-2 text-left bg-muted/30 p-3 rounded-lg">
                     <div>
@@ -338,13 +403,13 @@ export default function MyTicketsPage() {
                     </div>
                     <div>
                       <span className="text-muted-foreground text-xs block">Ghế</span>
-                      <span className="font-medium text-primary">{selectedTicket.seatNumber}</span>
+                      <span className="font-medium text-primary text-lg">{currentTicket.seatLabel}</span>
                     </div>
                   </div>
-                  {selectedTicket.fnbItems && selectedTicket.fnbItems.length > 0 && (
+                  {currentTicketIdx === 0 && selectedTicket.fnbItems && selectedTicket.fnbItems.length > 0 && (
                     <div className="text-sm text-left bg-primary/5 border border-primary/20 p-3 rounded-lg mt-3">
                       <p className="text-xs font-medium text-primary uppercase mb-2 flex items-center gap-1">
-                        <ShoppingCart className="w-3.5 h-3.5" /> Bắp nước kèm theo
+                        <ShoppingCart className="w-3.5 h-3.5" /> Bắp nước kèm theo (Cho cả đơn)
                       </p>
                       {selectedTicket.fnbItems.map(fnb => (
                         <div key={fnb.productId} className="flex justify-between text-sm mb-1">
@@ -355,12 +420,19 @@ export default function MyTicketsPage() {
                   )}
                 </div>
               </div>
-            )}
+              );
+            })()}
           </DialogContent>
         </Dialog>
 
         {/* Hidden Invoice for PDF Generation */}
-        {selectedTicket && (
+        {selectedTicket && (() => {
+          const tickets = selectedTicket.tickets || [{
+            ticketCode: selectedTicket.id,
+            qrCodeValue: selectedTicket.id,
+            seatLabel: selectedTicket.seatNumber
+          }];
+          return (
           <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
             <div ref={ticketRef} className="w-[600px] bg-white text-black p-8" style={{ fontFamily: 'sans-serif' }}>
               <div className="flex justify-between items-center border-b-2 border-black pb-4 mb-6">
@@ -387,9 +459,21 @@ export default function MyTicketsPage() {
                     <span className="text-gray-600 ml-2">{selectedTicket.showDate ? new Date(selectedTicket.showDate).toLocaleDateString('vi-VN') : ''}</span>
                   </div>
                   <div>
-                    <span className="text-gray-500 text-sm block">Ghế</span>
+                    <span className="text-gray-500 text-sm block">Các vé (Ghế)</span>
                     <span className="font-semibold text-lg">{selectedTicket.seatNumber}</span>
                   </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {tickets.map(t => (
+                    <div key={t.ticketCode} className="border border-gray-200 p-3 rounded flex items-center justify-between">
+                      <div>
+                        <p className="font-bold">Ghế {t.seatLabel}</p>
+                        <p className="text-xs text-gray-500 font-mono">{t.ticketCode}</p>
+                      </div>
+                      <QRCodeSVG value={t.qrCodeValue} size={40} />
+                    </div>
+                  ))}
                 </div>
 
                 {selectedTicket.fnbItems && selectedTicket.fnbItems.length > 0 && (
@@ -422,11 +506,12 @@ export default function MyTicketsPage() {
               
               <div className="mt-12 text-center text-sm text-gray-400 border-t border-gray-100 pt-4">
                 <p>Cảm ơn bạn đã lựa chọn CineBook!</p>
-                <p className="mt-1">Vui lòng xuất trình mã QR tại rạp để nhận vé cứng.</p>
+                <p className="mt-1">Vui lòng xuất trình mã QR tương ứng từng ghế tại rạp để nhận vé cứng.</p>
               </div>
             </div>
           </div>
-        )}
+          );
+        })()}
       </div>
   );
 }

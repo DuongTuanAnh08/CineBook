@@ -17,6 +17,10 @@ const resaleApi = {
         return axiosClient.post('/resale', data);
     },
 
+    updateListing: (id, data) => {
+        return axiosClient.put(`/resale/${id}`, data);
+    },
+
     updateStatus: (id, data) => {
         return axiosClient.put(`/resale/${id}/status`, data);
     },

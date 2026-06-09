@@ -143,6 +143,10 @@ export default function AdminSeatsPage() {
     if (nextType === 'Couple') {
       const nextSeat = newSeats[index + 1];
       if (nextSeat && nextSeat.rowLabel === newSeats[index].rowLabel) {
+        if (nextSeat.seatType === 'Couple' || nextSeat.seatType === 'VIP') {
+          toast.error(`Không thể tạo ghế Đôi! Vị trí bên cạnh đang là ghế ${nextSeat.seatType === 'VIP' ? 'VIP' : 'Đôi'}. Hãy chuyển nó về ghế Thường hoặc Ẩn trước.`);
+          return;
+        }
         nextSeat.seatType = 'Hidden';
       }
     } else if (currentType === 'Couple' && nextType === 'Hidden') {

@@ -7,13 +7,7 @@ import lombok.AllArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ResaleListingRequest {
-    private Long bookingId;
-    private Long sellerId;
+public class ResaleListingUpdateRequest {
     private Integer askingPrice;
     private String note;
-    private String phone;
-    private String facebookUrl;
-    private String seats;
-    private Boolean includesFnb;
 }

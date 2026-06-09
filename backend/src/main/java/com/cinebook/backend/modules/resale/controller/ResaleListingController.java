@@ -42,6 +42,11 @@ public class ResaleListingController {
         return ApiResponse.ok(service.updateStatus(id, request));
     }
 
+    @PutMapping("/{id}")
+    public ApiResponse<ResaleListingResponse> updateListing(@PathVariable Long id, @RequestBody com.cinebook.backend.modules.resale.dto.ResaleListingUpdateRequest request) {
+        return ApiResponse.ok(service.updateListing(id, request));
+    }
+
     @DeleteMapping("/{id}")
     public ApiResponse<Void> deleteListing(@PathVariable Long id) {
         service.deleteListing(id);

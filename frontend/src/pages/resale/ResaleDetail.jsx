@@ -1,7 +1,8 @@
 'use client';
 
-import { use } from 'react';
-
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import resaleApi from '@/api/resaleApi';
 import { useData } from '@/contexts/data-context'
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,30 +25,43 @@ const TICKET_TYPE_COLORS = {
 export default function ResaleDetailPage({
   params
 }) {
-  const { resaleListings } = useData();
   const {
     id
   } = useParams();
-  const listing = resaleListings.find(l => l.id === id);
+  const [listing, setListing] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    resaleApi.getActiveListings({ page: 0, size: 500 }).then(res => {
+      if (res.success) {
+        const found = res.data.content.find(l => l.id === id);
+        setListing(found);
+      }
+    }).catch(console.error).finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading) {
+    return <div className="text-center py-20 text-muted-foreground">Đang tải chi tiết...</div>;
+  }
 
   // BR-23: HIDDEN listings are not visible to Guest/Customer on public pages
   if (!listing || listing.status !== 'active') {
-    notFound();
+    return <Navigate to='/404' />;
   }
-  const displayDate = new Date(listing.showDate).toLocaleDateString('vi-VN', {
+  const displayDate = listing.showDate ? new Date(listing.showDate).toLocaleDateString('vi-VN', {
     weekday: 'long',
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
-  });
-  const createdDate = new Date(listing.createdAt).toLocaleDateString('vi-VN', {
+  }) : '—';
+  const createdDate = listing.createdAt ? new Date(listing.createdAt).toLocaleDateString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit'
-  });
-  return 
+  }) : '—';
+  return (
       <div className="container mx-auto px-4 py-10 max-w-2xl space-y-6">
         {/* Back */}
         <Button variant="ghost" size="sm" asChild className="gap-2 -ml-2">
@@ -129,8 +143,12 @@ export default function ResaleDetailPage({
                 value: listing.roomName
               }, {
                 icon: Armchair,
-                label: 'Ghế',
+                label: 'Ghế bán',
                 value: listing.seatNumber
+              }, {
+                icon: RefreshCw,
+                label: 'Bắp nước',
+                value: listing.includesFnb ? 'Có kèm bắp nước' : 'Không'
               }, {
                 icon: Tag,
                 label: 'Loại ghế',
@@ -234,5 +252,5 @@ export default function ResaleDetailPage({
           </p>
         </div>
       </div>
-    ;
+  );
 }

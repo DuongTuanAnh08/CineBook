@@ -22,6 +22,7 @@ public class ResaleListingResponse {
     private String ticketType;
     private Integer originalPrice;
     private Integer resalePrice;
+    private Boolean includesFnb;
     private String sellerName;
     private String sellerPhone;
     private String note;

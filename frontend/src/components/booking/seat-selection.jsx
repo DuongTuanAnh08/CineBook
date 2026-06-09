@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth-context';
 import { cn } from '@/lib/utils';
@@ -64,6 +64,29 @@ export function SeatSelection({
       if (interval) clearInterval(interval);
     };
   }, [showtimeId]);
+
+  const initializedHeldSeats = useRef(false);
+
+  // Khôi phục trạng thái ghế đang giữ từ backend khi load lại trang
+  useEffect(() => {
+    if (realSeats && user && !initializedHeldSeats.current) {
+      const myHeldSeats = realSeats
+        .filter(s => s.status === 'Held' && s.heldByUserId == user.userId)
+        .map(s => ({
+          id: s.seatId.toString(),
+          seatId: s.seatId,
+          label: s.seatLabel,
+          type: s.seatType.toLowerCase(),
+          status: 'selected',
+          price: s.price
+        }));
+        
+      if (myHeldSeats.length > 0) {
+        setSelectedSeats(myHeldSeats);
+      }
+      initializedHeldSeats.current = true;
+    }
+  }, [realSeats, user]);
 
   // Generate seat layout
   const seatLayout = getStaticSeatLayout(pricing);
