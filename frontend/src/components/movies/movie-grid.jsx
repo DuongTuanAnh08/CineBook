@@ -8,6 +8,7 @@ export function MovieGrid({
   movies,
   genres,
   cinemas,
+  showtimes = [],
   title = 'Danh sách phim',
   subtitle
 }) {
@@ -17,10 +18,16 @@ export function MovieGrid({
   const filteredMovies = useMemo(() => {
     return movies.filter(movie => {
       if (status !== 'all' && movie.status !== status) return false;
-      if (genre !== 'all' && !movie.genres.includes(genre)) return false;
+      if (genre !== 'all' && !movie.genres?.includes(genre)) return false;
+      if (cinema !== 'all') {
+        const hasShowtimeAtCinema = showtimes.some(showtime =>
+          String(showtime.movieId) === String(movie.id) && String(showtime.cinemaId) === String(cinema)
+        );
+        if (!hasShowtimeAtCinema) return false;
+      }
       return true;
     });
-  }, [movies, status, genre]);
+  }, [movies, showtimes, status, genre, cinema]);
   const handleClearFilters = () => {
     setStatus('all');
     setGenre('all');

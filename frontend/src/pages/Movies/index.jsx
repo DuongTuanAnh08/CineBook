@@ -2,10 +2,9 @@ import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { MovieGrid } from '@/components/movies/movie-grid'
 import { useData } from '@/contexts/data-context'
-import { genres } from '@/lib/mock-data'
 
 export default function MoviesPage() {
-  const { movies, cinemas } = useData();
+  const { movies, genres, cinemas, showtimes } = useData();
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
 
@@ -35,6 +34,7 @@ export default function MoviesPage() {
         movies={filteredMovies}
         genres={genres}
         cinemas={cinemas}
+        showtimes={showtimes}
         title={query ? `Kết quả tìm kiếm cho "${query}"` : "Danh sách phim"}
         subtitle={query ? "" : "Khám phá những bộ phim hay nhất đang chiếu và sắp ra mắt"}
       />

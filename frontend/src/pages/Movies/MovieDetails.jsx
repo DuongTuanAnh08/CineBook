@@ -34,11 +34,20 @@ import bookingApi from '@/api/bookingApi'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 
+const getYouTubeEmbedUrl = (url) => {
+  if (!url) return '';
+  const value = String(url).trim();
+  const idMatch = value.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([^?&/]+)/);
+  const videoId = idMatch?.[1] || (!value.includes('/') ? value : '');
+  return videoId ? `https://www.youtube.com/embed/${videoId}` : value;
+}
+
 export default function MovieDetailPage() {
   const { movies, showtimes } = useData();
   const { user } = useAuth();
   const { id } = useParams()
   const movie = movies.find((m) => String(m.id) === String(id) || String(m.movieId) === String(id))
+  const trailerEmbedUrl = getYouTubeEmbedUrl(movie?.trailer)
   const [trailerOpen, setTrailerOpen] = useState(false)
   const [reviews, setReviews] = useState([]);
   
@@ -127,7 +136,7 @@ export default function MovieDetailPage() {
 
   const movieShowtimes = useMemo(() => {
     if (!movie || movie.status !== 'now_showing') return [];
-    return showtimes.filter(s => s.movieId === id);
+    return showtimes.filter(s => String(s.movieId) === String(movie.movieId || movie.id));
   }, [id, movie, showtimes]);
 
   if (!movie) {
@@ -200,7 +209,7 @@ export default function MovieDetailPage() {
               </div>
 
               {/* Trailer Button */}
-              {movie.trailer && (
+              {trailerEmbedUrl && (
                 <Dialog open={trailerOpen} onOpenChange={setTrailerOpen}>
                   <DialogTrigger asChild>
                     <Button
@@ -214,7 +223,7 @@ export default function MovieDetailPage() {
                     <DialogTitle className="sr-only">Trailer: {movie.title}</DialogTitle>
                     <div className="aspect-video">
                       <iframe
-                        src={`https://www.youtube.com/embed/${movie.trailer}?autoplay=1`}
+                        src={`${trailerEmbedUrl}?autoplay=1`}
                         title={`Trailer: ${movie.title}`}
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
@@ -330,7 +339,7 @@ export default function MovieDetailPage() {
               <MessageSquare className="mr-2 size-4" />
               Đánh giá ({reviews.length})
             </TabsTrigger>
-            {movie.trailer && (
+            {trailerEmbedUrl && (
               <TabsTrigger value="trailer">
                 <Play className="mr-2 size-4" />
                 Trailer
@@ -356,7 +365,7 @@ export default function MovieDetailPage() {
 
           <TabsContent value="cast" className="mt-0">
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-              {movie.cast.map((actor) => (
+              {(movie.cast || []).map((actor) => (
                 <Card
                   key={actor.id}
                   className="overflow-hidden border-border/50 p-0 transition-colors hover:bg-card"
@@ -458,12 +467,12 @@ export default function MovieDetailPage() {
             </Card>
           </TabsContent>
 
-          {movie.trailer && (
+          {trailerEmbedUrl && (
             <TabsContent value="trailer" className="mt-0">
               <Card className="overflow-hidden border-border/50 p-0">
                 <div className="aspect-video">
                   <iframe
-                    src={`https://www.youtube.com/embed/${movie.trailer}`}
+                    src={trailerEmbedUrl}
                     title={`Trailer: ${movie.title}`}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
@@ -485,7 +494,7 @@ export default function MovieDetailPage() {
               .filter(
                 (m) =>
                   m.id !== movie.id &&
-                  m.genres.some((g) => movie.genres.includes(g))
+                  (m.genres || []).some((g) => (movie.genres || []).includes(g))
               )
               .slice(0, 6)
               .map((relatedMovie) => (

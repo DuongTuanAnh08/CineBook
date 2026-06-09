@@ -20,6 +20,7 @@ const mapMovieFromApi = (m) => ({
 export function DataProvider({ children }) {
   // Khởi tạo state rỗng ban đầu, sẽ được fetch từ backend
   const [movies, setMovies] = useState([]);
+  const [genres, setGenres] = useState([]);
 
   const refreshMovies = async () => {
     try {
@@ -36,6 +37,24 @@ export function DataProvider({ children }) {
   // Fetch movies from real backend API on mount
   useEffect(() => {
     refreshMovies();
+  }, []);
+
+  useEffect(() => {
+    const fetchGenres = async () => {
+      try {
+        const { default: genreApi } = await import('@/api/genreApi');
+        const response = await genreApi.getAll();
+        if (response.success && response.data) {
+          setGenres(response.data.map(g => ({
+            id: g.genreId.toString(),
+            name: g.name,
+          })));
+        }
+      } catch (err) {
+        console.error('Failed to fetch genres from API', err);
+      }
+    };
+    fetchGenres();
   }, []);
 
   const [cinemas, setCinemas] = useState([]);
@@ -243,7 +262,7 @@ export function DataProvider({ children }) {
 
   return (
     <DataContext.Provider value={{
-      movies, cinemas, concessions, resaleListings, bookings, showtimes, news, settings,
+      movies, genres, cinemas, concessions, resaleListings, bookings, showtimes, news, settings,
       refreshMovies, addMovie, updateMovie, deleteMovie,
       addShowtime, updateShowtime, deleteShowtime,
       createBooking,

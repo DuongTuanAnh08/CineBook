@@ -105,7 +105,7 @@ export default function AdminMoviesPage() {
       trailerUrl: movie.trailerUrl || '',
       poster: movie.posterUrl || movie.poster || '', 
       duration: movie.durationMin || movie.duration || '', 
-      status: movie.status === 'NowShowing' ? 'now_showing' : (movie.status === 'ComingSoon' ? 'coming_soon' : 'now_showing'), 
+      status: movie.status === 'NowShowing' || movie.status === 'now_showing' ? 'now_showing' : (movie.status === 'ComingSoon' || movie.status === 'coming_soon' ? 'coming_soon' : 'now_showing'), 
       ageRating: movie.ageRating || 'PG-13', 
       rating: Number(movie.avgRating ?? movie.rating ?? 0),
       genreIds: movie.genres ? movie.genres.map(g => g.genreId) : []
@@ -135,6 +135,23 @@ export default function AdminMoviesPage() {
   };
 
   const handleSave = async () => {
+    if (!formData.title.trim()) {
+      toast.error('Vui lòng nhập tên phim');
+      return;
+    }
+    if (!formData.poster.trim()) {
+      toast.error('Vui lòng nhập hoặc tải lên poster');
+      return;
+    }
+    if (!formData.duration || Number(formData.duration) <= 0) {
+      toast.error('Vui lòng nhập thời lượng phim hợp lệ');
+      return;
+    }
+    if (formData.genreIds.length === 0) {
+      toast.error('Vui lòng chọn ít nhất một thể loại');
+      return;
+    }
+
     setIsSaving(true);
     const payload = {
       title: formData.title,

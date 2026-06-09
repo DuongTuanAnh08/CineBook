@@ -18,7 +18,7 @@ export function MovieCard({ movie }) {
     <Card className="group overflow-hidden border-0 bg-card/50 p-0 transition-all duration-300 hover:bg-card hover:shadow-xl hover:shadow-primary/10">
       <div className="relative aspect-[2/3] overflow-hidden">
         <img
-          src={movie.poster}
+          src={movie.poster || 'https://placehold.co/300x450/png'}
           alt={movie.title}
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
@@ -64,7 +64,7 @@ export function MovieCard({ movie }) {
         </Link>
 
         <div className="flex flex-wrap gap-1">
-          {movie.genres.slice(0, 2).map((genre) => (
+          {(movie.genres || []).slice(0, 2).map((genre) => (
             <Badge key={genre} variant="secondary" className="text-xs font-normal">
               {genre}
             </Badge>
