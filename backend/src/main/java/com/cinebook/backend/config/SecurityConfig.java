@@ -57,7 +57,8 @@ public class SecurityConfig {
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/api-docs/**", "/swagger-ui.html").permitAll()
                 
                 // SystemAdmin Only
-                .requestMatchers("/api/dashboard/**", "/api/config/**").hasRole("SystemAdmin")
+                .requestMatchers("/api/dashboard/**").hasAnyRole("SystemAdmin", "ScheduleManager")
+                .requestMatchers("/api/config/**").hasRole("SystemAdmin")
                 .requestMatchers(HttpMethod.PUT, "/api/resale/*/hide").hasRole("SystemAdmin")
                 
                 // Allow anyone authenticated to hold/release seats

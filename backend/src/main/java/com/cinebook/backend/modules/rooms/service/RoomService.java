@@ -10,6 +10,7 @@ import com.cinebook.backend.modules.rooms.entity.Seat;
 import com.cinebook.backend.modules.rooms.entity.SeatType;
 import com.cinebook.backend.modules.rooms.repository.RoomRepository;
 import com.cinebook.backend.modules.rooms.repository.SeatRepository;
+import com.cinebook.backend.common.exception.AppException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Collection;
 import java.util.stream.Collectors;
 
 @Service
@@ -115,25 +118,45 @@ public class RoomService {
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
 
-        // Delete old seats
-        List<Seat> oldSeats = seatRepository.findByRoomRoomId(roomId);
-        try {
-            seatRepository.deleteAll(oldSeats);
-            seatRepository.flush();
-        } catch (Exception e) {
-            throw new RuntimeException("Cannot configure seats because some seats are already booked or referenced.");
+        // Load existing seats
+        List<Seat> existingSeats = seatRepository.findByRoomRoomId(roomId);
+        Map<String, Seat> existingSeatMap = existingSeats.stream()
+                .collect(Collectors.toMap(s -> s.getRowLabel() + "_" + s.getColNumber(), s -> s, (s1, s2) -> s1));
+
+        List<Seat> seatsToSave = new ArrayList<>();
+
+        // Match, update or insert seats
+        for (SeatConfigDto dto : seatConfigs) {
+            String key = dto.getRowLabel() + "_" + dto.getColNumber();
+            if (existingSeatMap.containsKey(key)) {
+                Seat seat = existingSeatMap.remove(key);
+                seat.setSeatType(dto.getSeatType());
+                seat.setSeatLabel(dto.getSeatLabel());
+                seatsToSave.add(seat);
+            } else {
+                Seat seat = Seat.builder()
+                        .room(room)
+                        .rowLabel(dto.getRowLabel())
+                        .colNumber(dto.getColNumber())
+                        .seatLabel(dto.getSeatLabel())
+                        .seatType(dto.getSeatType())
+                        .build();
+                seatsToSave.add(seat);
+            }
         }
 
-        // Insert new seats
-        List<Seat> newSeats = seatConfigs.stream().map(dto -> Seat.builder()
-                .room(room)
-                .rowLabel(dto.getRowLabel())
-                .colNumber(dto.getColNumber())
-                .seatLabel(dto.getSeatLabel())
-                .seatType(dto.getSeatType())
-                .build()).collect(Collectors.toList());
+        // The remaining seats in the map are those that were deleted/hidden
+        Collection<Seat> seatsToDelete = existingSeatMap.values();
+        if (!seatsToDelete.isEmpty()) {
+            try {
+                seatRepository.deleteAll(seatsToDelete);
+                seatRepository.flush();
+            } catch (Exception e) {
+                throw AppException.badRequest("Không thể xóa hoặc ẩn một số ghế vì các ghế đó đã được khách đặt vé hoặc đang giữ chỗ.");
+            }
+        }
 
-        List<Seat> savedSeats = seatRepository.saveAll(newSeats);
+        List<Seat> savedSeats = seatRepository.saveAll(seatsToSave);
         return savedSeats.stream().map(this::mapSeatToDto).collect(Collectors.toList());
     }
 

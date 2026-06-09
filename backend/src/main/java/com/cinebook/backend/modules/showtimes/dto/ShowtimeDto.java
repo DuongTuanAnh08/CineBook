@@ -19,4 +19,6 @@ public class ShowtimeDto {
     private Integer priceOverride;
     private String status;
     private Integer totalSeats; // Room capacity
+    private Integer availableSeats; // Available seats count
 }
+

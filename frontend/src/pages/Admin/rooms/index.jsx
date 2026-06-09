@@ -12,11 +12,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LayoutGrid, Plus, MoreHorizontal, Eye, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import roomApi from '@/api/roomApi';
 import cinemaApi from '@/api/cinemaApi';
 
 export default function AdminRoomsPage() {
+  const navigate = useNavigate();
   const [cinemas, setCinemas] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,6 +31,7 @@ export default function AdminRoomsPage() {
   const [formData, setFormData] = useState({
     cinemaId: '', name: '', rows: '10', columns: '10', roomType: '2D'
   });
+
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -217,7 +220,7 @@ export default function AdminRoomsPage() {
                         <DropdownMenuItem className="gap-2" onClick={() => handleToggleStatus(room)}>
                           <Eye className="w-4 h-4" /> {(room.status === 'Active' || room.status === 'active') ? 'Bảo trì / Ẩn phòng' : 'Mở lại phòng'}
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="gap-2">
+                        <DropdownMenuItem className="gap-2" onClick={() => navigate(`/admin/seats?cinemaId=${room.cinemaId}&roomId=${room.id}`)}>
                           <LayoutGrid className="w-4 h-4" /> Xem sơ đồ ghế
                         </DropdownMenuItem>
                       </DropdownMenuContent>

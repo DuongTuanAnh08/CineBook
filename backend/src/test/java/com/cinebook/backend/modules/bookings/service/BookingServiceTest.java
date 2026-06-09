@@ -13,6 +13,7 @@ import com.cinebook.backend.modules.showtimes.entity.Showtime;
 import com.cinebook.backend.modules.showtimes.repository.ShowtimeRepository;
 import com.cinebook.backend.modules.users.User;
 import com.cinebook.backend.modules.users.UserRepository;
+import com.cinebook.backend.modules.movies.entity.Movie;
 import com.cinebook.backend.modules.bookings.dto.FnBItemRequest;
 import com.cinebook.backend.modules.bookings.repository.FnBOrderItemRepository;
 import com.cinebook.backend.modules.fnb.repository.FnBProductRepository;
@@ -63,9 +64,14 @@ class BookingServiceTest {
         room.setRoomId(1L);
         room.setBaseNormalPrice(80000);
 
+        Movie movie = new Movie();
+        movie.setMovieId(1L);
+        movie.setTitle("Test Movie");
+
         Showtime showtime = new Showtime();
         showtime.setShowtimeId(1L);
         showtime.setRoom(room);
+        showtime.setMovie(movie);
 
         User user = new User();
         user.setUserId(1L);
@@ -78,6 +84,7 @@ class BookingServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(seatRepository.findById(10L)).thenReturn(Optional.of(seat));
 
+        when(systemConfigService.getBasePrice()).thenReturn(BigDecimal.valueOf(80000));
         when(systemConfigService.getSeatVipMultiplier()).thenReturn(BigDecimal.valueOf(1.5));
         when(systemConfigService.getSeatCoupleMultiplier()).thenReturn(BigDecimal.valueOf(2.5));
         when(systemConfigService.getVatRate()).thenReturn(BigDecimal.valueOf(0.1)); // 10%

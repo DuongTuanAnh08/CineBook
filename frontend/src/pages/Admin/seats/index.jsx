@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Armchair, Settings, Save, Loader2, RefreshCw } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import roomApi from '@/api/roomApi';
@@ -21,6 +22,7 @@ const SEAT_COLORS = {
 };
 
 export default function AdminSeatsPage() {
+  const [searchParams] = useSearchParams();
   const [realCinemas, setRealCinemas] = useState([]);
   const [realRooms, setRealRooms] = useState([]);
   const [selectedCinema, setSelectedCinema] = useState('');
@@ -76,12 +78,18 @@ export default function AdminSeatsPage() {
         if (roomRes.success && roomRes.data && roomRes.data.content) {
           setRealRooms(roomRes.data.content);
         }
+        
+        // Auto-select if query params are present
+        const cinemaIdParam = searchParams.get('cinemaId');
+        const roomIdParam = searchParams.get('roomId');
+        if (cinemaIdParam) setSelectedCinema(cinemaIdParam);
+        if (roomIdParam) setSelectedRoom(roomIdParam);
       } catch (e) {
         console.error(e);
       }
     };
     fetchBaseData();
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     if (selectedRoom) {

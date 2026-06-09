@@ -23,6 +23,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.cinebook.backend.modules.cinemas.repository.CinemaRepository;
+import com.cinebook.backend.modules.rooms.repository.SeatRepository;
+import com.cinebook.backend.modules.bookings.repository.BookingSeatRepository;
+import com.cinebook.backend.modules.showtimes.repository.SeatHoldRepository;
+import com.cinebook.backend.modules.users.UserRepository;
+import com.cinebook.backend.modules.config.service.SystemConfigService;
 
 @ExtendWith(MockitoExtension.class)
 class ShowtimeServiceTest {
@@ -38,6 +43,21 @@ class ShowtimeServiceTest {
 
     @Mock
     private CinemaRepository cinemaRepository;
+
+    @Mock
+    private SeatRepository seatRepository;
+
+    @Mock
+    private BookingSeatRepository bookingSeatRepository;
+
+    @Mock
+    private SeatHoldRepository seatHoldRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private SystemConfigService systemConfigService;
 
     @InjectMocks
     private ShowtimeService showtimeService;
@@ -59,6 +79,7 @@ class ShowtimeServiceTest {
 
         Room room = new Room();
         room.setRoomId(1L);
+        room.setCapacity(100);
 
         when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
         when(cinemaRepository.findById(1L)).thenReturn(Optional.of(cinema));
@@ -66,6 +87,8 @@ class ShowtimeServiceTest {
         // No overlapping showtimes
         when(showtimeRepository.existsConflictingShowtime(anyLong(), any(), any())).thenReturn(false);
         
+        when(bookingSeatRepository.findBookedSeatsByShowtime(anyLong())).thenReturn(java.util.Collections.emptyList());
+
         Showtime savedShowtime = Showtime.builder().showtimeId(100L).movie(movie).cinema(cinema).room(room).startTime(request.getStartTime()).endTime(request.getStartTime().plusMinutes(120)).build();
         when(showtimeRepository.save(any(Showtime.class))).thenReturn(savedShowtime);
 
@@ -101,7 +124,7 @@ class ShowtimeServiceTest {
         when(showtimeRepository.existsConflictingShowtime(anyLong(), any(), any())).thenReturn(true);
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> showtimeService.createShowtime(request));
-        assertEquals("Showtime conflicts with an existing schedule in the same room.", exception.getMessage());
+        assertEquals("Lịch chiếu này bị trùng thời gian với một lịch chiếu khác trong cùng phòng.", exception.getMessage());
         verify(showtimeRepository, never()).save(any(Showtime.class));
     }
 }

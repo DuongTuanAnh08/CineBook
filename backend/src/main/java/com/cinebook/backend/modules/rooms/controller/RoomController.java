@@ -31,7 +31,7 @@ public class RoomController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('SystemAdmin')")
+    @PreAuthorize("hasAnyRole('SystemAdmin', 'ScheduleManager')")
     public ApiResponse<RoomDto> createRoom(@RequestBody RoomRequest request) {
         return ApiResponse.ok(roomService.createRoom(request));
     }
@@ -48,9 +48,10 @@ public class RoomController {
     }
 
     @PostMapping("/{id}/seats")
-    @PreAuthorize("hasRole('SystemAdmin')")
+    @PreAuthorize("hasAnyRole('SystemAdmin', 'ScheduleManager')")
     public ApiResponse<List<SeatConfigDto>> configureSeats(@PathVariable Long id,
                                                             @RequestBody List<SeatConfigDto> seatConfigs) {
         return ApiResponse.ok(roomService.configureSeats(id, seatConfigs));
     }
 }
+

@@ -11,9 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Plus, MoreHorizontal, Pencil, Trash2, Clock, List, AlertCircle } from 'lucide-react';
+import { Calendar, Plus, MoreHorizontal, Pencil, Trash2, Clock, List, AlertCircle, Eye, Loader2 } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
+import { cn } from '@/lib/utils';
 
 import movieApi from '../../../api/movieApi';
 import cinemaApi from '../../../api/cinemaApi';
@@ -51,6 +52,50 @@ export default function AdminShowtimesPage() {
     movieId: '', cinemaId: '', roomId: '', date: TODAY, startTime: '09:00', priceOverride: 90000
   });
 
+  // Seat modal states
+  const [selectedShowtimeForSeats, setSelectedShowtimeForSeats] = useState(null);
+  const [showtimeSeats, setShowtimeSeats] = useState([]);
+  const [isSeatsDialogOpen, setIsSeatsDialogOpen] = useState(false);
+  const [isLoadingSeats, setIsLoadingSeats] = useState(false);
+
+  const handleViewSeats = async (showtime) => {
+    setSelectedShowtimeForSeats(showtime);
+    setIsSeatsDialogOpen(true);
+    setIsLoadingSeats(true);
+    try {
+      const res = await showtimeApi.getSeats(showtime.showtimeId);
+      if (res.success) {
+        setShowtimeSeats(res.data || []);
+      }
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Lỗi", description: "Không thể tải sơ đồ ghế của suất chiếu này", variant: "destructive" });
+    } finally {
+      setIsLoadingSeats(false);
+    }
+  };
+
+  const formattedSeatsGrid = useMemo(() => {
+    if (!Array.isArray(showtimeSeats) || showtimeSeats.length === 0) {
+      return [];
+    }
+    const grouped = {};
+    showtimeSeats.forEach(s => {
+      if (s && s.rowLabel) {
+        if (!grouped[s.rowLabel]) grouped[s.rowLabel] = [];
+        grouped[s.rowLabel].push(s);
+      }
+    });
+
+    return Object.keys(grouped).sort().map(rowLabel => {
+      const rowSeats = grouped[rowLabel].sort((a, b) => (a.colNumber || 0) - (b.colNumber || 0));
+      return {
+        rowLabel,
+        seats: rowSeats
+      };
+    });
+  }, [showtimeSeats]);
+
   const fetchData = async () => {
     try {
       const [moviesRes, cinemasRes, roomsRes, showtimesRes] = await Promise.all([
@@ -71,7 +116,7 @@ export default function AdminShowtimesPage() {
           date: dateTime[0],
           timeString: dateTime[1].substring(0, 5),
           endTimeString: endDateTime[1].substring(0, 5),
-          availableSeats: s.totalSeats, // Since we don't have bookings yet
+          availableSeats: s.availableSeats !== undefined ? s.availableSeats : s.totalSeats,
         };
       });
       setShowtimes(mappedShowtimes);
@@ -257,7 +302,15 @@ export default function AdminShowtimesPage() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="icon" className="w-8 h-8" disabled><MoreHorizontal className="w-4 h-4" /></Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="gap-1 hover:text-primary"
+                            onClick={() => handleViewSeats(s)}
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            Xem ghế
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );
@@ -391,6 +444,91 @@ export default function AdminShowtimesPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Hủy</Button>
             <Button onClick={handleSave}>Lưu thông tin</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Seats Dialog */}
+      <Dialog open={isSeatsDialogOpen} onOpenChange={setIsSeatsDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Sơ đồ ghế - Suất chiếu {selectedShowtimeForSeats?.timeString}</DialogTitle>
+          </DialogHeader>
+          <div className="py-2 text-sm space-y-1">
+            <p><strong>Phim:</strong> {selectedShowtimeForSeats?.movieTitle}</p>
+            <p><strong>Phòng:</strong> {selectedShowtimeForSeats?.roomName} ({selectedShowtimeForSeats?.cinemaName})</p>
+          </div>
+
+          {isLoadingSeats ? (
+            <div className="flex justify-center p-12">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : showtimeSeats.length === 0 ? (
+            <div className="text-center p-6 text-muted-foreground">Không có dữ liệu ghế.</div>
+          ) : (
+            <div className="flex flex-col items-center gap-4 py-4">
+              <div className="w-4/5 h-1.5 bg-primary/60 rounded-full" />
+              <p className="text-[10px] text-muted-foreground -mt-3">MÀN HÌNH</p>
+
+              {/* Grid */}
+              <div className="space-y-1.5 mt-4 overflow-x-auto w-full max-w-full pb-2">
+                {formattedSeatsGrid.map(row => (
+                  <div key={row.rowLabel} className="flex items-center gap-1 justify-center min-w-max">
+                    <span className="w-4 text-[10px] text-muted-foreground text-center">{row.rowLabel}</span>
+                    <div className="flex gap-1">
+                      {row.seats.map((seat, indexInRow) => {
+                        if (indexInRow > 0 && row.seats[indexInRow - 1] && row.seats[indexInRow - 1].seatType === 'Couple' && seat.seatType === 'Hidden') {
+                          return null;
+                        }
+                        
+                        let seatBg = 'bg-secondary/40 border-border';
+                        let textColor = 'text-foreground';
+                        if (seat.status === 'Booked') {
+                          seatBg = 'bg-red-500/80 border-red-600 text-white font-semibold';
+                        } else if (seat.status === 'Held') {
+                          seatBg = 'bg-orange-500/80 border-orange-600 text-white font-semibold';
+                        } else {
+                          if (seat.seatType === 'VIP') seatBg = 'bg-yellow-500/20 border-yellow-500/40 text-yellow-600';
+                          else if (seat.seatType === 'Couple') seatBg = 'bg-pink-500/20 border-pink-500/40 text-pink-600';
+                        }
+
+                        if (seat.seatType === 'Hidden' && seat.status !== 'Booked' && seat.status !== 'Held') {
+                          return <div key={seat.seatId} className="w-6 h-6 opacity-0 pointer-events-none" />;
+                        }
+
+                        return (
+                          <div
+                            key={seat.seatId}
+                            className={cn(
+                              "h-6 rounded-t-sm text-[9px] flex items-center justify-center border transition-colors select-none",
+                              seat.seatType === 'Couple' ? 'w-14' : 'w-6',
+                              seatBg,
+                              textColor
+                            )}
+                            title={`${seat.seatLabel || ''} [${seat.seatType || ''}] - ${seat.status || ''}`}
+                          >
+                            {(seat.seatLabel || '').replace(/^[A-Z]+/, '')}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <span className="w-4 text-[10px] text-muted-foreground text-center">{row.rowLabel}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Legend */}
+              <div className="flex items-center justify-center flex-wrap gap-4 text-[11px] text-muted-foreground pt-4 border-t w-full mt-4">
+                <div className="flex items-center gap-1"><div className="w-3.5 h-3.5 rounded-t-sm bg-secondary/40 border" /> Thường</div>
+                <div className="flex items-center gap-1"><div className="w-3.5 h-3.5 rounded-t-sm bg-yellow-500/20 border border-yellow-500/40" /> VIP</div>
+                <div className="flex items-center gap-1"><div className="w-3.5 h-3.5 rounded-t-sm bg-pink-500/20 border border-pink-500/40" /> Ghế đôi</div>
+                <div className="flex items-center gap-1"><div className="w-3.5 h-3.5 rounded-t-sm bg-red-500/80 border border-red-600" /> Đã bán</div>
+                <div className="flex items-center gap-1"><div className="w-3.5 h-3.5 rounded-t-sm bg-orange-500/80 border border-orange-600" /> Đang giữ (chờ thanh toán)</div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={() => setIsSeatsDialogOpen(false)}>Đóng</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

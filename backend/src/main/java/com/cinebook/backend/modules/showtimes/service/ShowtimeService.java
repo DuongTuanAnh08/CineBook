@@ -67,6 +67,7 @@ public class ShowtimeService {
     }
 
     private ShowtimeDto mapToDto(Showtime s) {
+        int bookedCount = bookingSeatRepository.findBookedSeatsByShowtime(s.getShowtimeId()).size();
         return ShowtimeDto.builder()
                 .showtimeId(s.getShowtimeId())
                 .movieId(s.getMovie().getMovieId())
@@ -80,6 +81,7 @@ public class ShowtimeService {
                 .priceOverride(s.getPriceOverride())
                 .status(s.getStatus())
                 .totalSeats(s.getRoom().getCapacity())
+                .availableSeats(s.getRoom().getCapacity() - bookedCount)
                 .build();
     }
 
@@ -214,6 +216,12 @@ public class ShowtimeService {
                 .orElseThrow(() -> new RuntimeException("Room not found"));
 
         LocalDateTime startTime = request.getStartTime();
+        if (startTime == null) {
+            throw AppException.badRequest("Thời gian bắt đầu không được để trống.");
+        }
+        if (startTime.isBefore(LocalDateTime.now())) {
+            throw AppException.badRequest("Không thể tạo suất chiếu ở thời gian trong quá khứ.");
+        }
         LocalDateTime endTime = startTime.plusMinutes(movie.getDurationMin());
         LocalDateTime endTimeWithBuffer = endTime.plusMinutes(15);
 
@@ -255,6 +263,9 @@ public class ShowtimeService {
             showtime.setRoom(room);
         }
         if (request.getStartTime() != null) {
+            if (request.getStartTime().isBefore(LocalDateTime.now())) {
+                throw AppException.badRequest("Không thể cập nhật suất chiếu sang thời gian trong quá khứ.");
+            }
             showtime.setStartTime(request.getStartTime());
             showtime.setEndTime(request.getStartTime().plusMinutes(showtime.getMovie().getDurationMin()));
         }
