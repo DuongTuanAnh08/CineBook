@@ -19,9 +19,11 @@ import movieApi from '@/api/movieApi';
 import uploadApi from '@/api/uploadApi';
 import genreApi from '@/api/genreApi';
 import { useAuth } from '@/contexts/auth-context';
+import { useData } from '@/contexts/data-context';
 
 export default function AdminMoviesPage() {
   const { user } = useAuth();
+  const { refreshMovies } = useData();
   const role = user?.role || 'admin';
   const [movies, setMovies] = useState([]);
   const [allGenres, setAllGenres] = useState([]);
@@ -52,9 +54,10 @@ export default function AdminMoviesPage() {
           ...m,
           id: m.movieId,
           poster: m.posterUrl,
+          duration: m.durationMin,
           status: m.status === 'NowShowing' ? 'now_showing' : 
-                  m.status === 'ComingSoon' ? 'coming_soon' : 'stopped',
-          rating: m.rating || 4.5
+                  m.status === 'ComingSoon' ? 'coming_soon' : 'hidden',
+          rating: Number(m.avgRating ?? 0)
         }));
         setMovies(mappedMovies);
       }
@@ -85,7 +88,7 @@ export default function AdminMoviesPage() {
 
   const openAdd = () => {
     setEditingMovie(null);
-    setFormData({ title: '', originalTitle: '', synopsis: '', director: '', castList: '', releaseDate: new Date().toISOString().split('T')[0], language: 'Vietnamese', trailerUrl: '', poster: '', duration: '', status: 'now_showing', ageRating: 'PG-13', rating: 4.5, genreIds: [] });
+    setFormData({ title: '', originalTitle: '', synopsis: '', director: '', castList: '', releaseDate: new Date().toISOString().split('T')[0], language: 'Vietnamese', trailerUrl: '', poster: '', duration: '', status: 'now_showing', ageRating: 'PG-13', rating: 0, genreIds: [] });
     setIsDialogOpen(true);
   };
 
@@ -104,7 +107,7 @@ export default function AdminMoviesPage() {
       duration: movie.durationMin || movie.duration || '', 
       status: movie.status === 'NowShowing' ? 'now_showing' : (movie.status === 'ComingSoon' ? 'coming_soon' : 'now_showing'), 
       ageRating: movie.ageRating || 'PG-13', 
-      rating: movie.rating || 4.5,
+      rating: Number(movie.avgRating ?? movie.rating ?? 0),
       genreIds: movie.genres ? movie.genres.map(g => g.genreId) : []
     });
     setIsDialogOpen(true);
@@ -154,12 +157,14 @@ export default function AdminMoviesPage() {
         if (res.success) {
           toast.success("Cập nhật phim thành công!");
           fetchMovies();
+          await refreshMovies();
         }
       } else {
         const res = await movieApi.createMovie(payload);
         if (res.success) {
           toast.success("Thêm phim mới thành công!");
           fetchMovies();
+          await refreshMovies();
         }
       }
       setIsDialogOpen(false);
@@ -183,6 +188,7 @@ export default function AdminMoviesPage() {
         if (res.success) {
            toast.success("Xóa phim thành công!");
            fetchMovies();
+           await refreshMovies();
         }
       } catch (error) {
         toast.error(error.message || "Không thể xóa phim này");

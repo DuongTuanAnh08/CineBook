@@ -8,6 +8,7 @@ export function StarRating({
   showValue = true,
   className,
 }) {
+  const numericRating = Number(rating ?? 0)
   const sizeClasses = {
     sm: 'size-3',
     md: 'size-4',
@@ -24,8 +25,8 @@ export function StarRating({
     <div className={cn('flex items-center gap-1', className)}>
       <div className="flex items-center">
         {Array.from({ length: maxRating }).map((_, index) => {
-          const filled = index < Math.floor(rating)
-          const halfFilled = !filled && index < rating
+          const filled = index < Math.floor(numericRating)
+          const halfFilled = !filled && index < numericRating
 
           return (
             <Star
@@ -44,7 +45,7 @@ export function StarRating({
       </div>
       {showValue && (
         <span className={cn('font-medium text-accent', textClasses[size])}>
-          {rating.toFixed(1)}
+          {numericRating.toFixed(1)}
         </span>
       )}
     </div>

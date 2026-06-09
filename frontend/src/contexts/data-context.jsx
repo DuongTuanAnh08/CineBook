@@ -3,38 +3,39 @@ import { movies as initialMovies, cinemas as initialCinemas, concessionItems as 
 
 const DataContext = createContext(undefined);
 
+const mapMovieFromApi = (m) => ({
+  ...m,
+  id: m.movieId?.toString(),
+  poster: m.posterUrl,
+  backdrop: m.posterUrl,
+  trailer: m.trailerUrl,
+  rating: Number(m.avgRating ?? 0),
+  duration: m.durationMin,
+  status: m.status === 'NowShowing' ? 'now_showing' : (m.status === 'ComingSoon' ? 'coming_soon' : m.status),
+  genres: m.genres ? m.genres.map(g => g.name) : [],
+  description: m.synopsis,
+  cast: m.castList ? m.castList.split(',').map((c, i) => ({ id: i.toString(), name: c.trim() })) : []
+});
+
 export function DataProvider({ children }) {
   // Khởi tạo state rỗng ban đầu, sẽ được fetch từ backend
   const [movies, setMovies] = useState([]);
 
+  const refreshMovies = async () => {
+    try {
+      const { default: movieApi } = await import('@/api/movieApi');
+      const response = await movieApi.getMovies();
+      if (response.success && response.data?.content) {
+        setMovies(response.data.content.map(mapMovieFromApi));
+      }
+    } catch (err) {
+      console.error('Failed to fetch movies from API', err);
+    }
+  };
+
   // Fetch movies from real backend API on mount
   useEffect(() => {
-    const fetchMovies = async () => {
-      try {
-        const { default: movieApi } = await import('@/api/movieApi');
-        const response = await movieApi.getMovies();
-        if (response.success && response.data?.content) {
-          // Backend returns paginated list, map it to match frontend expected structure
-          const mappedMovies = response.data.content.map(m => ({
-            ...m,
-            id: m.movieId.toString(),
-            poster: m.posterUrl,
-            backdrop: m.posterUrl, // or backdropUrl if you add it later
-            trailer: m.trailerUrl,
-            rating: m.avgRating,
-            duration: m.durationMin,
-            status: m.status === 'NowShowing' ? 'now_showing' : (m.status === 'ComingSoon' ? 'coming_soon' : m.status),
-            genres: m.genres ? m.genres.map(g => g.name) : [],
-            description: m.synopsis,
-            cast: m.castList ? m.castList.split(',').map((c, i) => ({ id: i.toString(), name: c.trim() })) : []
-          }));
-          setMovies(mappedMovies);
-        }
-      } catch (err) {
-        console.error('Failed to fetch movies from API', err);
-      }
-    };
-    fetchMovies();
+    refreshMovies();
   }, []);
 
   const [cinemas, setCinemas] = useState([]);
@@ -243,7 +244,7 @@ export function DataProvider({ children }) {
   return (
     <DataContext.Provider value={{
       movies, cinemas, concessions, resaleListings, bookings, showtimes, news, settings,
-      addMovie, updateMovie, deleteMovie,
+      refreshMovies, addMovie, updateMovie, deleteMovie,
       addShowtime, updateShowtime, deleteShowtime,
       createBooking,
       addConcession, updateConcession, deleteConcession,
