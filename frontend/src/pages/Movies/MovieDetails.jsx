@@ -214,7 +214,7 @@ export default function MovieDetailPage() {
                     <DialogTitle className="sr-only">Trailer: {movie.title}</DialogTitle>
                     <div className="aspect-video">
                       <iframe
-                        src={`https://www.youtube.com/embed/${movie.trailer}?autoplay=1`}
+                        src={movie.trailer.startsWith('http') ? (movie.trailer.includes('?') ? `${movie.trailer}&autoplay=1` : `${movie.trailer}?autoplay=1`) : `https://www.youtube.com/embed/${movie.trailer}?autoplay=1`}
                         title={`Trailer: ${movie.title}`}
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
@@ -463,7 +463,7 @@ export default function MovieDetailPage() {
               <Card className="overflow-hidden border-border/50 p-0">
                 <div className="aspect-video">
                   <iframe
-                    src={`https://www.youtube.com/embed/${movie.trailer}`}
+                    src={movie.trailer.startsWith('http') ? movie.trailer : `https://www.youtube.com/embed/${movie.trailer}`}
                     title={`Trailer: ${movie.title}`}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
