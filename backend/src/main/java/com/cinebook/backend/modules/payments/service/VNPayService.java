@@ -54,11 +54,11 @@ public class VNPayService {
         vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
         
         // Expire time is holdExpiresAt
-        if (booking.getHoldExpiresAt() != null) {
-            Calendar expireCld = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
-            expireCld.setTime(java.sql.Timestamp.valueOf(booking.getHoldExpiresAt()));
-            vnp_Params.put("vnp_ExpireDate", formatter.format(expireCld.getTime()));
-        }
+        // if (booking.getHoldExpiresAt() != null) {
+        //     Calendar expireCld = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+        //     expireCld.setTime(java.sql.Timestamp.valueOf(booking.getHoldExpiresAt()));
+        //     vnp_Params.put("vnp_ExpireDate", formatter.format(expireCld.getTime()));
+        // }
 
         List<String> fieldNames = new ArrayList<>(vnp_Params.keySet());
         Collections.sort(fieldNames);

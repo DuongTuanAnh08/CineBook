@@ -11,6 +11,7 @@ import { getStaticSeatLayout } from '@/lib/seat-layout';
 import { useToast } from '@/hooks/use-toast';
 import { Monitor, Loader2 } from 'lucide-react';
 import showtimeApi from '@/api/showtimeApi';
+import configApi from '@/api/configApi';
 const DEFAULT_PRICING = {
   standard: 75000,
   vip: 100000,
@@ -35,10 +36,24 @@ export function SeatSelection({
   const [isConfirming, setIsConfirming] = useState(false);
   const [isLoadingSeats, setIsLoadingSeats] = useState(false);
   const [realSeats, setRealSeats] = useState(null);
+  const [dynamicMaxSeats, setDynamicMaxSeats] = useState(maxSeats);
   const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    configApi.getAllConfigs()
+      .then(res => {
+        if (res.success && res.data) {
+          const seatLimitConfig = res.data.find(c => c.configKey === 'max_seats_per_booking');
+          if (seatLimitConfig && seatLimitConfig.configValue) {
+            setDynamicMaxSeats(parseInt(seatLimitConfig.configValue, 10));
+          }
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   useEffect(() => {
     let interval;
@@ -143,10 +158,10 @@ export function SeatSelection({
       }
     } else {
       // Check max seats limit
-      if (selectedSeats.length >= maxSeats) {
+      if (selectedSeats.length >= dynamicMaxSeats) {
         toast({
           title: 'Đã đạt giới hạn ghế',
-          description: `Bạn chỉ có thể chọn tối đa ${maxSeats} ghế`,
+          description: `Bạn chỉ có thể chọn tối đa ${dynamicMaxSeats} ghế`,
           variant: 'destructive'
         });
         return;
@@ -169,7 +184,7 @@ export function SeatSelection({
         });
       }
     }
-  }, [maxSeats, toast, isAuthenticated, navigate, location.pathname, selectedSeats, showtimeId]);
+  }, [dynamicMaxSeats, toast, isAuthenticated, navigate, location.pathname, selectedSeats, showtimeId]);
   const handleConfirm = useCallback(() => {
     if (selectedSeats.length === 0) {
       toast({
@@ -234,7 +249,7 @@ export function SeatSelection({
                   // Add aisle gap for standard/vip rows
                   const showAisle = seat.type !== 'couple' && (index === 2 || index === 7);
                   return <div key={seat.id} className="flex items-center">
-                          <SeatButton seat={seat} isSelected={selectedSeats.some(s => s.id === seat.id)} onSelect={handleSeatSelect} disabled={selectedSeats.length >= maxSeats && !selectedSeats.some(s => s.id === seat.id)} />
+                          <SeatButton seat={seat} isSelected={selectedSeats.some(s => s.id === seat.id)} onSelect={handleSeatSelect} disabled={selectedSeats.length >= dynamicMaxSeats && !selectedSeats.some(s => s.id === seat.id)} />
                           {showAisle && <div className="w-6" />}
                         </div>;
                 })}

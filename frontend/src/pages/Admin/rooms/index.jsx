@@ -16,6 +16,8 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import roomApi from '@/api/roomApi';
 import cinemaApi from '@/api/cinemaApi';
+import { useClientPagination } from '@/hooks/use-client-pagination';
+import { ClientPagination } from '@/components/ui/client-pagination';
 
 export default function AdminRoomsPage() {
   const navigate = useNavigate();
@@ -67,6 +69,8 @@ export default function AdminRoomsPage() {
   }, []);
 
   const filtered = rooms.filter(r => selectedCinema === 'all' || r.cinemaId?.toString() === selectedCinema.toString());
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered, 10);
+  
   const activeCount = filtered.filter(r => r.status === 'Active' || r.status === 'active').length;
 
   const openAdd = () => {
@@ -194,7 +198,7 @@ export default function AdminRoomsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map(room => (
+              {currentDataOnPage.map(room => (
                 <TableRow key={room.id} className="border-border">
                   <TableCell className="font-medium">{room.name}</TableCell>
                   <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
@@ -236,7 +240,20 @@ export default function AdminRoomsPage() {
                 </TableRow>
               )}
             </TableBody>
-          </Table>
+            </Table>
+          )}
+          
+          {!isLoading && filtered.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-border">
+              <div className="text-sm text-muted-foreground mb-4 sm:mb-0">
+                Hiển thị {startIndex + 1}-{endIndex} trên tổng số {totalItems} phòng chiếu
+              </div>
+              <ClientPagination 
+                currentPage={currentPage} 
+                totalPages={totalPages} 
+                onPageChange={handlePageChange} 
+              />
+            </div>
           )}
         </CardContent>
       </Card>

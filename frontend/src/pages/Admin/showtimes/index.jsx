@@ -20,6 +20,8 @@ import movieApi from '../../../api/movieApi';
 import cinemaApi from '../../../api/cinemaApi';
 import roomApi from '../../../api/roomApi';
 import showtimeApi from '../../../api/showtimeApi';
+import { useClientPagination } from '@/hooks/use-client-pagination';
+import { ClientPagination } from '@/components/ui/client-pagination';
 
 const getLocalYYYYMMDD = () => {
   const d = new Date();
@@ -136,6 +138,8 @@ export default function AdminShowtimesPage() {
     const matchDate = s.date === selectedDate;
     return matchMovie && matchCinema && matchDate;
   });
+
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered, 10);
 
   const openAdd = () => {
     setFormData({ 
@@ -282,7 +286,7 @@ export default function AdminShowtimesPage() {
                         Không có suất chiếu nào
                       </TableCell>
                     </TableRow>
-                  ) : filtered.map(s => {
+                  ) : currentDataOnPage.map(s => {
                     const occupancy = Math.round((1 - s.availableSeats / s.totalSeats) * 100);
                     return (
                       <TableRow key={s.showtimeId} className="border-border">
@@ -317,6 +321,18 @@ export default function AdminShowtimesPage() {
                   })}
                 </TableBody>
               </Table>
+              {filtered.length > 0 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-border">
+                  <div className="text-sm text-muted-foreground mb-4 sm:mb-0">
+                    Hiển thị {startIndex + 1}-{endIndex} trên tổng số {totalItems} suất chiếu
+                  </div>
+                  <ClientPagination 
+                    currentPage={currentPage} 
+                    totalPages={totalPages} 
+                    onPageChange={handlePageChange} 
+                  />
+                </div>
+              )}
             </TabsContent>
             
             <TabsContent value="calendar" className="m-0 border-t border-border p-6 overflow-x-auto">

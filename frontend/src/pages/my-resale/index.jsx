@@ -16,6 +16,8 @@ import { Calendar, Clock, MapPin, Armchair, Pencil, Trash2, RefreshCw, Plus, Ale
 import { Link } from 'react-router-dom';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useClientPagination } from '@/hooks/use-client-pagination';
+import { ClientPagination } from '@/components/ui/client-pagination';
 const TICKET_TYPE_LABELS = {
   standard: 'Thường',
   vip: 'VIP',
@@ -65,6 +67,8 @@ export default function MyResaleListingsPage() {
   useEffect(() => {
     fetchListings();
   }, []);
+
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(listings, 10);
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -156,7 +160,7 @@ export default function MyResaleListingsPage() {
               <Link to="/my-tickets">Xem vé của tôi</Link>
             </Button>
           </div> : <div className="space-y-4">
-            {listings.map(listing => {
+            {currentDataOnPage.map(listing => {
           const displayDate = listing.showDate ? new Date(listing.showDate).toLocaleDateString('vi-VN', {
             weekday: 'short',
             day: '2-digit',
@@ -256,6 +260,19 @@ export default function MyResaleListingsPage() {
                 </Card>;
         })}
           </div>}
+
+        {!loading && listings.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between mt-6 p-4 bg-card border border-border rounded-lg">
+            <div className="text-sm text-muted-foreground mb-4 sm:mb-0">
+              Hiển thị {startIndex + 1}-{endIndex} trên tổng số {totalItems} bài đăng
+            </div>
+            <ClientPagination 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              onPageChange={handlePageChange} 
+            />
+          </div>
+        )}
       </div>
 
       {/* Edit Dialog */}

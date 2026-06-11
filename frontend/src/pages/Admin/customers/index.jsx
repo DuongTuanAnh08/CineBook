@@ -13,6 +13,8 @@ import { Users, Search, MoreHorizontal, Eye, Ban, Download } from 'lucide-react'
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import adminUserApi from '@/api/adminUserApi';
+import { useClientPagination } from '@/hooks/use-client-pagination';
+import { ClientPagination } from '@/components/ui/client-pagination';
 
 function getInitials(name) {
   if (!name) return 'U';
@@ -95,6 +97,8 @@ export default function AdminCustomersPage() {
     (c.email || '').toLowerCase().includes(search.toLowerCase()) || 
     (c.phone || '').includes(search)
   );
+
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered, 10);
 
   const activeCount = customers.filter(c => c.status === 'Active').length;
   const vipCount = customers.filter(c => (c.totalSpent || 0) >= 4000000).length;
@@ -201,7 +205,7 @@ export default function AdminCustomersPage() {
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-4">Không tìm thấy khách hàng</TableCell>
                   </TableRow>
-                ) : filtered.map(customer => {
+                ) : currentDataOnPage.map(customer => {
                 const tier = getTier(customer.totalSpent);
                 return <TableRow key={customer.userId} className="border-border">
                       <TableCell>
@@ -267,6 +271,18 @@ export default function AdminCustomersPage() {
               })}
               </TableBody>
             </Table>
+            {!loading && filtered.length > 0 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-border">
+                <div className="text-sm text-muted-foreground mb-4 sm:mb-0">
+                  Hiển thị {startIndex + 1}-{endIndex} trên tổng số {totalItems} khách hàng
+                </div>
+                <ClientPagination 
+                  currentPage={currentPage} 
+                  totalPages={totalPages} 
+                  onPageChange={handlePageChange} 
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

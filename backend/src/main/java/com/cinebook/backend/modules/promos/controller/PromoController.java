@@ -12,13 +12,13 @@ public class PromoController {
     private final PromoService service;
 
     @GetMapping("/validate")
-    public ApiResponse<Boolean> validatePromo(
+    public ApiResponse<com.cinebook.backend.modules.promos.entity.PromoCode> validatePromo(
             @RequestParam String code,
             @RequestParam Long userId,
             @RequestParam Integer orderValue) {
         try {
-            boolean isValid = service.validatePromo(code, userId, orderValue);
-            return ApiResponse.ok(isValid);
+            com.cinebook.backend.modules.promos.entity.PromoCode promo = service.validatePromo(code, userId, orderValue);
+            return ApiResponse.ok(promo);
         } catch (Exception e) {
             return ApiResponse.error("BAD_REQUEST", e.getMessage());
         }

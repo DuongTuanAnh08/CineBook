@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import newsApi from '@/api/newsApi';
+import { useClientPagination } from '@/hooks/use-client-pagination';
+import { ClientPagination } from '@/components/ui/client-pagination';
 
 export default function NewsPage() {
   const [news, setNews] = useState([]);
@@ -14,6 +16,9 @@ export default function NewsPage() {
     }).finally(() => setLoading(false));
   }, []);
 
+  const publishedNews = useMemo(() => news.filter(n => n.status === 'Published'), [news]);
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(publishedNews, 9); // 9 per page for 3 columns
+
   if (loading) return <div className="text-center py-10">Đang tải...</div>;
 
   return (
@@ -22,9 +27,10 @@ export default function NewsPage() {
       {news.length === 0 ? (
         <p className="text-muted-foreground">Chưa có bài viết nào.</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {news.filter(n => n.status === 'Published').map(article => (
-            <Link to={`/news/${article.id}`} key={article.id} className="block group">
+        <div className="space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {currentDataOnPage.map(article => (
+              <Link to={`/news/${article.id}`} key={article.id} className="block group">
               <div className="flex flex-col h-full overflow-hidden rounded-xl border bg-card text-card-foreground shadow hover:shadow-lg transition-all">
                 <div className="aspect-video relative w-full overflow-hidden">
                   <img 
@@ -45,8 +51,22 @@ export default function NewsPage() {
                   </p>
                 </div>
               </div>
-            </Link>
-          ))}
+              </Link>
+            ))}
+          </div>
+          
+          {publishedNews.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-card border border-border rounded-xl">
+              <div className="text-sm text-muted-foreground mb-4 sm:mb-0">
+                Hiển thị {startIndex + 1}-{endIndex} trên tổng số {totalItems} bài viết
+              </div>
+              <ClientPagination 
+                currentPage={currentPage} 
+                totalPages={totalPages} 
+                onPageChange={handlePageChange} 
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

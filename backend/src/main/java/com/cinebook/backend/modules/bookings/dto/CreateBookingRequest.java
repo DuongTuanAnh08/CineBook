@@ -18,4 +18,6 @@ public class CreateBookingRequest {
 
     @jakarta.validation.Valid
     private List<FnBItemRequest> fnbItems;
+
+    private String promoCode;
 }

@@ -13,6 +13,8 @@ import newsApi from '../../../api/newsApi';
 import uploadApi from '@/api/uploadApi';
 import { useAuth } from '@/contexts/auth-context';
 import { useRef } from 'react';
+import { useClientPagination } from '@/hooks/use-client-pagination';
+import { ClientPagination } from '@/components/ui/client-pagination';
 
 export default function AdminNews() {
   const [news, setNews] = useState([]);
@@ -29,6 +31,8 @@ export default function AdminNews() {
     thumbnailUrl: '',
     status: 'Published'
   });
+
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(news, 10);
 
   const fetchNews = async () => {
     try {
@@ -161,7 +165,7 @@ export default function AdminNews() {
                 <TableCell colSpan={4} className="text-center py-4">Chưa có bài viết nào</TableCell>
               </TableRow>
             ) : (
-              news.map(article => (
+              currentDataOnPage.map(article => (
                 <TableRow key={article.id}>
                   <TableCell className="font-medium">
                     <div className="line-clamp-1">{article.title}</div>
@@ -185,6 +189,18 @@ export default function AdminNews() {
             )}
           </TableBody>
         </Table>
+        {news.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-border">
+            <div className="text-sm text-muted-foreground mb-4 sm:mb-0">
+              Hiển thị {startIndex + 1}-{endIndex} trên tổng số {totalItems} bài viết
+            </div>
+            <ClientPagination 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              onPageChange={handlePageChange} 
+            />
+          </div>
+        )}
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={(open) => {

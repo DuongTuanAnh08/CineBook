@@ -100,7 +100,7 @@ class BookingServiceTest {
         
         when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
 
-        Booking response = bookingService.createBooking(1L, 1L, Collections.singletonList(10L), List.of());
+        Booking response = bookingService.createBooking(1L, 1L, Collections.singletonList(10L), List.of(), null);
 
         assertNotNull(response);
         assertEquals(99L, response.getId());

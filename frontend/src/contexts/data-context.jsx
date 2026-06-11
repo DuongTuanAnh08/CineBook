@@ -123,6 +123,30 @@ export function DataProvider({ children }) {
     return saved ? JSON.parse(saved) : initialSettings;
   });
 
+  // Fetch real settings from backend
+  useEffect(() => {
+    const fetchConfigs = async () => {
+      try {
+        const { default: configApi } = await import('@/api/configApi');
+        const response = await configApi.getAllConfigs();
+        if (response.success && response.data) {
+          setSettings(prev => {
+            const newSettings = { ...prev };
+            response.data.forEach(c => {
+              if (c.configKey === 'vat_rate') newSettings.vatPercent = parseFloat(c.configValue) * 100;
+              if (c.configKey === 'weekend_surcharge_percent') newSettings.weekendSurcharge = parseFloat(c.configValue);
+              if (c.configKey === 'evening_surcharge_percent') newSettings.eveningSurcharge = parseFloat(c.configValue);
+            });
+            return newSettings;
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch configs from API', err);
+      }
+    };
+    fetchConfigs();
+  }, []);
+
   // State cho Bookings (Vé đã mua)
   const [bookings, setBookings] = useState([]);
 

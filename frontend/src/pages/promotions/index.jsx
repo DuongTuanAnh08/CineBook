@@ -5,6 +5,8 @@ import { Tag, Copy, Clock, Ticket, Gift, Star } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import promoApi from '@/api/promoApi';
 import { toast } from 'sonner';
+import { useClientPagination } from '@/hooks/use-client-pagination';
+import { ClientPagination } from '@/components/ui/client-pagination';
 
 const TAG_CONFIG = {
   hot: {
@@ -53,6 +55,8 @@ export default function PromotionsPage() {
 
   const active = promotions.filter(p => p.status === 'Active');
   const expired = promotions.filter(p => p.status !== 'Active');
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(active, 10);
+  
   return (
     <div className="container mx-auto px-4 py-10 space-y-10">
         {/* Header */}
@@ -70,9 +74,10 @@ export default function PromotionsPage() {
           </h2>
           
           {active.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              {active.map(promo => {
-              const tag = TAG_CONFIG['hot'];
+            <div className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-2">
+                {currentDataOnPage.map(promo => {
+                const tag = TAG_CONFIG['hot'];
               const Icon = Ticket;
               return <Card key={promo.id} className="bg-card border-border hover:border-primary/40 transition-colors overflow-hidden">
                     <div className="absolute top-0 left-0 w-1 h-full bg-primary" />
@@ -114,7 +119,19 @@ export default function PromotionsPage() {
                       </div>
                     </CardContent>
                   </Card>;
-            })}
+              })}
+              </div>
+              
+              <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-card border border-border rounded-xl">
+                <div className="text-sm text-muted-foreground mb-4 sm:mb-0">
+                  Hiển thị {startIndex + 1}-{endIndex} trên tổng số {totalItems} khuyến mãi
+                </div>
+                <ClientPagination 
+                  currentPage={currentPage} 
+                  totalPages={totalPages} 
+                  onPageChange={handlePageChange} 
+                />
+              </div>
             </div>
           ) : (
             <div className="text-center py-10 text-muted-foreground border border-dashed rounded-xl border-border">

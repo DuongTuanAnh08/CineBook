@@ -95,8 +95,8 @@ function BookingContent() {
   const concessionTotal = orderItems.reduce((acc, o) => acc + o.item.price * o.quantity, 0);
   const currentSeatTotal = pendingSeats.reduce((acc, s) => acc + s.price, 0);
   const currentSubtotal = currentSeatTotal + concessionTotal;
-  const currentVatAmount = currentSubtotal * ((settings?.vatPercent ?? 8) / 100);
-  const currentTotal = currentSubtotal + currentVatAmount;
+  // Tax is no longer calculated here, deferred to Payment page
+  const currentTotal = currentSubtotal;
 
   const handleNextFromStep1 = (selection) => {
     const selectedMovie = movies.find(m => m.id.toString() === selection.movieId.toString());
@@ -113,14 +113,6 @@ function BookingContent() {
   };
 
   const handleConfirmSeats = selectedSeats => {
-    if (selectedSeats.length > 8) {
-      toast({
-        title: 'Lỗi',
-        description: 'Bạn chỉ được chọn tối đa 8 ghế cho mỗi giao dịch.',
-        variant: 'destructive'
-      });
-      return;
-    }
     setPendingSeats(selectedSeats);
     setConcessionOpen(true);
   };
@@ -128,8 +120,7 @@ function BookingContent() {
   const proceedToPayment = withConcession => {
     const seatTotal = pendingSeats.reduce((acc, s) => acc + s.price, 0);
     const subtotal = seatTotal + (withConcession ? concessionTotal : 0);
-    const vatAmount = subtotal * ((settings?.vatPercent ?? 8) / 100);
-    const total = subtotal + vatAmount;
+    // Tax is deferred to Payment page
     
     const queryParams = new URLSearchParams({
       seats: pendingSeats.map(s => s.id).join(','),
@@ -139,7 +130,9 @@ function BookingContent() {
       room,
       date,
       time,
-      total: total.toString()
+      total: subtotal.toString(),
+      seatTotal: seatTotal.toString(),
+      vatPercent: (settings?.vatPercent ?? 10).toString()
     });
     if (withConcession && orderItems.length > 0) {
       queryParams.set('concessions', JSON.stringify(orderItems.map(o => ({
@@ -300,8 +293,7 @@ function BookingContent() {
               <div className="space-y-1">
                 <div className="flex justify-between text-sm font-medium"><span>Tiền vé ({pendingSeats.length} ghế)</span><span>{currentSeatTotal.toLocaleString('vi-VN')}₫</span></div>
                 {orderItems.length > 0 && <div className="flex justify-between text-sm font-medium"><span>Tiền bắp nước</span><span>{concessionTotal.toLocaleString('vi-VN')}₫</span></div>}
-                <div className="flex justify-between text-sm text-muted-foreground"><span>Thuế VAT ({settings?.vatPercent ?? 8}%)</span><span>{currentVatAmount.toLocaleString('vi-VN')}₫</span></div>
-                <div className="flex justify-between font-bold text-lg pt-2"><span>Tổng thanh toán</span><span className="text-primary">{currentTotal.toLocaleString('vi-VN')}₫</span></div>
+                <div className="flex justify-between font-bold text-lg pt-2"><span>Tạm tính</span><span className="text-primary">{currentTotal.toLocaleString('vi-VN')}₫</span></div>
               </div>
             </div>
 

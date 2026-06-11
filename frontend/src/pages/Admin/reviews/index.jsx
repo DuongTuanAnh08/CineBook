@@ -9,22 +9,21 @@ import reviewApi from '@/api/reviewApi';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { Input } from '@/components/ui/input';
+import { useClientPagination } from '@/hooks/use-client-pagination';
+import { ClientPagination } from '@/components/ui/client-pagination';
 
 export default function AdminReviewsPage() {
   const [reviews, setReviews] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
   const { toast } = useToast();
 
   const fetchReviews = async () => {
     setIsLoading(true);
     try {
-      const res = await reviewApi.getAllReviewsAdmin({ page, size: 20 });
+      const res = await reviewApi.getAllReviewsAdmin({ page: 0, size: 500 });
       if (res.success && res.data) {
         setReviews(res.data.content);
-        setTotalPages(res.data.totalPages);
       }
     } catch (error) {
       toast({
@@ -39,7 +38,7 @@ export default function AdminReviewsPage() {
 
   useEffect(() => {
     fetchReviews();
-  }, [page]);
+  }, []);
 
   const handleToggleStatus = async (review) => {
     const newStatus = review.status === 'Active' ? 'Deleted' : 'Active';
@@ -66,6 +65,8 @@ export default function AdminReviewsPage() {
     r.comment?.toLowerCase().includes(search.toLowerCase()) || 
     r.customerName?.toLowerCase().includes(search.toLowerCase())
   );
+
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filteredReviews, 10);
 
   return (
     <div className="space-y-6">
@@ -118,7 +119,7 @@ export default function AdminReviewsPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredReviews.map((review) => (
+                currentDataOnPage.map((review) => (
                   <TableRow key={review.id}>
                     <TableCell className="font-medium">
                       {review.customerName}
@@ -161,27 +162,16 @@ export default function AdminReviewsPage() {
           </Table>
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-end space-x-2 p-4 border-t border-border">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage(p => Math.max(0, p - 1))}
-                disabled={page === 0}
-              >
-                Trước
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                Trang {page + 1} / {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                disabled={page >= totalPages - 1}
-              >
-                Sau
-              </Button>
+          {!isLoading && filteredReviews.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-border">
+              <div className="text-sm text-muted-foreground mb-4 sm:mb-0">
+                Hiển thị {startIndex + 1}-{endIndex} trên tổng số {totalItems} đánh giá
+              </div>
+              <ClientPagination 
+                currentPage={currentPage} 
+                totalPages={totalPages} 
+                onPageChange={handlePageChange} 
+              />
             </div>
           )}
         </CardContent>

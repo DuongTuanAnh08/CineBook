@@ -13,6 +13,8 @@ import { MoreHorizontal } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import genreApi from '@/api/genreApi';
+import { useClientPagination } from '@/hooks/use-client-pagination';
+import { ClientPagination } from '@/components/ui/client-pagination';
 
 export default function AdminGenresPage() {
   const [genres, setGenres] = useState([]);
@@ -48,6 +50,7 @@ export default function AdminGenresPage() {
   }, []);
 
   const filtered = genres.filter(g => g.name.toLowerCase().includes(search.toLowerCase()));
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered, 10);
 
   const openAdd = () => {
     setEditingGenre(null);
@@ -167,7 +170,7 @@ export default function AdminGenresPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map(genre => (
+                {currentDataOnPage.map(genre => (
                   <TableRow key={genre.genreId} className="border-border">
                     <TableCell className="text-center font-medium">#{genre.genreId}</TableCell>
                     <TableCell>{genre.name}</TableCell>
@@ -199,6 +202,19 @@ export default function AdminGenresPage() {
                 )}
               </TableBody>
             </Table>
+            )}
+            
+            {!isLoading && filtered.length > 0 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-border">
+                <div className="text-sm text-muted-foreground mb-4 sm:mb-0">
+                  Hiển thị {startIndex + 1}-{endIndex} trên tổng số {totalItems} thể loại
+                </div>
+                <ClientPagination 
+                  currentPage={currentPage} 
+                  totalPages={totalPages} 
+                  onPageChange={handlePageChange} 
+                />
+              </div>
             )}
           </CardContent>
         </Card>

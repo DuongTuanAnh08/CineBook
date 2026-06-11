@@ -15,6 +15,8 @@ import { toast } from 'sonner';
 import promoApi from '../../../api/promoApi';
 import dayjs from 'dayjs';
 import { useAuth } from '@/contexts/auth-context';
+import { useClientPagination } from '@/hooks/use-client-pagination';
+import { ClientPagination } from '@/components/ui/client-pagination';
 
 const STATUS_CONFIG = {
   Active: {
@@ -147,6 +149,8 @@ export default function AdminPromotionsPage() {
     (p.code || '').toLowerCase().includes(search.toLowerCase())
   );
 
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered, 10);
+
   return (
     <div className="space-y-6 p-6">
         {/* Header */}
@@ -221,7 +225,7 @@ export default function AdminPromotionsPage() {
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-4">Không có dữ liệu</TableCell>
                   </TableRow>
-                ) : filtered.map(promo => <TableRow key={promo.id} className="border-border">
+                ) : currentDataOnPage.map(promo => <TableRow key={promo.id} className="border-border">
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <code className="text-sm font-mono font-bold bg-secondary px-2 py-0.5 rounded">
@@ -282,6 +286,18 @@ export default function AdminPromotionsPage() {
                   </TableRow>)}
               </TableBody>
             </Table>
+            {!loading && filtered.length > 0 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-border">
+                <div className="text-sm text-muted-foreground mb-4 sm:mb-0">
+                  Hiển thị {startIndex + 1}-{endIndex} trên tổng số {totalItems} khuyến mãi
+                </div>
+                <ClientPagination 
+                  currentPage={currentPage} 
+                  totalPages={totalPages} 
+                  onPageChange={handlePageChange} 
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
 

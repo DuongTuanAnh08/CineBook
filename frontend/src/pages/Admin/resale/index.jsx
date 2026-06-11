@@ -16,6 +16,8 @@ import { cn } from '@/lib/utils';
 import resaleApi from '@/api/resaleApi';
 import { useAuth } from '@/contexts/auth-context';
 import { toast } from 'sonner';
+import { useClientPagination } from '@/hooks/use-client-pagination';
+import { ClientPagination } from '@/components/ui/client-pagination';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -93,6 +95,8 @@ export default function AdminResalePage() {
     if (filterStatus !== 'all') result = result.filter(l => l.status === filterStatus);
     return result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [listings, search, filterMovie, filterCinema, filterStatus]);
+
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered, 10);
 
   // KPI counts
   const counts = useMemo(() => ({
@@ -273,7 +277,7 @@ export default function AdminResalePage() {
                       <RefreshCw className="w-10 h-10 mx-auto mb-2 opacity-20" />
                       Không có kết quả phù hợp
                     </TableCell>
-                  </TableRow> : filtered.map(listing => <TableRow key={listing.id} className="border-border">
+                  </TableRow> : currentDataOnPage.map(listing => <TableRow key={listing.id} className="border-border">
                       <TableCell className="font-mono text-xs text-muted-foreground">
                         #{listing.id.toUpperCase()}
                       </TableCell>
@@ -338,6 +342,18 @@ export default function AdminResalePage() {
                     </TableRow>)}
               </TableBody>
             </Table>
+            {!loading && filtered.length > 0 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-border">
+                <div className="text-sm text-muted-foreground mb-4 sm:mb-0">
+                  Hiển thị {startIndex + 1}-{endIndex} trên tổng số {totalItems} vé bán lại
+                </div>
+                <ClientPagination 
+                  currentPage={currentPage} 
+                  totalPages={totalPages} 
+                  onPageChange={handlePageChange} 
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -12,6 +12,8 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import bookingApi from '../../../api/bookingApi';
 import dayjs from 'dayjs';
+import { useClientPagination } from '@/hooks/use-client-pagination';
+import { ClientPagination } from '@/components/ui/client-pagination';
 
 const STATUS_CONFIG = {
   Confirmed: {
@@ -81,6 +83,8 @@ export default function AdminBookingsPage() {
     const matchStatus = statusFilter === 'all' || b.status === statusFilter;
     return matchSearch && matchStatus;
   });
+
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered, 10);
 
   const totalRevenue = bookings.filter(b => b.status === 'Confirmed').reduce((a, b) => a + (b.amount || 0), 0);
 
@@ -170,7 +174,7 @@ export default function AdminBookingsPage() {
                   <TableRow>
                     <TableCell colSpan={9} className="text-center py-4">Không có dữ liệu</TableCell>
                   </TableRow>
-                ) : filtered.map(booking => <TableRow key={booking.id} className="border-border">
+                ) : currentDataOnPage.map(booking => <TableRow key={booking.id} className="border-border">
                     <TableCell className="font-mono text-sm font-medium">{booking.id}</TableCell>
                     <TableCell className="text-sm max-w-[150px] truncate">{booking.movie}</TableCell>
                     <TableCell>
@@ -224,6 +228,18 @@ export default function AdminBookingsPage() {
                   </TableRow>)}
               </TableBody>
             </Table>
+            {!loading && filtered.length > 0 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-border">
+                <div className="text-sm text-muted-foreground mb-4 sm:mb-0">
+                  Hiển thị {startIndex + 1}-{endIndex} trên tổng số {totalItems} đơn
+                </div>
+                <ClientPagination 
+                  currentPage={currentPage} 
+                  totalPages={totalPages} 
+                  onPageChange={handlePageChange} 
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

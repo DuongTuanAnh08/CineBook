@@ -24,7 +24,8 @@ public class BookingController {
                 request.getCustomerId(),
                 request.getShowtimeId(),
                 request.getSeatIds(),
-                request.getFnbItems()
+                request.getFnbItems(),
+                request.getPromoCode()
         );
         java.util.Map<String, Object> data = new java.util.HashMap<>();
         data.put("id", booking.getId());

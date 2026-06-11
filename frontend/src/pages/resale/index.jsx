@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar, Clock, MapPin, Armchair, Search, Tag, RefreshCw, ChevronRight, SlidersHorizontal, Ticket } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useClientPagination } from '@/hooks/use-client-pagination';
+import { ClientPagination } from '@/components/ui/client-pagination';
 
 export default function ResaleTicketPage() {
   const [resaleListings, setResaleListings] = useState([]);
@@ -49,6 +51,8 @@ export default function ResaleTicketPage() {
     });
     return result;
   }, [searchQuery, filterMovie, filterCinema, sortBy, activeListings]);
+
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered, 10);
 
   const clearFilters = () => {
     setSearchQuery('');
@@ -122,7 +126,7 @@ export default function ResaleTicketPage() {
             <Ticket className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
             <p className="text-muted-foreground font-medium">Không tìm thấy vé phù hợp</p>
             {hasFilters && <Button variant="link" onClick={clearFilters}>Xóa bộ lọc</Button>}
-          </div> : filtered.map(listing => <Card key={listing.id} className="bg-card border-border overflow-hidden hover:border-primary/50 transition-colors">
+          </div> : currentDataOnPage.map(listing => <Card key={listing.id} className="bg-card border-border overflow-hidden hover:border-primary/50 transition-colors">
               <CardContent className="p-0">
                 <div className="flex flex-col sm:flex-row">
                   {/* Info */}
@@ -179,6 +183,19 @@ export default function ResaleTicketPage() {
                 </div>
               </CardContent>
             </Card>)}
+            
+        {filtered.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-card border border-border rounded-xl">
+            <div className="text-sm text-muted-foreground mb-4 sm:mb-0">
+              Hiển thị {startIndex + 1}-{endIndex} trên tổng số {totalItems} vé
+            </div>
+            <ClientPagination 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              onPageChange={handlePageChange} 
+            />
+          </div>
+        )}
       </div>
     </div>
   );

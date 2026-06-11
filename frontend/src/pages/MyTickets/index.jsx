@@ -23,6 +23,8 @@ import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
 import { useRef } from 'react';
 import { ReviewModal } from '@/components/reviews/ReviewModal';
+import { useClientPagination } from '@/hooks/use-client-pagination';
+import { ClientPagination } from '@/components/ui/client-pagination';
 
 const STATUS = {
   upcoming: {
@@ -123,6 +125,8 @@ export default function MyTicketsPage() {
     return matchTab && matchSearch;
   });
 
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered, 10);
+
   const downloadPDF = async (ticket) => {
     setSelectedTicket(ticket);
     setTimeout(async () => {
@@ -188,7 +192,7 @@ export default function MyTicketsPage() {
             <Ticket className="w-12 h-12 mx-auto mb-3 opacity-30" />
             <p>Không có vé nào.</p>
           </div> : <div className="space-y-4">
-            {filtered.map(ticket => {
+            {currentDataOnPage.map(ticket => {
           const statusKey = mapStatus(ticket);
           const status = STATUS[statusKey];
           const displayDate = ticket.showDate ? new Date(ticket.showDate).toLocaleDateString('vi-VN', {
@@ -336,6 +340,19 @@ export default function MyTicketsPage() {
                 </Card>;
         })}
           </div>}
+          
+        {!loading && filtered.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between mt-6 p-4 bg-card border border-border rounded-lg">
+            <div className="text-sm text-muted-foreground mb-4 sm:mb-0">
+              Hiển thị {startIndex + 1}-{endIndex} trên tổng số {totalItems} vé
+            </div>
+            <ClientPagination 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              onPageChange={handlePageChange} 
+            />
+          </div>
+        )}
 
         <ReviewModal 
           isOpen={isReviewOpen} 

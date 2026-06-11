@@ -20,6 +20,8 @@ import uploadApi from '@/api/uploadApi';
 import genreApi from '@/api/genreApi';
 import { useAuth } from '@/contexts/auth-context';
 import { useData } from '@/contexts/data-context';
+import { useClientPagination } from '@/hooks/use-client-pagination';
+import { ClientPagination } from '@/components/ui/client-pagination';
 
 export default function AdminMoviesPage() {
   const { user } = useAuth();
@@ -85,6 +87,8 @@ export default function AdminMoviesPage() {
   }, []);
 
   const filtered = movies.filter(m => m.title.toLowerCase().includes(search.toLowerCase()) || (m.originalTitle ?? '').toLowerCase().includes(search.toLowerCase()));
+
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered, 10);
 
   const openAdd = () => {
     setEditingMovie(null);
@@ -287,7 +291,7 @@ export default function AdminMoviesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map(movie => <TableRow key={movie.id} className="border-border">
+                {currentDataOnPage.map(movie => <TableRow key={movie.id} className="border-border">
                     <TableCell>
                       <div className="relative w-10 h-14 rounded overflow-hidden bg-secondary">
                         <img src={movie.poster || 'https://placehold.co/150x225/png'} alt={movie.title} className="w-full h-full object-cover" />
@@ -337,6 +341,18 @@ export default function AdminMoviesPage() {
                   </TableRow>)}
               </TableBody>
             </Table>
+            )}
+            {!isLoading && filtered.length > 0 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-border">
+                <div className="text-sm text-muted-foreground mb-4 sm:mb-0">
+                  Hiển thị {startIndex + 1}-{endIndex} trên tổng số {totalItems} phim
+                </div>
+                <ClientPagination 
+                  currentPage={currentPage} 
+                  totalPages={totalPages} 
+                  onPageChange={handlePageChange} 
+                />
+              </div>
             )}
           </CardContent>
         </Card>

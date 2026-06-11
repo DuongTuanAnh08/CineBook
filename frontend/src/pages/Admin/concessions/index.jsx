@@ -14,8 +14,9 @@ import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, ShoppingCart, Search, Al
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
-
 import fnbApi from '../../../api/fnbApi';
+import { useClientPagination } from '@/hooks/use-client-pagination';
+import { ClientPagination } from '@/components/ui/client-pagination';
 
 const TYPE_LABELS = {
   Drink: 'Đồ uống',
@@ -78,6 +79,8 @@ export default function AdminConcessionsPage() {
     const matchSearch = item.name.toLowerCase().includes(search.toLowerCase()) || (item.description ?? '').toLowerCase().includes(search.toLowerCase());
     return matchType && matchSearch;
   });
+
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered, 10);
 
   const openAdd = () => {
     setEditingItem(null);
@@ -245,7 +248,7 @@ export default function AdminConcessionsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map(item => (
+              {currentDataOnPage.map(item => (
                 <TableRow key={item.id} className={cn('border-border', item.status === 'Inactive' && 'opacity-60')}>
                   <TableCell>
                     <div className="w-10 h-10 rounded-md overflow-hidden bg-secondary">
@@ -302,6 +305,18 @@ export default function AdminConcessionsPage() {
             </TableBody>
           </Table>
         </div>
+        {filtered.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-border bg-card">
+            <div className="text-sm text-muted-foreground mb-4 sm:mb-0">
+              Hiển thị {startIndex + 1}-{endIndex} trên tổng số {totalItems} mặt hàng
+            </div>
+            <ClientPagination 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              onPageChange={handlePageChange} 
+            />
+          </div>
+        )}
       </Card>
 
       {/* Add/Edit Dialog */}

@@ -62,16 +62,18 @@ function PaymentContent() {
   if (!isAuthenticated) {
     return <Navigate to='/login' replace />;
   }
-  const seats = params.get('seats')?.split(',') ?? [];
-  const showtimeId = params.get('showtimeId') ?? '';
+  const subtotal = Number(params.get('total') ?? 0); // This is now PRE-TAX subtotal
+  const seatTotal = Number(params.get('seatTotal') ?? 0);
+  const vatPercent = Number(params.get('vatPercent') ?? 10);
+  const seats = params.get('seats')?.split(',') || [];
+  const showtimeId = params.get('showtimeId') ?? '1';
   const movieId = params.get('movie') ?? '1';
   const cinemaId = params.get('cinema') ?? '1';
   const cinema = cinemas.find(c => c.id === cinemaId)?.name ?? 'Rạp CineBook';
   const room = params.get('room') ?? 'Phòng 1';
   const date = params.get('date') ?? '';
   const time = params.get('time') ?? '';
-  const total = Number(params.get('total') ?? 0);
-
+  
   // Parse concessions
   const concessionsParam = params.get('concessions');
   const concessions = concessionsParam ? (() => {
@@ -86,14 +88,25 @@ function PaymentContent() {
   const [method, setMethod] = useState('vnpay');
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
+  const [promoData, setPromoData] = useState(null);
   const [promoError, setPromoError] = useState('');
   const [processing, setProcessing] = useState(false);
-  const [discountPercent, setDiscountPercent] = useState(0);
   const { toast } = useToast();
   const { user } = useAuth();
   
-  const discount = promoApplied ? Math.round(total * (discountPercent / 100)) : 0;
-  const finalTotal = total - discount;
+  const discount = (() => {
+    if (!promoApplied || !promoData) return 0;
+    if (promoData.discountType === 'Percentage') {
+      const calculated = Math.round(subtotal * (promoData.discountValue / 100));
+      return promoData.maxDiscountVnd ? Math.min(calculated, promoData.maxDiscountVnd) : calculated;
+    }
+    return promoData.discountValue;
+  })();
+  
+  // Calculate final amounts just like backend: VAT is applied AFTER discount
+  const newSubtotal = Math.max(0, subtotal - discount);
+  const calculatedVatAmount = Math.round(newSubtotal * (vatPercent / 100));
+  const finalTotal = newSubtotal + calculatedVatAmount;
 
   const handleApplyPromo = async () => {
     setPromoError('');
@@ -102,23 +115,25 @@ function PaymentContent() {
     try {
       const res = await promoApi.validatePromo({
         code: promoCode,
-        userId: user?.id,
-        orderValue: total
+        userId: user?.id || user?.userId,
+        orderValue: subtotal
       });
       if (res.success && res.data) {
         setPromoApplied(true);
-        setDiscountPercent(20);
+        setPromoData(res.data);
         toast({
           title: 'Áp dụng mã thành công',
-          description: `Bạn được giảm 20% cho đơn hàng này.`
+          description: `Đã áp dụng mã ${promoCode}.`
         });
       } else {
         setPromoError('Mã không hợp lệ hoặc không đủ điều kiện.');
         setPromoApplied(false);
+        setPromoData(null);
       }
     } catch (err) {
       setPromoError(err?.response?.data?.error?.message || 'Không thể kiểm tra mã khuyến mãi.');
       setPromoApplied(false);
+      setPromoData(null);
     }
   };
 
@@ -135,6 +150,10 @@ function PaymentContent() {
           quantity: Number(c.qty)
         }))
       };
+      
+      if (promoApplied && promoCode) {
+        payload.promoCode = promoCode;
+      }
       
       const res = await bookingApi.createBooking(payload);
       
@@ -394,7 +413,7 @@ function PaymentContent() {
                     <button className="text-xs text-muted-foreground hover:text-foreground" onClick={() => {
                   setPromoApplied(false);
                   setPromoCode('');
-                  setDiscountPercent(0);
+                  setPromoData(null);
                 }}>
                       Xóa
                     </button>
@@ -415,17 +434,21 @@ function PaymentContent() {
               {/* Price breakdown */}
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Tạm tính ({seats.length} ghế)</span>
-                  <span>{(total - concessionTotal).toLocaleString('vi-VN')}₫</span>
+                  <span className="text-muted-foreground">Tiền vé ({seats.length} ghế)</span>
+                  <span>{(seatTotal > 0 ? seatTotal : (subtotal - concessionTotal)).toLocaleString('vi-VN')}₫</span>
                 </div>
                 {concessionTotal > 0 && <div className="flex justify-between">
                     <span className="text-muted-foreground">Đồ ăn & nước</span>
                     <span>{concessionTotal.toLocaleString('vi-VN')}₫</span>
                   </div>}
                 {promoApplied && <div className="flex justify-between text-green-500">
-                    <span>Giảm giá ({discountPercent}%)</span>
+                    <span>Giảm giá ({promoData?.discountType === 'Percentage' ? `${promoData.discountValue}%` : 'Trực tiếp'})</span>
                     <span>-{discount.toLocaleString('vi-VN')}₫</span>
                   </div>}
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Thuế VAT ({vatPercent}%)</span>
+                  <span>{calculatedVatAmount.toLocaleString('vi-VN')}₫</span>
+                </div>
                 <div className="flex justify-between font-bold text-base pt-1">
                   <span>Tổng cộng</span>
                   <span className="text-primary">{finalTotal.toLocaleString('vi-VN')}₫</span>

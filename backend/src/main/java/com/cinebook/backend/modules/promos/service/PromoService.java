@@ -14,7 +14,7 @@ public class PromoService {
     private final PromoCodeRepository promoCodeRepository;
     private final PromoUsageRepository promoUsageRepository;
 
-    public boolean validatePromo(String code, Long userId, Integer orderValue) {
+    public PromoCode validatePromo(String code, Long userId, Integer orderValue) {
         PromoCode promo = promoCodeRepository.findByCode(code)
                 .orElseThrow(() -> new RuntimeException("Promo not found"));
 
@@ -40,7 +40,7 @@ public class PromoService {
             throw new RuntimeException("User has already used this promo");
         }
 
-        return true;
+        return promo;
     }
 
     public org.springframework.data.domain.Page<PromoCode> getAllPromos(org.springframework.data.domain.Pageable pageable) {

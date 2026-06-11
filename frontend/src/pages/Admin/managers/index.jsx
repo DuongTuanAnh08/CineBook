@@ -10,6 +10,8 @@ import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import adminUserApi from '@/api/adminUserApi';
 import cinemaApi from '@/api/cinemaApi';
+import { useClientPagination } from '@/hooks/use-client-pagination';
+import { ClientPagination } from '@/components/ui/client-pagination';
 
 export default function AdminManagersPage() {
   const [managers, setManagers] = useState([]);
@@ -84,6 +86,8 @@ export default function AdminManagersPage() {
     (m.fullName || '').toLowerCase().includes(search.toLowerCase()) || 
     (m.email || '').toLowerCase().includes(search.toLowerCase())
   );
+
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered, 10);
 
   return (
     <div className="space-y-6 p-6">
@@ -172,7 +176,7 @@ export default function AdminManagersPage() {
                   <TableRow><TableCell colSpan={5} className="text-center py-4">Đang tải...</TableCell></TableRow>
                 ) : filtered.length === 0 ? (
                   <TableRow><TableCell colSpan={5} className="text-center py-4">Không tìm thấy manager nào</TableCell></TableRow>
-                ) : filtered.map(manager => (
+                ) : currentDataOnPage.map(manager => (
                   <TableRow key={manager.userId}>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
@@ -202,6 +206,18 @@ export default function AdminManagersPage() {
                 ))}
               </TableBody>
             </Table>
+            {!loading && filtered.length > 0 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-border">
+                <div className="text-sm text-muted-foreground mb-4 sm:mb-0">
+                  Hiển thị {startIndex + 1}-{endIndex} trên tổng số {totalItems} tài khoản
+                </div>
+                <ClientPagination 
+                  currentPage={currentPage} 
+                  totalPages={totalPages} 
+                  onPageChange={handlePageChange} 
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
     </div>

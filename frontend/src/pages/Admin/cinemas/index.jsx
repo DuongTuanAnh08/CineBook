@@ -12,6 +12,8 @@ import { MapPin, Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, Loader2 } fr
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import cinemaApi from '@/api/cinemaApi';
+import { useClientPagination } from '@/hooks/use-client-pagination';
+import { ClientPagination } from '@/components/ui/client-pagination';
 
 export default function AdminCinemasPage() {
   const [cinemas, setCinemas] = useState([]);
@@ -61,6 +63,8 @@ export default function AdminCinemasPage() {
     const matchCity = selectedCity === 'all' || c.city === selectedCity;
     return matchSearch && matchCity;
   });
+
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered, 10);
 
   const openAdd = () => {
     setEditingCinema(null);
@@ -194,7 +198,7 @@ export default function AdminCinemasPage() {
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filtered.map(cinema => <Card key={cinema.id} className="bg-card border-border hover:border-primary/50 transition-colors">
+            {currentDataOnPage.map(cinema => <Card key={cinema.id} className="bg-card border-border hover:border-primary/50 transition-colors">
                 <CardHeader className="flex flex-row items-start justify-between gap-2">
                   <div className="flex items-start gap-3">
                     <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 shrink-0 mt-0.5">
@@ -233,6 +237,18 @@ export default function AdminCinemasPage() {
                   </div>
                 </CardContent>
               </Card>)}
+          </div>
+        )}
+        {!isLoading && filtered.length > 0 && (
+          <div className="mt-4 flex flex-col sm:flex-row items-center justify-between p-4 border border-border rounded-lg bg-card">
+            <div className="text-sm text-muted-foreground mb-4 sm:mb-0">
+              Hiển thị {startIndex + 1}-{endIndex} trên tổng số {totalItems} rạp
+            </div>
+            <ClientPagination 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              onPageChange={handlePageChange} 
+            />
           </div>
         )}
 

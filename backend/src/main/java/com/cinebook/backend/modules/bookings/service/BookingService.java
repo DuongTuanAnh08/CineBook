@@ -21,6 +21,7 @@ import com.cinebook.backend.modules.fnb.entity.FnBProduct;
 import com.cinebook.backend.modules.fnb.repository.FnBProductRepository;
 import com.cinebook.backend.modules.bookings.dto.FnBItemRequest;
 import com.cinebook.backend.modules.bookings.dto.FnBItemDto;
+import com.cinebook.backend.modules.promos.repository.PromoCodeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,9 +44,10 @@ public class BookingService {
     private final NotificationService notificationService;
     private final FnBOrderItemRepository fnbOrderItemRepository;
     private final FnBProductRepository fnbProductRepository;
+    private final PromoCodeRepository promoCodeRepository;
 
     @Transactional
-    public Booking createBooking(Long customerId, Long showtimeId, List<Long> seatIds, List<FnBItemRequest> fnbItems) {
+    public Booking createBooking(Long customerId, Long showtimeId, List<Long> seatIds, List<FnBItemRequest> fnbItems, String promoCode) {
         User customer = userRepository.findById(customerId)
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
 
@@ -148,6 +150,35 @@ public class BookingService {
             savedBooking.setVatAmount(newVatAmount);
             savedBooking.setTotalAfterTax(newTotalAfterTax);
             savedBooking = bookingRepository.save(savedBooking);
+        }
+
+        if (promoCode != null && !promoCode.isEmpty()) {
+            java.util.Optional<com.cinebook.backend.modules.promos.entity.PromoCode> optPromo = promoCodeRepository.findByCode(promoCode);
+            if (optPromo.isPresent()) {
+                com.cinebook.backend.modules.promos.entity.PromoCode promo = optPromo.get();
+                if (promo.getStatus() == com.cinebook.backend.modules.promos.entity.PromoStatus.Active) {
+                    int discountAmount = 0;
+                    if (promo.getDiscountType() == com.cinebook.backend.modules.promos.entity.PromoDiscountType.Percentage) {
+                        discountAmount = savedBooking.getTotalBeforeTax() * promo.getDiscountValue().intValue() / 100;
+                        if (promo.getMaxDiscountVnd() != null && discountAmount > promo.getMaxDiscountVnd()) {
+                            discountAmount = promo.getMaxDiscountVnd();
+                        }
+                    } else {
+                        discountAmount = promo.getDiscountValue().intValue();
+                    }
+                    
+                    int newTotalBeforeTax = savedBooking.getTotalBeforeTax() - discountAmount;
+                    if (newTotalBeforeTax < 0) newTotalBeforeTax = 0;
+                    int newVatAmount = java.math.BigDecimal.valueOf(newTotalBeforeTax).multiply(vatRate).setScale(0, java.math.RoundingMode.HALF_UP).intValue();
+                    int newTotalAfterTax = newTotalBeforeTax + newVatAmount;
+
+                    savedBooking.setPromoId(promo.getId());
+                    savedBooking.setDiscountAmount(discountAmount);
+                    savedBooking.setVatAmount(newVatAmount);
+                    savedBooking.setTotalAfterTax(newTotalAfterTax);
+                    savedBooking = bookingRepository.save(savedBooking);
+                }
+            }
         }
 
         // Trigger notification
