@@ -52,13 +52,13 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/payments/vnpay-return").permitAll()   // VNPay IPN/Return (no JWT)
                 .requestMatchers("/api/payments/vnpay/callback").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/movies/**", "/api/showtimes/**", "/api/cinemas/**", "/api/rooms/**", "/api/concessions/**", "/api/promos/**", "/api/news/**", "/api/reviews/**", "/api/configs/**", "/api/resale/**", "/uploads/**", "/api/genres/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/movies/**", "/api/showtimes/**", "/api/cinemas/**", "/api/rooms/**", "/api/concessions/**", "/api/promos/**", "/api/news/**", "/api/reviews/**", "/api/config/**", "/api/resale/**", "/uploads/**", "/api/genres/**").permitAll()
                 // Swagger UI
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/api-docs/**", "/swagger-ui.html").permitAll()
                 
                 // SystemAdmin Only
                 .requestMatchers("/api/dashboard/**").hasAnyRole("SystemAdmin", "ScheduleManager")
-                .requestMatchers("/api/config/**").hasRole("SystemAdmin")
+                .requestMatchers(HttpMethod.PUT, "/api/config/**").hasRole("SystemAdmin")
                 .requestMatchers(HttpMethod.PUT, "/api/resale/*/hide").hasRole("SystemAdmin")
                 
                 // Allow anyone authenticated to hold/release seats

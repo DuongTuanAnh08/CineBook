@@ -7,6 +7,13 @@ export function useCountdown({
   isStarted = true
 }) {
   const [totalSeconds, setTotalSeconds] = useState(initialMinutes * 60);
+
+  useEffect(() => {
+    if (!isStarted) {
+      setTotalSeconds(initialMinutes * 60);
+    }
+  }, [initialMinutes, isStarted]);
+
   useEffect(() => {
     if (!isStarted) return;
     

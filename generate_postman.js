@@ -90,7 +90,9 @@ collection.item.push({
     createItem("2.16 Search Showtimes", "GET", "/showtimes/search", null, false, [{key: "movieId", value: "1"}, {key: "date", value: "2026-06-02"}, {key: "cinemaId", value: "1"}]),
     createItem("2.17 Get Showtime Details", "GET", "/showtimes/1", null, false),
     createItem("2.18 Get Seats for Showtime", "GET", "/showtimes/1/seats", null, false),
-    createItem("2.19 Create Showtime (Admin)", "POST", "/showtimes", JSON.stringify({ movieId: 1, roomId: 1, startTime: "2026-06-02T10:00:00", endTime: "2026-06-02T12:00:00" }, null, 2), true)
+    createItem("2.19 Create Showtime (Admin)", "POST", "/showtimes", JSON.stringify({ movieId: 1, roomId: 1, startTime: "2026-06-02T10:00:00", endTime: "2026-06-02T12:00:00" }, null, 2), true),
+    createItem("2.20 Hold Seat", "POST", "/showtimes/1/seats/2/hold", null, true),
+    createItem("2.21 Release Seat", "DELETE", "/showtimes/1/seats/2/hold", null, true)
   ]
 });
 
@@ -102,7 +104,10 @@ collection.item.push({
     createItem("3.2 Create Booking", "POST", "/bookings", JSON.stringify({ showtimeId: 1, seatIds: [1, 2], fnbItems: [{ fnbId: 1, quantity: 2 }], promoCode: "SUMMER10" }, null, 2), true),
     createItem("3.3 Get Booking Details", "GET", "/bookings/1", null, true),
     createItem("3.4 Generate VNPay URL", "GET", "/payments/create-url", null, true, [{key: "bookingId", value: "1"}]),
-    createItem("3.5 VNPay Return Callback", "GET", "/payments/vnpay-return", null, false, [{key: "vnp_ResponseCode", value: "00"}, {key: "vnp_TxnRef", value: "1"}])
+    createItem("3.5 VNPay Return Callback", "GET", "/payments/vnpay-return", null, false, [{key: "vnp_ResponseCode", value: "00"}, {key: "vnp_TxnRef", value: "1"}]),
+    createItem("3.6 Get All Bookings (Admin)", "GET", "/bookings/admin", null, true),
+    createItem("3.7 Update Booking Status (Admin)", "PUT", "/bookings/admin/1/status", null, true, [{key: "status", value: "Confirmed"}]),
+    createItem("3.8 Get My Tickets", "GET", "/bookings/my-tickets", null, true)
   ]
 });
 
@@ -126,7 +131,10 @@ collection.item.push({
     createItem("5.1 List Active Resales", "GET", "/resale/active", null, false),
     createItem("5.2 Get My Resales", "GET", "/resale/my-listings", null, true, [{key: "sellerId", value: "1"}]),
     createItem("5.3 Create Resale Ticket", "POST", "/resale", JSON.stringify({ bookingId: 1, sellerId: 1, askingPrice: 50000, note: "Busy", phone: "0912345678", facebookUrl: "fb.com/abc" }, null, 2), true),
-    createItem("5.4 Hide Resale Ticket (Admin)", "PUT", "/resale/1/hide", null, true, [{key: "reason", value: "Spam"}])
+    createItem("5.4 Get All Resales (Admin)", "GET", "/resale/admin/all", null, true),
+    createItem("5.5 Update Resale Status", "PUT", "/resale/1/status", JSON.stringify({ status: "Hidden" }, null, 2), true),
+    createItem("5.6 Update Resale Listing", "PUT", "/resale/1", JSON.stringify({ askingPrice: 45000 }, null, 2), true),
+    createItem("5.7 Delete Resale Listing", "DELETE", "/resale/1", null, true)
   ]
 });
 
@@ -172,6 +180,18 @@ collection.item.push({
     createItem("8.1 Get My Notifications", "GET", "/notifications", null, true),
     createItem("8.2 Mark as Read", "PUT", "/notifications/1/read", null, true),
     createItem("8.3 Mark All as Read", "PUT", "/notifications/read-all", null, true)
+  ]
+});
+
+// 9. Genres
+collection.item.push({
+  name: "9. Genres",
+  item: [
+    createItem("9.1 Get All Genres", "GET", "/genres", null, false),
+    createItem("9.2 Get Genre Details", "GET", "/genres/1", null, false),
+    createItem("9.3 Create Genre (Admin)", "POST", "/genres", JSON.stringify({ name: "Action", description: "Action movies" }, null, 2), true),
+    createItem("9.4 Update Genre (Admin)", "PUT", "/genres/1", JSON.stringify({ name: "Action & Adventure" }, null, 2), true),
+    createItem("9.5 Delete Genre (Admin)", "DELETE", "/genres/1", null, true)
   ]
 });
 

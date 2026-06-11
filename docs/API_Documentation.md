@@ -357,6 +357,20 @@
 
 ---
 
+### 2.20 Hold Seat
+**POST** `/showtimes/1/seats/2/hold`
+
+- **Auth required**: Yes (Bearer Token)
+
+---
+
+### 2.21 Release Seat
+**DELETE** `/showtimes/1/seats/2/hold`
+
+- **Auth required**: Yes (Bearer Token)
+
+---
+
 ## 3. Booking & Payment
 
 ### 3.1 Get My Bookings
@@ -413,6 +427,29 @@
 - **Query Parameters**:
   - `vnp_ResponseCode`: 00
   - `vnp_TxnRef`: 1
+
+---
+
+### 3.6 Get All Bookings (Admin)
+**GET** `/bookings/admin`
+
+- **Auth required**: Yes (Bearer Token)
+
+---
+
+### 3.7 Update Booking Status (Admin)
+**PUT** `/bookings/admin/1/status?status=Confirmed`
+
+- **Auth required**: Yes (Bearer Token)
+- **Query Parameters**:
+  - `status`: Confirmed
+
+---
+
+### 3.8 Get My Tickets
+**GET** `/bookings/my-tickets`
+
+- **Auth required**: Yes (Bearer Token)
 
 ---
 
@@ -514,12 +551,43 @@
 
 ---
 
-### 5.4 Hide Resale Ticket (Admin)
-**PUT** `/resale/1/hide?reason=Spam`
+### 5.4 Get All Resales (Admin)
+**GET** `/resale/admin/all`
 
 - **Auth required**: Yes (Bearer Token)
-- **Query Parameters**:
-  - `reason`: Spam
+
+---
+
+### 5.5 Update Resale Status
+**PUT** `/resale/1/status`
+
+- **Auth required**: Yes (Bearer Token)
+- **Request Body** (application/json):
+```json
+{
+  "status": "Hidden"
+}
+```
+
+---
+
+### 5.6 Update Resale Listing
+**PUT** `/resale/1`
+
+- **Auth required**: Yes (Bearer Token)
+- **Request Body** (application/json):
+```json
+{
+  "askingPrice": 45000
+}
+```
+
+---
+
+### 5.7 Delete Resale Listing
+**DELETE** `/resale/1`
+
+- **Auth required**: Yes (Bearer Token)
 
 ---
 
@@ -647,6 +715,56 @@
 
 ### 8.3 Mark All as Read
 **PUT** `/notifications/read-all`
+
+- **Auth required**: Yes (Bearer Token)
+
+---
+
+## 9. Genres
+
+### 9.1 Get All Genres
+**GET** `/genres`
+
+- **Auth required**: No
+
+---
+
+### 9.2 Get Genre Details
+**GET** `/genres/1`
+
+- **Auth required**: No
+
+---
+
+### 9.3 Create Genre (Admin)
+**POST** `/genres`
+
+- **Auth required**: Yes (Bearer Token)
+- **Request Body** (application/json):
+```json
+{
+  "name": "Action",
+  "description": "Action movies"
+}
+```
+
+---
+
+### 9.4 Update Genre (Admin)
+**PUT** `/genres/1`
+
+- **Auth required**: Yes (Bearer Token)
+- **Request Body** (application/json):
+```json
+{
+  "name": "Action & Adventure"
+}
+```
+
+---
+
+### 9.5 Delete Genre (Admin)
+**DELETE** `/genres/1`
 
 - **Auth required**: Yes (Bearer Token)
 

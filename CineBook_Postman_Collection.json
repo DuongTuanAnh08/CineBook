@@ -928,6 +928,60 @@
               }
             }
           }
+        },
+        {
+          "name": "2.20 Hold Seat",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/showtimes/1/seats/2/hold",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "showtimes",
+                "1",
+                "seats",
+                "2",
+                "hold"
+              ],
+              "query": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "2.21 Release Seat",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/showtimes/1/seats/2/hold",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "showtimes",
+                "1",
+                "seats",
+                "2",
+                "hold"
+              ],
+              "query": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
         }
       ]
     },
@@ -1073,6 +1127,85 @@
               ]
             },
             "header": []
+          }
+        },
+        {
+          "name": "3.6 Get All Bookings (Admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/bookings/admin",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings",
+                "admin"
+              ],
+              "query": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "3.7 Update Booking Status (Admin)",
+          "request": {
+            "method": "PUT",
+            "url": {
+              "raw": "{{baseUrl}}/bookings/admin/1/status?status=Confirmed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings",
+                "admin",
+                "1",
+                "status"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "Confirmed"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        },
+        {
+          "name": "3.8 Get My Tickets",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/bookings/my-tickets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings",
+                "my-tickets"
+              ],
+              "query": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
           }
         }
       ]
@@ -1232,79 +1365,31 @@
       "name": "5. Resale",
       "item": [
         {
-          "name": "5.1 List All Resales (Admin)",
+          "name": "5.1 List Active Resales",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
-              "raw": "{{base_url}}/resale/admin/all?page=0&size=10",
+              "raw": "{{baseUrl}}/resale/active",
               "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "resale",
-                "admin",
-                "all"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "0"
-                },
-                {
-                  "key": "size",
-                  "value": "10"
-                }
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "5.2 List Active Resales",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/resale/active?page=0&size=10",
-              "host": [
-                "{{base_url}}"
+                "{{baseUrl}}"
               ],
               "path": [
                 "resale",
                 "active"
               ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "0"
-                },
-                {
-                  "key": "size",
-                  "value": "10"
-                }
-              ]
-            }
+              "query": []
+            },
+            "header": []
           }
         },
         {
-          "name": "5.3 Get My Resales",
+          "name": "5.2 Get My Resales",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
-              "raw": "{{base_url}}/resale/my-listings?sellerId=1&page=0&size=10",
+              "raw": "{{baseUrl}}/resale/my-listings?sellerId=1",
               "host": [
-                "{{base_url}}"
+                "{{baseUrl}}"
               ],
               "path": [
                 "resale",
@@ -1314,149 +1399,154 @@
                 {
                   "key": "sellerId",
                   "value": "1"
-                },
-                {
-                  "key": "page",
-                  "value": "0"
-                },
-                {
-                  "key": "size",
-                  "value": "10"
                 }
               ]
             },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
           }
         },
         {
-          "name": "5.4 Create Resale Listing",
+          "name": "5.3 Create Resale Ticket",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
             "url": {
-              "raw": "{{base_url}}/resale",
+              "raw": "{{baseUrl}}/resale",
               "host": [
-                "{{base_url}}"
+                "{{baseUrl}}"
               ],
               "path": [
                 "resale"
-              ]
+              ],
+              "query": []
             },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bookingId\": 1,\n  \"sellerId\": 1,\n  \"askingPrice\": 150000,\n  \"note\": \"Bán vé VIP\",\n  \"phone\": \"0901234567\",\n  \"facebookUrl\": \"https://fb.com/user\",\n  \"seats\": \"C1, C2\",\n  \"includesFnb\": true\n}",
+              "raw": "{\n  \"bookingId\": 1,\n  \"sellerId\": 1,\n  \"askingPrice\": 50000,\n  \"note\": \"Busy\",\n  \"phone\": \"0912345678\",\n  \"facebookUrl\": \"fb.com/abc\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
             }
+          }
+        },
+        {
+          "name": "5.4 Get All Resales (Admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/resale/admin/all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resale",
+                "admin",
+                "all"
+              ],
+              "query": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
           }
         },
         {
           "name": "5.5 Update Resale Status",
           "request": {
             "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
             "url": {
-              "raw": "{{base_url}}/resale/1/status",
+              "raw": "{{baseUrl}}/resale/1/status",
               "host": [
-                "{{base_url}}"
+                "{{baseUrl}}"
               ],
               "path": [
                 "resale",
                 "1",
                 "status"
-              ]
+              ],
+              "query": []
             },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"Hidden\",\n  \"hiddenReason\": \"Spam\",\n  \"hiddenByAdminId\": 2\n}",
+              "raw": "{\n  \"status\": \"Hidden\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
             }
           }
         },
         {
-          "name": "5.6 Update Resale Listing (Price & Note)",
+          "name": "5.6 Update Resale Listing",
           "request": {
             "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
             "url": {
-              "raw": "{{base_url}}/resale/1",
+              "raw": "{{baseUrl}}/resale/1",
               "host": [
-                "{{base_url}}"
+                "{{baseUrl}}"
               ],
               "path": [
                 "resale",
                 "1"
-              ]
+              ],
+              "query": []
             },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"askingPrice\": 100000,\n  \"note\": \"Giảm giá bán gấp\"\n}",
+              "raw": "{\n  \"askingPrice\": 45000\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
             }
           }
         },
@@ -1464,27 +1554,24 @@
           "name": "5.7 Delete Resale Listing",
           "request": {
             "method": "DELETE",
-            "header": [],
             "url": {
-              "raw": "{{base_url}}/resale/1",
+              "raw": "{{baseUrl}}/resale/1",
               "host": [
-                "{{base_url}}"
+                "{{baseUrl}}"
               ],
               "path": [
                 "resale",
                 "1"
-              ]
+              ],
+              "query": []
             },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            }
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
           }
         }
       ]
@@ -1840,6 +1927,145 @@
               "path": [
                 "notifications",
                 "read-all"
+              ],
+              "query": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Genres",
+      "item": [
+        {
+          "name": "9.1 Get All Genres",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/genres",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "genres"
+              ],
+              "query": []
+            },
+            "header": []
+          }
+        },
+        {
+          "name": "9.2 Get Genre Details",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/genres/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "genres",
+                "1"
+              ],
+              "query": []
+            },
+            "header": []
+          }
+        },
+        {
+          "name": "9.3 Create Genre (Admin)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/genres",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "genres"
+              ],
+              "query": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Action\",\n  \"description\": \"Action movies\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "9.4 Update Genre (Admin)",
+          "request": {
+            "method": "PUT",
+            "url": {
+              "raw": "{{baseUrl}}/genres/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "genres",
+                "1"
+              ],
+              "query": []
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Action & Adventure\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "9.5 Delete Genre (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/genres/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "genres",
+                "1"
               ],
               "query": []
             },

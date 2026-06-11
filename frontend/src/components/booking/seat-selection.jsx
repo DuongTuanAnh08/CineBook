@@ -37,6 +37,7 @@ export function SeatSelection({
   const [isLoadingSeats, setIsLoadingSeats] = useState(false);
   const [realSeats, setRealSeats] = useState(null);
   const [dynamicMaxSeats, setDynamicMaxSeats] = useState(maxSeats);
+  const [dynamicHoldTime, setDynamicHoldTime] = useState(15);
   const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
@@ -49,6 +50,10 @@ export function SeatSelection({
           const seatLimitConfig = res.data.find(c => c.configKey === 'max_seats_per_booking');
           if (seatLimitConfig && seatLimitConfig.configValue) {
             setDynamicMaxSeats(parseInt(seatLimitConfig.configValue, 10));
+          }
+          const holdTimeConfig = res.data.find(c => c.configKey === 'seat_hold_minutes');
+          if (holdTimeConfig && holdTimeConfig.configValue) {
+            setDynamicHoldTime(parseInt(holdTimeConfig.configValue, 10));
           }
         }
       })
@@ -270,7 +275,7 @@ export function SeatSelection({
 
       {/* Booking Summary - Sticky on desktop */}
       <div className="lg:sticky lg:top-4 lg:h-fit">
-        <BookingSummary movieTitle={movieTitle} moviePoster={moviePoster} cinemaName={cinemaName} roomName={roomName} showDate={showDate} showTime={showTime} selectedSeats={selectedSeats} onConfirm={handleConfirm} onCancel={handleCancel} onTimerExpire={handleTimerExpire} isConfirming={isConfirming} />
+        <BookingSummary movieTitle={movieTitle} moviePoster={moviePoster} cinemaName={cinemaName} roomName={roomName} showDate={showDate} showTime={showTime} selectedSeats={selectedSeats} maxSeats={dynamicMaxSeats} holdTime={dynamicHoldTime} onConfirm={handleConfirm} onCancel={handleCancel} onTimerExpire={handleTimerExpire} isConfirming={isConfirming} />
       </div>
     </div>
   );

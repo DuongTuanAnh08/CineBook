@@ -14,6 +14,8 @@ export function BookingSummary({
   showDate,
   showTime,
   selectedSeats,
+  maxSeats = 8,
+  holdTime = 15,
   onConfirm,
   onCancel,
   onTimerExpire,
@@ -44,7 +46,7 @@ export function BookingSummary({
       {/* Timer */}
       <div className="p-4 border-b border-border">
         <BookingTimer 
-          initialMinutes={15} 
+          initialMinutes={holdTime} 
           onExpire={onTimerExpire} 
           isStarted={selectedSeats.length > 0}
         />
@@ -88,7 +90,7 @@ export function BookingSummary({
           <Armchair className="size-5 text-primary" />
           <h4 className="font-semibold">Ghế đã chọn</h4>
           <Badge variant="secondary" className="ml-auto">
-            {selectedSeats.length} / 8 ghế
+            {selectedSeats.length} / {maxSeats} ghế
           </Badge>
         </div>
 

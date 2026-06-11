@@ -17,8 +17,14 @@ export default function AdminSettingsPage() {
   const { toast } = useToast();
 
   const [emailNotif, setEmailNotif] = useState(true);
-  const [smsNotif, setSmsNotif] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
+
+  const [cinemaName, setCinemaName] = useState('CineBook');
+  const [hotline, setHotline] = useState('1900 2099');
+  const [address, setAddress] = useState('72 Lê Thánh Tôn, Quận 1, TP. Hồ Chí Minh');
+  const [description, setDescription] = useState('CineBook — Hệ thống rạp chiếu phim hàng đầu Việt Nam với trải nghiệm xem phim đẳng cấp.');
+  const [currency, setCurrency] = useState('VND');
+  const [language, setLanguage] = useState('vi');
 
   const [vatPercent, setVatPercent] = useState(8);
   const [weekendSurcharge, setWeekendSurcharge] = useState(20);
@@ -39,17 +45,25 @@ export default function AdminSettingsPage() {
     configApi.getAllConfigs().then(res => {
       if (res.success) {
           res.data.forEach(config => {
-            if (config.configKey === 'vatPercent') setVatPercent(Number(config.configValue));
-            if (config.configKey === 'weekendSurcharge') setWeekendSurcharge(Number(config.configValue));
-            if (config.configKey === 'eveningSurcharge') setEveningSurcharge(Number(config.configValue));
-            if (config.configKey === 'eveningSurchargeTime') setEveningSurchargeTime(config.configValue);
+            if (config.configKey === 'vat_rate') setVatPercent(Number(config.configValue) * 100);
+            if (config.configKey === 'weekend_surcharge_percent') setWeekendSurcharge(Number(config.configValue));
+            if (config.configKey === 'evening_surcharge_percent') setEveningSurcharge(Number(config.configValue));
+            if (config.configKey === 'evening_surcharge_time') setEveningSurchargeTime(config.configValue);
             if (config.configKey === 'base_price') setBasePrice(Number(config.configValue));
             if (config.configKey === 'seat_vip_multiplier') setSeatVipMultiplier(Number(config.configValue));
             if (config.configKey === 'seat_couple_multiplier') setSeatCoupleMultiplier(Number(config.configValue));
             if (config.configKey === 'room_3d_multiplier') setRoom3DMultiplier(Number(config.configValue));
             if (config.configKey === 'room_imax_multiplier') setRoomIMAXMultiplier(Number(config.configValue));
-            if (config.configKey === 'holdTime') setHoldTime(Number(config.configValue));
-            if (config.configKey === 'maxSeats') setMaxSeats(Number(config.configValue));
+            if (config.configKey === 'seat_hold_minutes') setHoldTime(Number(config.configValue));
+            if (config.configKey === 'max_seats_per_booking') setMaxSeats(Number(config.configValue));
+            if (config.configKey === 'cinema_name') setCinemaName(config.configValue);
+            if (config.configKey === 'hotline') setHotline(config.configValue);
+            if (config.configKey === 'address') setAddress(config.configValue);
+            if (config.configKey === 'description') setDescription(config.configValue);
+            if (config.configKey === 'currency') setCurrency(config.configValue);
+            if (config.configKey === 'language') setLanguage(config.configValue);
+            if (config.configKey === 'email_notif') setEmailNotif(config.configValue === 'true');
+            if (config.configKey === 'maintenance_mode') setMaintenanceMode(config.configValue === 'true');
           });
       }
     }).finally(() => setLoading(false));
@@ -58,17 +72,25 @@ export default function AdminSettingsPage() {
   const handleSave = async () => {
     try {
         await Promise.all([
-          configApi.updateConfig('vatPercent', String(vatPercent)),
-          configApi.updateConfig('weekendSurcharge', String(weekendSurcharge)),
-          configApi.updateConfig('eveningSurcharge', String(eveningSurcharge)),
-          configApi.updateConfig('eveningSurchargeTime', eveningSurchargeTime),
+          configApi.updateConfig('vat_rate', String(vatPercent / 100)),
+          configApi.updateConfig('weekend_surcharge_percent', String(weekendSurcharge)),
+          configApi.updateConfig('evening_surcharge_percent', String(eveningSurcharge)),
+          configApi.updateConfig('evening_surcharge_time', eveningSurchargeTime),
           configApi.updateConfig('base_price', String(basePrice)),
           configApi.updateConfig('seat_vip_multiplier', String(seatVipMultiplier)),
           configApi.updateConfig('seat_couple_multiplier', String(seatCoupleMultiplier)),
           configApi.updateConfig('room_3d_multiplier', String(room3DMultiplier)),
           configApi.updateConfig('room_imax_multiplier', String(roomIMAXMultiplier)),
-          configApi.updateConfig('holdTime', String(holdTime)),
-          configApi.updateConfig('maxSeats', String(maxSeats))
+          configApi.updateConfig('seat_hold_minutes', String(holdTime)),
+          configApi.updateConfig('max_seats_per_booking', String(maxSeats)),
+          configApi.updateConfig('cinema_name', cinemaName),
+          configApi.updateConfig('hotline', hotline),
+          configApi.updateConfig('address', address),
+          configApi.updateConfig('description', description),
+          configApi.updateConfig('currency', currency),
+          configApi.updateConfig('language', language),
+          configApi.updateConfig('email_notif', String(emailNotif)),
+          configApi.updateConfig('maintenance_mode', String(maintenanceMode))
         ]);
       toast({
         title: 'Thành công',
@@ -99,25 +121,25 @@ export default function AdminSettingsPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="cinema-name">Tên hệ thống rạp</Label>
-                <Input id="cinema-name" defaultValue="CineBook" />
+                <Input id="cinema-name" value={cinemaName} onChange={e => setCinemaName(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="hotline">Số điện thoại hotline</Label>
-                <Input id="hotline" defaultValue="1900 2099" />
+                <Input id="hotline" value={hotline} onChange={e => setHotline(e.target.value)} />
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="address">Địa chỉ trụ sở chính</Label>
-              <Input id="address" defaultValue="72 Lê Thánh Tôn, Quận 1, TP. Hồ Chí Minh" />
+              <Input id="address" value={address} onChange={e => setAddress(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="description">Mô tả</Label>
-              <Textarea id="description" rows={3} defaultValue="CineBook — Hệ thống rạp chiếu phim hàng đầu Việt Nam với trải nghiệm xem phim đẳng cấp." />
+              <Textarea id="description" rows={3} value={description} onChange={e => setDescription(e.target.value)} />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="currency">Đơn vị tiền tệ</Label>
-                <Select defaultValue="VND">
+                <Select value={currency} onValueChange={setCurrency}>
                   <SelectTrigger id="currency">
                     <SelectValue />
                   </SelectTrigger>
@@ -129,7 +151,7 @@ export default function AdminSettingsPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="language">Ngôn ngữ mặc định</Label>
-                <Select defaultValue="vi">
+                <Select value={language} onValueChange={setLanguage}>
                   <SelectTrigger id="language">
                     <SelectValue />
                   </SelectTrigger>

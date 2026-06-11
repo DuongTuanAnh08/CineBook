@@ -19,7 +19,6 @@ public class SystemConfigController {
     private final SystemConfigService systemConfigService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('SystemAdmin', 'ScheduleManager')")
     public ApiResponse<List<SystemConfig>> getAllConfigs() {
         return ApiResponse.ok(systemConfigService.getAllConfigs());
     }
