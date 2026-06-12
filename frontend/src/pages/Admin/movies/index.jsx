@@ -109,7 +109,8 @@ export default function AdminMoviesPage() {
       trailerUrl: movie.trailerUrl || '',
       poster: movie.posterUrl || movie.poster || '', 
       duration: movie.durationMin || movie.duration || '', 
-      status: movie.status === 'NowShowing' || movie.status === 'now_showing' ? 'now_showing' : (movie.status === 'ComingSoon' || movie.status === 'coming_soon' ? 'coming_soon' : 'now_showing'), 
+      status: movie.status === 'NowShowing' || movie.status === 'now_showing' ? 'now_showing' : 
+              movie.status === 'ComingSoon' || movie.status === 'coming_soon' ? 'coming_soon' : 'hidden', 
       ageRating: movie.ageRating || 'PG-13', 
       rating: Number(movie.avgRating ?? movie.rating ?? 0),
       genreIds: movie.genres ? movie.genres.map(g => g.genreId) : []
@@ -143,7 +144,7 @@ export default function AdminMoviesPage() {
       toast.error('Vui lòng nhập tên phim');
       return;
     }
-    if (!formData.poster.trim()) {
+    if (!formData.poster?.trim()) {
       toast.error('Vui lòng nhập hoặc tải lên poster');
       return;
     }
@@ -151,7 +152,7 @@ export default function AdminMoviesPage() {
       toast.error('Vui lòng nhập thời lượng phim hợp lệ');
       return;
     }
-    if (formData.genreIds.length === 0) {
+    if (!formData.genreIds || formData.genreIds.length === 0) {
       toast.error('Vui lòng chọn ít nhất một thể loại');
       return;
     }
@@ -167,7 +168,8 @@ export default function AdminMoviesPage() {
       language: formData.language || "Vietnamese",
       trailerUrl: formData.trailerUrl || "",
       posterUrl: formData.poster || "",
-      status: formData.status === 'now_showing' ? 'NowShowing' : 'ComingSoon',
+      status: formData.status === 'now_showing' ? 'NowShowing' : 
+              formData.status === 'coming_soon' ? 'ComingSoon' : 'Hidden',
       ageRating: formData.ageRating || 'PG-13',
       genreIds: formData.genreIds
     };
@@ -177,14 +179,14 @@ export default function AdminMoviesPage() {
         const res = await movieApi.updateMovie(editingMovie.id, payload);
         if (res.success) {
           toast.success("Cập nhật phim thành công!");
-          fetchMovies();
+          await fetchMovies();
           await refreshMovies();
         }
       } else {
         const res = await movieApi.createMovie(payload);
         if (res.success) {
           toast.success("Thêm phim mới thành công!");
-          fetchMovies();
+          await fetchMovies();
           await refreshMovies();
         }
       }
@@ -208,7 +210,7 @@ export default function AdminMoviesPage() {
         const res = await movieApi.deleteMovie(deletingId);
         if (res.success) {
            toast.success("Xóa phim thành công!");
-           fetchMovies();
+           await fetchMovies();
            await refreshMovies();
         }
       } catch (error) {
@@ -315,8 +317,12 @@ export default function AdminMoviesPage() {
                       <span className="text-sm font-medium text-yellow-500">★ {movie.rating}</span>
                     </TableCell>
                     <TableCell>
-                      <Badge className={movie.status === 'now_showing' ? 'bg-green-500/20 text-green-500 hover:bg-green-500/30' : 'bg-blue-500/20 text-blue-500 hover:bg-blue-500/30'}>
-                        {movie.status === 'now_showing' ? 'Đang chiếu' : 'Sắp chiếu'}
+                      <Badge className={
+                        movie.status === 'now_showing' ? 'bg-green-500/20 text-green-500 hover:bg-green-500/30' : 
+                        movie.status === 'coming_soon' ? 'bg-blue-500/20 text-blue-500 hover:bg-blue-500/30' : 
+                        'bg-gray-500/20 text-gray-500 hover:bg-gray-500/30'
+                      }>
+                        {movie.status === 'now_showing' ? 'Đang chiếu' : movie.status === 'coming_soon' ? 'Sắp chiếu' : 'Đã ẩn'}
                       </Badge>
                     </TableCell>
                     {role !== 'manager' && (
@@ -494,6 +500,7 @@ export default function AdminMoviesPage() {
                     <SelectContent>
                       <SelectItem value="now_showing">Đang chiếu</SelectItem>
                       <SelectItem value="coming_soon">Sắp chiếu</SelectItem>
+                      <SelectItem value="hidden">Đã ẩn (Xóa)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

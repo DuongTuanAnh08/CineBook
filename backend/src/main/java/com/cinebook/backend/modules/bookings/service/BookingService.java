@@ -85,7 +85,9 @@ public class BookingService {
                 multiplier = coupleMultiplier;
             }
             
-            int basePrice = systemConfigService.getBasePrice().intValue();
+            int basePrice = showtime.getPriceOverride() != null 
+                    ? showtime.getPriceOverride() 
+                    : systemConfigService.getBasePrice().intValue();
             
             BigDecimal roomMultiplier = BigDecimal.ONE;
             if ("3D".equalsIgnoreCase(room.getRoomType())) {
@@ -93,8 +95,31 @@ public class BookingService {
             } else if ("IMAX".equalsIgnoreCase(room.getRoomType())) {
                 roomMultiplier = systemConfigService.getRoomIMAXMultiplier();
             }
+            BigDecimal surchargeMultiplier = BigDecimal.ONE;
+            java.time.DayOfWeek day = showtime.getStartTime().getDayOfWeek();
+            if (day == java.time.DayOfWeek.SATURDAY || day == java.time.DayOfWeek.SUNDAY) {
+                BigDecimal weekendSurcharge = systemConfigService.getWeekendSurchargePercent()
+                        .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+                surchargeMultiplier = surchargeMultiplier.add(weekendSurcharge);
+            }
             
+            int hour = showtime.getStartTime().getHour();
+            int eveningHour = 18;
+            try {
+                String eveningTimeStr = systemConfigService.getEveningSurchargeTime();
+                if (eveningTimeStr != null && eveningTimeStr.contains(":")) {
+                    eveningHour = Integer.parseInt(eveningTimeStr.split(":")[0]);
+                }
+            } catch(Exception e) {}
+            
+            if (hour >= eveningHour) {
+                BigDecimal eveningSurcharge = systemConfigService.getEveningSurchargePercent()
+                        .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+                surchargeMultiplier = surchargeMultiplier.add(eveningSurcharge);
+            }
+
             int seatPrice = BigDecimal.valueOf(basePrice)
+                .multiply(surchargeMultiplier)
                 .multiply(roomMultiplier)
                 .multiply(multiplier)
                 .intValue();

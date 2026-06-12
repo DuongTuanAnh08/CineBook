@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Outlet, useLocation } from 'react-router-
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import { AuthProvider } from '@/contexts/auth-context'
 import { DataProvider } from '@/contexts/data-context'
+import { Toaster } from '@/components/ui/sonner'
 
 // Main Layout Pages
 import Home from './pages/Home.jsx'
@@ -127,6 +128,7 @@ export default function App() {
         </BrowserRouter>
       </AuthProvider>
       </DataProvider>
+      <Toaster position="top-right" richColors />
     </GoogleOAuthProvider>
   )
 }

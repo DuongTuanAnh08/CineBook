@@ -302,7 +302,7 @@ export default function AdminShowtimesPage() {
                         <TableCell className="text-sm">{s.availableSeats}/{s.totalSeats}</TableCell>
                         <TableCell>
                           <Badge className={occupancy >= 80 ? 'bg-red-500/20 text-red-500' : occupancy >= 50 ? 'bg-yellow-500/20 text-yellow-500' : 'bg-green-500/20 text-green-500'}>
-                            {s.status}
+                            {occupancy}% lấp đầy
                           </Badge>
                         </TableCell>
                         <TableCell>
