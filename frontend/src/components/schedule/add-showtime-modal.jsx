@@ -13,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useData } from '@/contexts/data-context';
-import { calculateEndTime, checkConflicts, getRoomTypeLabel, getRoomTypeColor } from '@/lib/schedule-utils';
+import { calculateEndTime, checkConflicts } from '@/lib/schedule-utils';
 import { cn } from '@/lib/utils';
 export function AddShowtimeModal({
   open,
@@ -158,9 +158,6 @@ export function AddShowtimeModal({
                 {rooms.map(room => <SelectItem key={room.id} value={room.id}>
                     <div className="flex items-center gap-2">
                       <span>{room.name}</span>
-                      <Badge variant="outline" className={cn("text-[10px] h-5", getRoomTypeColor(room.type))}>
-                        {getRoomTypeLabel(room.type)}
-                      </Badge>
                       <span className="text-xs text-muted-foreground">({room.capacity} ghế)</span>
                     </div>
                   </SelectItem>)}

@@ -145,9 +145,25 @@ export default function AdminPromotionsPage() {
     }
   };
 
-  const filtered = promos.filter(p => 
-    (p.code || '').toLowerCase().includes(search.toLowerCase())
-  );
+  const getDerivedStatus = (promo) => {
+    const now = new Date();
+    if (promo.status === 'Active' && new Date(promo.validUntil) < now) {
+      return 'Expired';
+    }
+    if (promo.status === 'Active' && promo.usageLimit && promo.usedCount >= promo.usageLimit) {
+      return 'Expired';
+    }
+    return promo.status;
+  };
+
+  const currentPromos = promos.map(p => ({ ...p, derivedStatus: getDerivedStatus(p) }));
+
+  const filtered = currentPromos.filter(promo => {
+    return promo.code?.toLowerCase().includes(search.toLowerCase());
+  });
+
+  const activeCount = currentPromos.filter(p => p.derivedStatus === 'Active').length;
+  const expiredCount = currentPromos.filter(p => p.derivedStatus === 'Expired' || p.derivedStatus === 'Inactive').length;
 
   const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered, 10);
 
@@ -174,13 +190,13 @@ export default function AdminPromotionsPage() {
           value: promos.length
         }, {
           label: 'Đang hoạt động',
-          value: promos.filter(p => p.status === 'Active').length
+          value: activeCount
         }, {
           label: 'Tổng lượt dùng',
           value: promos.reduce((a, p) => a + (p.usedCount || 0), 0)
         }, {
           label: 'Đã hết hạn',
-          value: promos.filter(p => p.status === 'Expired').length
+          value: expiredCount
         }].map(s => <Card key={s.label} className="bg-card border-border">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">{s.label}</CardTitle>
@@ -260,8 +276,8 @@ export default function AdminPromotionsPage() {
                       {dayjs(promo.validFrom).format('DD/MM/YYYY')} → {dayjs(promo.validUntil).format('DD/MM/YYYY')}
                     </TableCell>
                     <TableCell>
-                      <Badge className={STATUS_CONFIG[promo.status]?.className || 'bg-gray-500/20 text-gray-500'}>
-                        {STATUS_CONFIG[promo.status]?.label || promo.status}
+                      <Badge className={STATUS_CONFIG[promo.derivedStatus]?.className || 'bg-gray-500/20 text-gray-500'}>
+                        {STATUS_CONFIG[promo.derivedStatus]?.label || promo.derivedStatus}
                       </Badge>
                     </TableCell>
                     {role !== 'manager' && (

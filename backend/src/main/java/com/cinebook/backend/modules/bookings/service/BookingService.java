@@ -45,6 +45,7 @@ public class BookingService {
     private final FnBOrderItemRepository fnbOrderItemRepository;
     private final FnBProductRepository fnbProductRepository;
     private final PromoCodeRepository promoCodeRepository;
+    private final com.cinebook.backend.modules.promos.service.PromoService promoService;
 
     @Transactional
     public Booking createBooking(Long customerId, Long showtimeId, List<Long> seatIds, List<FnBItemRequest> fnbItems, String promoCode) {
@@ -78,51 +79,50 @@ public class BookingService {
             Seat seat = seatRepository.findById(seatId)
                     .orElseThrow(() -> new RuntimeException("Seat not found: " + seatId));
             
-            BigDecimal multiplier = BigDecimal.ONE;
-            if (seat.getSeatType() == SeatType.VIP) {
-                multiplier = vipMultiplier;
-            } else if (seat.getSeatType() == SeatType.Couple) {
-                multiplier = coupleMultiplier;
-            }
-            
-            int basePrice = showtime.getPriceOverride() != null 
-                    ? showtime.getPriceOverride() 
-                    : systemConfigService.getBasePrice().intValue();
-            
-            BigDecimal roomMultiplier = BigDecimal.ONE;
-            if ("3D".equalsIgnoreCase(room.getRoomType())) {
-                roomMultiplier = systemConfigService.getRoom3DMultiplier();
-            } else if ("IMAX".equalsIgnoreCase(room.getRoomType())) {
-                roomMultiplier = systemConfigService.getRoomIMAXMultiplier();
-            }
-            BigDecimal surchargeMultiplier = BigDecimal.ONE;
-            java.time.DayOfWeek day = showtime.getStartTime().getDayOfWeek();
-            if (day == java.time.DayOfWeek.SATURDAY || day == java.time.DayOfWeek.SUNDAY) {
-                BigDecimal weekendSurcharge = systemConfigService.getWeekendSurchargePercent()
-                        .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
-                surchargeMultiplier = surchargeMultiplier.add(weekendSurcharge);
-            }
-            
-            int hour = showtime.getStartTime().getHour();
-            int eveningHour = 18;
-            try {
-                String eveningTimeStr = systemConfigService.getEveningSurchargeTime();
-                if (eveningTimeStr != null && eveningTimeStr.contains(":")) {
-                    eveningHour = Integer.parseInt(eveningTimeStr.split(":")[0]);
+            int seatPrice;
+            if (showtime.getPriceOverride() != null) {
+                // priceOverride is the final flat price — use directly as base
+                seatPrice = showtime.getPriceOverride();
+            } else {
+                BigDecimal basePrice = systemConfigService.getBasePrice();
+                
+                // Seat type multiplier
+                BigDecimal seatMultiplier = BigDecimal.ONE;
+                if (seat.getSeatType() == SeatType.VIP) {
+                    seatMultiplier = vipMultiplier;
+                } else if (seat.getSeatType() == SeatType.Couple) {
+                    seatMultiplier = coupleMultiplier;
                 }
-            } catch(Exception e) {}
-            
-            if (hour >= eveningHour) {
-                BigDecimal eveningSurcharge = systemConfigService.getEveningSurchargePercent()
-                        .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
-                surchargeMultiplier = surchargeMultiplier.add(eveningSurcharge);
+                
+                // Day-of-week multiplier (weekend surcharge)
+                BigDecimal dayMultiplier = BigDecimal.ONE;
+                java.time.DayOfWeek day = showtime.getStartTime().getDayOfWeek();
+                if (day == java.time.DayOfWeek.SATURDAY || day == java.time.DayOfWeek.SUNDAY) {
+                    BigDecimal weekendSurcharge = systemConfigService.getWeekendSurchargePercent()
+                            .divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP);
+                    dayMultiplier = BigDecimal.ONE.add(weekendSurcharge);
+                }
+                
+                // Time-of-day multiplier (evening surcharge)
+                BigDecimal timeMultiplier = BigDecimal.ONE;
+                try {
+                    String eveningTimeStr = systemConfigService.getEveningSurchargeTime();
+                    if (eveningTimeStr != null && eveningTimeStr.contains(":")) {
+                        java.time.LocalTime eveningTime = java.time.LocalTime.parse(eveningTimeStr);
+                        if (!showtime.getStartTime().toLocalTime().isBefore(eveningTime)) {
+                            BigDecimal eveningSurcharge = systemConfigService.getEveningSurchargePercent()
+                                    .divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP);
+                            timeMultiplier = BigDecimal.ONE.add(eveningSurcharge);
+                        }
+                    }
+                } catch (Exception e) { /* use default timeMultiplier = 1 */ }
+                
+                seatPrice = basePrice
+                    .multiply(seatMultiplier)
+                    .multiply(dayMultiplier)
+                    .multiply(timeMultiplier)
+                    .intValue();
             }
-
-            int seatPrice = BigDecimal.valueOf(basePrice)
-                .multiply(surchargeMultiplier)
-                .multiply(roomMultiplier)
-                .multiply(multiplier)
-                .intValue();
             totalBeforeTax += seatPrice;
 
             BookingSeat bookingSeat = new BookingSeat();
@@ -178,31 +178,31 @@ public class BookingService {
         }
 
         if (promoCode != null && !promoCode.isEmpty()) {
-            java.util.Optional<com.cinebook.backend.modules.promos.entity.PromoCode> optPromo = promoCodeRepository.findByCode(promoCode);
-            if (optPromo.isPresent()) {
-                com.cinebook.backend.modules.promos.entity.PromoCode promo = optPromo.get();
-                if (promo.getStatus() == com.cinebook.backend.modules.promos.entity.PromoStatus.Active) {
-                    int discountAmount = 0;
-                    if (promo.getDiscountType() == com.cinebook.backend.modules.promos.entity.PromoDiscountType.Percentage) {
-                        discountAmount = savedBooking.getTotalBeforeTax() * promo.getDiscountValue().intValue() / 100;
-                        if (promo.getMaxDiscountVnd() != null && discountAmount > promo.getMaxDiscountVnd()) {
-                            discountAmount = promo.getMaxDiscountVnd();
-                        }
-                    } else {
-                        discountAmount = promo.getDiscountValue().intValue();
+            try {
+                com.cinebook.backend.modules.promos.entity.PromoCode promo = promoService.validatePromo(promoCode, customerId, savedBooking.getTotalBeforeTax());
+                int discountAmount = 0;
+                if (promo.getDiscountType() == com.cinebook.backend.modules.promos.entity.PromoDiscountType.Percentage) {
+                    discountAmount = savedBooking.getTotalBeforeTax() * promo.getDiscountValue().intValue() / 100;
+                    if (promo.getMaxDiscountVnd() != null && discountAmount > promo.getMaxDiscountVnd()) {
+                        discountAmount = promo.getMaxDiscountVnd();
                     }
-                    
-                    int newTotalBeforeTax = savedBooking.getTotalBeforeTax() - discountAmount;
-                    if (newTotalBeforeTax < 0) newTotalBeforeTax = 0;
-                    int newVatAmount = java.math.BigDecimal.valueOf(newTotalBeforeTax).multiply(vatRate).setScale(0, java.math.RoundingMode.HALF_UP).intValue();
-                    int newTotalAfterTax = newTotalBeforeTax + newVatAmount;
-
-                    savedBooking.setPromoId(promo.getId());
-                    savedBooking.setDiscountAmount(discountAmount);
-                    savedBooking.setVatAmount(newVatAmount);
-                    savedBooking.setTotalAfterTax(newTotalAfterTax);
-                    savedBooking = bookingRepository.save(savedBooking);
+                } else {
+                    discountAmount = promo.getDiscountValue().intValue();
                 }
+                
+                int newTotalBeforeTax = savedBooking.getTotalBeforeTax() - discountAmount;
+                if (newTotalBeforeTax < 0) newTotalBeforeTax = 0;
+                int newVatAmount = java.math.BigDecimal.valueOf(newTotalBeforeTax).multiply(vatRate).setScale(0, java.math.RoundingMode.HALF_UP).intValue();
+                int newTotalAfterTax = newTotalBeforeTax + newVatAmount;
+
+                savedBooking.setPromoId(promo.getId());
+                savedBooking.setDiscountAmount(discountAmount);
+                savedBooking.setVatAmount(newVatAmount);
+                savedBooking.setTotalAfterTax(newTotalAfterTax);
+                savedBooking = bookingRepository.save(savedBooking);
+            } catch (Exception e) {
+                // If promo validation fails, we throw an exception to abort the booking
+                throw new RuntimeException("Invalid promo code: " + e.getMessage());
             }
         }
 

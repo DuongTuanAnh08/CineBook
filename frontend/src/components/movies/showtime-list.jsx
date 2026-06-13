@@ -89,15 +89,20 @@ export function ShowtimeList({
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {roomShowtimes.sort((a, b) => a.startTime.localeCompare(b.startTime)).map(showtime => {
-                    const isPast = false;
+                    const now = new Date();
+                    const [hours, minutes] = showtime.startTime.split(':');
+                    const [year, month, day] = showtime.date.split('-');
+                    const showtimeDate = new Date(year, month - 1, day, hours, minutes);
+                    const isPast = showtimeDate < now;
+                    
                     const isLowSeats = showtime.availableSeats < 20;
-                    return <Button key={showtime.id} variant="outline" size="sm" disabled={isPast || showtime.availableSeats === 0} className={`group relative flex-col h-auto py-1.5 px-2 hover:border-primary hover:bg-primary/10 ${isLowSeats ? 'border-orange-500/50' : ''}`} onClick={() => {
+                    return <Button key={showtime.id} variant="outline" size="sm" disabled={isPast || showtime.availableSeats === 0} className={`group relative flex-col h-auto py-1.5 px-2 hover:border-primary hover:bg-primary/10 ${isLowSeats && !isPast ? 'border-orange-500/50' : ''}`} onClick={() => {
                       onSelectShowtime?.(showtime);
                       navigate(`/booking/${movieId}?id=${movieId}&cinema=${showtime.cinemaId}&room=${encodeURIComponent(showtime.roomName)}&date=${selectedDate}&time=${showtime.startTime}&showtimeId=${showtime.id}`);
                     }}>
-                                  <span className="text-sm font-semibold leading-none">{showtime.startTime}</span>
+                                  <span className={`text-sm font-semibold leading-none ${isPast ? 'line-through text-muted-foreground' : ''}`}>{showtime.startTime}</span>
                                   <span className="text-[10px] text-muted-foreground mt-0.5">
-                                    {showtime.availableSeats === 0 ? <span className="text-destructive">Hết chỗ</span> : `${showtime.availableSeats} chỗ`}
+                                    {isPast ? <span>Đã chiếu</span> : showtime.availableSeats === 0 ? <span className="text-destructive">Hết chỗ</span> : `${showtime.availableSeats} chỗ`}
                                   </span>
                                   <span className="text-[10px] text-accent mt-0.5">
                                     {new Intl.NumberFormat('vi-VN').format(showtime.price)}đ

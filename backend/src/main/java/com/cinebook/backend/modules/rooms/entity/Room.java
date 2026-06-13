@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import com.cinebook.backend.modules.cinemas.entity.Cinema;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "Rooms")
@@ -40,9 +42,8 @@ public class Room {
     @Column(name = "seat_layout", columnDefinition = "JSON")
     private String seatLayout;
 
-    @Column(name = "room_type", nullable = false)
-    @Builder.Default
-    private String roomType = "2D";
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL)
+    private List<Seat> seats = new ArrayList<>();
 
     @Column(name = "status", nullable = false)
     @Builder.Default

@@ -51,7 +51,6 @@ public class RoomService {
                 .columns(room.getColumns())
                 .capacity(room.getCapacity())
                 .baseNormalPrice(room.getBaseNormalPrice())
-                .roomType(room.getRoomType())
                 .status(room.getStatus())
                 .build();
     }
@@ -70,7 +69,6 @@ public class RoomService {
                 .columns(request.getColumns())
                 .capacity(capacity)
                 .baseNormalPrice(request.getBaseNormalPrice() != null ? request.getBaseNormalPrice() : 0)
-                .roomType(request.getRoomType() != null ? request.getRoomType() : "2D")
                 .status(request.getStatus() != null ? request.getStatus() : "Active")
                 .build();
         

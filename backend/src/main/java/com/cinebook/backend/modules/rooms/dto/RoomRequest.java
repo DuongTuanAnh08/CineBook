@@ -9,6 +9,6 @@ public class RoomRequest {
     private Integer rows;
     private Integer columns;
     private Integer baseNormalPrice;
-    private String roomType;
+    private String seatLayout;
     private String status;
 }

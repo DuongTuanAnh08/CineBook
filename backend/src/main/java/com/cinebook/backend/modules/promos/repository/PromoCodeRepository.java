@@ -8,4 +8,5 @@ import java.util.Optional;
 @Repository
 public interface PromoCodeRepository extends JpaRepository<PromoCode, Long> {
     Optional<PromoCode> findByCode(String code);
+    java.util.List<PromoCode> findByStatusAndValidUntilBefore(com.cinebook.backend.modules.promos.entity.PromoStatus status, java.time.LocalDateTime dateTime);
 }

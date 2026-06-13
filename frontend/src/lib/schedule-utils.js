@@ -8,32 +8,27 @@ export const rooms = [{
   id: 'room-1',
   name: 'Phòng 1',
   cinemaId: '1',
-  capacity: 120,
-  type: 'standard'
+  capacity: 120
 }, {
   id: 'room-2',
   name: 'Phòng 2',
   cinemaId: '1',
-  capacity: 150,
-  type: '3d'
+  capacity: 150
 }, {
   id: 'room-3',
   name: 'Phòng 3',
   cinemaId: '1',
-  capacity: 200,
-  type: 'imax'
+  capacity: 200
 }, {
   id: 'room-4',
   name: 'Phòng 4',
   cinemaId: '1',
-  capacity: 80,
-  type: '4dx'
+  capacity: 80
 }, {
   id: 'room-5',
   name: 'Phòng 5',
   cinemaId: '1',
-  capacity: 100,
-  type: 'standard'
+  capacity: 100
 }];
 
 // Generate initial schedule data
@@ -359,26 +354,4 @@ export function checkConflicts(newShowtime, existingShowtimes, excludeId) {
     }
   }
   return conflicts;
-}
-
-// Get room type label
-export function getRoomTypeLabel(type) {
-  const labels = {
-    standard: '2D',
-    '3d': '3D',
-    imax: 'IMAX',
-    '4dx': '4DX'
-  };
-  return labels[type];
-}
-
-// Get room type color
-export function getRoomTypeColor(type) {
-  const colors = {
-    standard: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-    '3d': 'bg-green-500/20 text-green-400 border-green-500/30',
-    imax: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-    '4dx': 'bg-amber-500/20 text-amber-400 border-amber-500/30'
-  };
-  return colors[type];
 }

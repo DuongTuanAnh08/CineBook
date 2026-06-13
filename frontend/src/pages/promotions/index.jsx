@@ -42,8 +42,8 @@ export default function PromotionsPage() {
   useEffect(() => {
     promoApi.getAllPromos({ page: 0, size: 100 })
       .then(res => {
-        if (res.data?.success) {
-          setPromotions(res.data.data.content);
+        if (res.success) {
+          setPromotions(res.data.content);
         }
       })
       .catch(err => {
@@ -53,8 +53,9 @@ export default function PromotionsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const active = promotions.filter(p => p.status === 'Active');
-  const expired = promotions.filter(p => p.status !== 'Active');
+  const now = new Date();
+  const active = promotions.filter(p => p.status === 'Active' && new Date(p.validUntil) >= now);
+  const expired = promotions.filter(p => p.status !== 'Active' || new Date(p.validUntil) < now);
   const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(active, 10);
   
   return (
@@ -88,22 +89,21 @@ export default function PromotionsPage() {
                             <Icon className="w-5 h-5 text-primary" />
                           </div>
                           <div>
-                            <CardTitle className="text-base leading-tight">{promo.title}</CardTitle>
+                            <CardTitle className="text-base leading-tight">Mã ưu đãi {promo.code}</CardTitle>
                             <Badge className={`mt-1 text-xs ${tag.className}`}>{tag.label}</Badge>
                           </div>
                         </div>
                         <div className="text-right shrink-0">
-                          <p className="text-2xl font-bold text-primary">{promo.discount}</p>
-                          <p className="text-2xl font-bold text-primary">{promo.discountValue}</p>
+                          <p className="text-2xl font-bold text-primary">Giảm {promo.discountValue}{promo.discountType === 'Percentage' ? '%' : '₫'}</p>
                         </div>
                       </div>
                     </CardHeader>
                     <CardContent className="pl-6 space-y-3">
-                      <p className="text-sm text-muted-foreground">{promo.description}</p>
+                      <p className="text-sm text-muted-foreground">Áp dụng cho đơn hàng đáp ứng điều kiện tối thiểu.</p>
                       <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                        <span>Đơn tối thiểu: <strong className="text-foreground">{promo.minOrderValue?.toLocaleString('vi-VN')}₫</strong></span>
-                        <span>Giảm tối đa: <strong className="text-foreground">{promo.maxDiscountAmount?.toLocaleString('vi-VN')}₫</strong></span>
-                        <span>Hết hạn: <strong className="text-foreground">{promo.endDate ? new Date(promo.endDate).toLocaleDateString('vi-VN') : 'Không giới hạn'}</strong></span>
+                        <span>Đơn tối thiểu: <strong className="text-foreground">{promo.minOrderValue ? promo.minOrderValue.toLocaleString('vi-VN') : 0}₫</strong></span>
+                        <span>Giảm tối đa: <strong className="text-foreground">{promo.maxDiscountVnd ? promo.maxDiscountVnd.toLocaleString('vi-VN') + '₫' : 'Không giới hạn'}</strong></span>
+                        <span>Hết hạn: <strong className="text-foreground">{promo.validUntil ? new Date(promo.validUntil).toLocaleDateString('vi-VN') : 'Không giới hạn'}</strong></span>
                       </div>
                       <div className="flex items-center gap-2">
                         <code className="flex-1 text-center font-mono font-bold text-sm bg-secondary rounded-lg px-3 py-2 tracking-widest">
@@ -154,9 +154,9 @@ export default function PromotionsPage() {
                         <Icon className="w-5 h-5 text-muted-foreground" />
                         <div>
                           <CardTitle className="text-base leading-tight line-through">
-                            {promo.title}
+                            Mã ưu đãi {promo.code}
                           </CardTitle>
-                          <p className="text-xs text-muted-foreground mt-0.5">Hết hạn: {promo.endDate ? new Date(promo.endDate).toLocaleDateString('vi-VN') : '—'}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">Hết hạn: {promo.validUntil ? new Date(promo.validUntil).toLocaleDateString('vi-VN') : '—'}</p>
                         </div>
                       </div>
                     </CardHeader>

@@ -31,7 +31,7 @@ export default function AdminRoomsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const [formData, setFormData] = useState({
-    cinemaId: '', name: '', rows: '10', columns: '10', roomType: '2D'
+    cinemaId: '', name: '', rows: '10', columns: '10'
   });
 
 
@@ -74,7 +74,7 @@ export default function AdminRoomsPage() {
   const activeCount = filtered.filter(r => r.status === 'Active' || r.status === 'active').length;
 
   const openAdd = () => {
-    setFormData({ cinemaId: '', name: '', rows: '10', columns: '10', roomType: '2D' });
+    setFormData({ cinemaId: '', name: '', rows: '10', columns: '10' });
     setIsDialogOpen(true);
   };
 
@@ -103,8 +103,7 @@ export default function AdminRoomsPage() {
         name: formData.name,
         rows: parseInt(formData.rows) || 10,
         columns: parseInt(formData.columns) || 10,
-        baseNormalPrice: 0,
-        roomType: formData.roomType || '2D'
+        baseNormalPrice: 0
       };
 
     try {
@@ -191,7 +190,6 @@ export default function AdminRoomsPage() {
               <TableRow className="border-border hover:bg-transparent">
                 <TableHead>Tên phòng</TableHead>
                 <TableHead>Rạp</TableHead>
-                <TableHead>Loại phòng</TableHead>
                 <TableHead>Sức chứa</TableHead>
                 <TableHead>Trạng thái</TableHead>
                 <TableHead className="w-[100px] text-right">Thao tác</TableHead>
@@ -203,9 +201,6 @@ export default function AdminRoomsPage() {
                   <TableCell className="font-medium">{room.name}</TableCell>
                   <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
                     {room.cinemaName}
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    <Badge className="bg-secondary text-muted-foreground">{room.roomType || '2D'}</Badge>
                   </TableCell>
                   <TableCell className="text-sm">{room.capacity || 0} ghế</TableCell>
                   <TableCell>
@@ -234,7 +229,7 @@ export default function AdminRoomsPage() {
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                     Không tìm thấy phòng chiếu nào
                   </TableCell>
                 </TableRow>
@@ -276,21 +271,10 @@ export default function AdminRoomsPage() {
                 </SelectContent>
               </Select>
             </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4">
                 <div className="grid gap-2">
                   <Label>Tên phòng</Label>
                   <Input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="VD: Phòng 1" />
-                </div>
-                <div className="grid gap-2">
-                  <Label>Loại phòng</Label>
-                  <Select value={formData.roomType} onValueChange={v => setFormData({ ...formData, roomType: v })}>
-                    <SelectTrigger><SelectValue placeholder="-- Chọn loại --" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="2D">Tiêu chuẩn (2D)</SelectItem>
-                      <SelectItem value="3D">Phòng 3D</SelectItem>
-                      <SelectItem value="IMAX">Phòng IMAX</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
             <div className="grid grid-cols-2 gap-4">

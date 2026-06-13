@@ -14,6 +14,5 @@ public class RoomDto {
     private Integer columns;
     private Integer capacity;
     private Integer baseNormalPrice;
-    private String roomType;
     private String status;
 }

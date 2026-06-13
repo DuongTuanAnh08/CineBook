@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { ScheduleBlock } from './schedule-block';
 import { START_HOUR, END_HOUR, TIME_SLOT_HEIGHT } from '@/types/schedule';
-import { getRoomTypeLabel, getRoomTypeColor, checkConflicts } from '@/lib/schedule-utils';
+import { checkConflicts } from '@/lib/schedule-utils';
 import { cn } from '@/lib/utils';
 export function ScheduleCalendar({
   rooms,
@@ -107,9 +107,6 @@ export function ScheduleCalendar({
               {/* Room Header */}
               <div className="sticky top-0 z-10 h-12 flex items-center justify-center gap-2 border-b border-border bg-card/80 backdrop-blur px-2">
                 <span className="font-medium text-sm truncate">{room.name}</span>
-                <Badge variant="outline" className={cn("text-[10px] h-5 px-1.5", getRoomTypeColor(room.type))}>
-                  {getRoomTypeLabel(room.type)}
-                </Badge>
               </div>
               
               {/* Time Grid */}

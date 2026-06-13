@@ -74,4 +74,26 @@ public class PromoService {
         // Or set status to inactive
         promoCodeRepository.delete(promo);
     }
+
+    public void recordUsage(Long promoId, Long userId, Long bookingId) {
+        PromoCode promo = promoCodeRepository.findById(promoId)
+                .orElseThrow(() -> new RuntimeException("Promo not found"));
+        
+        promo.setUsedCount(promo.getUsedCount() + 1);
+        promoCodeRepository.save(promo);
+
+        com.cinebook.backend.modules.promos.entity.PromoUsage usage = new com.cinebook.backend.modules.promos.entity.PromoUsage();
+        usage.setPromoId(promoId);
+        usage.setUserId(userId);
+        usage.setBookingId(bookingId);
+        promoUsageRepository.save(usage);
+    }
+
+    public void expireOldPromos() {
+        java.util.List<PromoCode> expiredPromos = promoCodeRepository.findByStatusAndValidUntilBefore(PromoStatus.Active, LocalDateTime.now());
+        for (PromoCode promo : expiredPromos) {
+            promo.setStatus(PromoStatus.Inactive);
+            promoCodeRepository.save(promo);
+        }
+    }
 }

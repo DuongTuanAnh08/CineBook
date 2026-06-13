@@ -25,7 +25,6 @@ public class PromoController {
     }
 
     @GetMapping
-    @org.springframework.security.access.prepost.PreAuthorize("hasRole('SystemAdmin')")
     public ApiResponse<org.springframework.data.domain.Page<com.cinebook.backend.modules.promos.entity.PromoCode>> getAllPromos(org.springframework.data.domain.Pageable pageable) {
         return ApiResponse.ok(service.getAllPromos(pageable));
     }

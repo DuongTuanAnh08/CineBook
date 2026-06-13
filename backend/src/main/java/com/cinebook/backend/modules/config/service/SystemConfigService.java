@@ -34,15 +34,7 @@ public class SystemConfigService {
         return val != null ? new BigDecimal(val) : BigDecimal.valueOf(2.00);
     }
 
-    public BigDecimal getRoom3DMultiplier() {
-        String val = getConfigValue("room_3d_multiplier");
-        return val != null ? new BigDecimal(val) : BigDecimal.valueOf(1.20);
-    }
 
-    public BigDecimal getRoomIMAXMultiplier() {
-        String val = getConfigValue("room_imax_multiplier");
-        return val != null ? new BigDecimal(val) : BigDecimal.valueOf(1.50);
-    }
 
     public int getSeatHoldMinutes() {
         String val = getConfigValue("seat_hold_minutes");

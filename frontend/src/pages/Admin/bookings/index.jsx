@@ -51,7 +51,7 @@ export default function AdminBookingsPage() {
   const fetchBookings = async () => {
     try {
       setLoading(true);
-      const res = await bookingApi.getAllBookingsAdmin({ page: 0, size: 100 });
+      const res = await bookingApi.getAllBookingsAdmin({ page: 0, size: 100, sort: 'createdAt,desc' });
       setBookings(res.data?.content || []);
     } catch (error) {
       console.error("Failed to fetch bookings", error);

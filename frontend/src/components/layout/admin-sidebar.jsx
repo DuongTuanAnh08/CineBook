@@ -75,10 +75,6 @@ const sidebarGroups = [{
     icon: RefreshCw,
     href: '/admin/resale',
     exact: true
-  }, {
-    label: 'Báo cáo Resale',
-    icon: FileBarChart2,
-    href: '/admin/resale/report'
   }]
 }, {
   title: 'Hệ thống',

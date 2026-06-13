@@ -32,6 +32,7 @@ public class PaymentController {
     private final BookingRepository bookingRepository;
     private final PaymentRepository paymentRepository;
     private final NotificationService notificationService;
+    private final com.cinebook.backend.modules.promos.service.PromoService promoService;
 
     @Value("${app.frontend.url:http://localhost:3000}")
     private String frontendUrl;
@@ -102,6 +103,15 @@ public class PaymentController {
                     Booking booking = payment.getBooking();
                     booking.setStatus(BookingStatus.Confirmed);
                     bookingRepository.save(booking);
+
+                    if (booking.getPromoId() != null) {
+                        try {
+                            promoService.recordUsage(booking.getPromoId(), booking.getCustomer().getUserId(), booking.getId());
+                        } catch (Exception e) {
+                            // Log the error but don't fail the payment
+                            System.err.println("Error recording promo usage: " + e.getMessage());
+                        }
+                    }
 
                     // Trigger notification
                     String notificationTitle = "Thanh toán thành công";
