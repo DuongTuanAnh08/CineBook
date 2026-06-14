@@ -17,7 +17,7 @@ import com.cinebook.backend.modules.movies.entity.Movie;
 import com.cinebook.backend.modules.bookings.dto.FnBItemRequest;
 import com.cinebook.backend.modules.bookings.repository.FnBOrderItemRepository;
 import com.cinebook.backend.modules.fnb.repository.FnBProductRepository;
-import com.cinebook.backend.modules.notifications.service.NotificationService;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -48,8 +48,7 @@ class BookingServiceTest {
     private SeatRepository seatRepository;
     @Mock
     private SystemConfigService systemConfigService;
-    @Mock
-    private NotificationService notificationService;
+
     @Mock
     private FnBOrderItemRepository fnbOrderItemRepository;
     @Mock
@@ -72,6 +71,7 @@ class BookingServiceTest {
         showtime.setShowtimeId(1L);
         showtime.setRoom(room);
         showtime.setMovie(movie);
+        showtime.setStartTime(java.time.LocalDateTime.now());
 
         User user = new User();
         user.setUserId(1L);
@@ -88,6 +88,9 @@ class BookingServiceTest {
         when(systemConfigService.getSeatVipMultiplier()).thenReturn(BigDecimal.valueOf(1.5));
         when(systemConfigService.getSeatCoupleMultiplier()).thenReturn(BigDecimal.valueOf(2.5));
         when(systemConfigService.getVatRate()).thenReturn(BigDecimal.valueOf(0.1)); // 10%
+        when(systemConfigService.getWeekendSurchargePercent()).thenReturn(BigDecimal.valueOf(0));
+        when(systemConfigService.getEveningSurchargeTime()).thenReturn("17:00");
+        when(systemConfigService.getEveningSurchargePercent()).thenReturn(BigDecimal.valueOf(0));
         when(systemConfigService.getSeatHoldMinutes()).thenReturn(15);
 
         Booking savedBooking = new Booking();

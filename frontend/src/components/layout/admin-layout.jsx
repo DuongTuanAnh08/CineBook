@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Bell, Home, LogOut, Settings, User } from 'lucide-react';
+import { Home, LogOut, Settings, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 export function AdminLayout({
   children
@@ -33,11 +33,7 @@ export function AdminLayout({
 
           {/* Right Section */}
           <div className="flex items-center gap-3">
-            {/* Notifications */}
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="w-5 h-5" />
-              <span className="sr-only">Thông báo</span>
-            </Button>
+
 
             {/* User Menu */}
             {user && <DropdownMenu>

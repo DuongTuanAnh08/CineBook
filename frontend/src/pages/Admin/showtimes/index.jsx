@@ -51,7 +51,7 @@ export default function AdminShowtimesPage() {
 
   // Form states
   const [formData, setFormData] = useState({
-    movieId: '', cinemaId: '', roomId: '', date: TODAY, startTime: '09:00', priceOverride: 90000
+    movieId: '', cinemaId: '', roomId: '', date: TODAY, startTime: '09:00'
   });
 
   // Seat modal states
@@ -147,8 +147,7 @@ export default function AdminShowtimesPage() {
       cinemaId: cinemas[0]?.cinemaId?.toString() || '', 
       roomId: '', 
       date: selectedDate, 
-      startTime: '09:00', 
-      priceOverride: 90000 
+      startTime: '09:00'
     });
     setErrorMsg('');
     setIsDialogOpen(true);

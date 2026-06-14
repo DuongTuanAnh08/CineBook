@@ -78,7 +78,7 @@ public class ShowtimeService {
                 .roomName(s.getRoom().getName())
                 .startTime(s.getStartTime())
                 .endTime(s.getEndTime())
-                .priceOverride(s.getPriceOverride())
+
                 .status(s.getStatus())
                 .totalSeats(s.getRoom().getCapacity())
                 .availableSeats(s.getRoom().getCapacity() - bookedCount)
@@ -173,10 +173,6 @@ public class ShowtimeService {
     }
 
     private Integer calculateTicketPrice(Showtime showtime, Seat seat) {
-        if (showtime.getPriceOverride() != null) {
-            return showtime.getPriceOverride();
-        }
-
         BigDecimal basePrice = systemConfigService.getBasePrice();
         
         // Seat Multiplier
@@ -236,7 +232,7 @@ public class ShowtimeService {
                 .room(room)
                 .startTime(startTime)
                 .endTime(endTime)
-                .priceOverride(request.getPriceOverride())
+
                 .build();
 
         return mapToDto(showtimeRepository.save(showtime));
@@ -269,9 +265,7 @@ public class ShowtimeService {
             showtime.setStartTime(request.getStartTime());
             showtime.setEndTime(request.getStartTime().plusMinutes(showtime.getMovie().getDurationMin()));
         }
-        if (request.getPriceOverride() != null) {
-            showtime.setPriceOverride(request.getPriceOverride());
-        }
+
         if (request.getStatus() != null) {
             showtime.setStatus(request.getStatus());
         }

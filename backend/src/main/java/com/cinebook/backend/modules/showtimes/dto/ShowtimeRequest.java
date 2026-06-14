@@ -9,6 +9,6 @@ public class ShowtimeRequest {
     private Long cinemaId;
     private Long roomId;
     private LocalDateTime startTime;
-    private Integer priceOverride;
+
     private String status;
 }

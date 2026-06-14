@@ -14,7 +14,7 @@ import com.cinebook.backend.modules.showtimes.entity.Showtime;
 import com.cinebook.backend.modules.showtimes.repository.ShowtimeRepository;
 import com.cinebook.backend.modules.users.User;
 import com.cinebook.backend.modules.users.UserRepository;
-import com.cinebook.backend.modules.notifications.service.NotificationService;
+
 import com.cinebook.backend.modules.bookings.entity.FnBOrderItem;
 import com.cinebook.backend.modules.bookings.repository.FnBOrderItemRepository;
 import com.cinebook.backend.modules.fnb.entity.FnBProduct;
@@ -41,7 +41,7 @@ public class BookingService {
     private final ShowtimeRepository showtimeRepository;
     private final SeatRepository seatRepository;
     private final SystemConfigService systemConfigService;
-    private final NotificationService notificationService;
+
     private final FnBOrderItemRepository fnbOrderItemRepository;
     private final FnBProductRepository fnbProductRepository;
     private final PromoCodeRepository promoCodeRepository;
@@ -80,49 +80,45 @@ public class BookingService {
                     .orElseThrow(() -> new RuntimeException("Seat not found: " + seatId));
             
             int seatPrice;
-            if (showtime.getPriceOverride() != null) {
-                // priceOverride is the final flat price — use directly as base
-                seatPrice = showtime.getPriceOverride();
-            } else {
-                BigDecimal basePrice = systemConfigService.getBasePrice();
-                
-                // Seat type multiplier
-                BigDecimal seatMultiplier = BigDecimal.ONE;
-                if (seat.getSeatType() == SeatType.VIP) {
-                    seatMultiplier = vipMultiplier;
-                } else if (seat.getSeatType() == SeatType.Couple) {
-                    seatMultiplier = coupleMultiplier;
-                }
-                
-                // Day-of-week multiplier (weekend surcharge)
-                BigDecimal dayMultiplier = BigDecimal.ONE;
-                java.time.DayOfWeek day = showtime.getStartTime().getDayOfWeek();
-                if (day == java.time.DayOfWeek.SATURDAY || day == java.time.DayOfWeek.SUNDAY) {
-                    BigDecimal weekendSurcharge = systemConfigService.getWeekendSurchargePercent()
-                            .divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP);
-                    dayMultiplier = BigDecimal.ONE.add(weekendSurcharge);
-                }
-                
-                // Time-of-day multiplier (evening surcharge)
-                BigDecimal timeMultiplier = BigDecimal.ONE;
-                try {
-                    String eveningTimeStr = systemConfigService.getEveningSurchargeTime();
-                    if (eveningTimeStr != null && eveningTimeStr.contains(":")) {
-                        java.time.LocalTime eveningTime = java.time.LocalTime.parse(eveningTimeStr);
-                        if (!showtime.getStartTime().toLocalTime().isBefore(eveningTime)) {
-                            BigDecimal eveningSurcharge = systemConfigService.getEveningSurchargePercent()
-                                    .divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP);
-                            timeMultiplier = BigDecimal.ONE.add(eveningSurcharge);
-                        }
-                    }
-                } catch (Exception e) { /* use default timeMultiplier = 1 */ }
-                
-                seatPrice = basePrice
-                    .multiply(seatMultiplier)
-                    .multiply(dayMultiplier)
-                    .multiply(timeMultiplier)
-                    .intValue();
+            BigDecimal basePrice = systemConfigService.getBasePrice();
+            
+            // Seat type multiplier
+            BigDecimal seatMultiplier = BigDecimal.ONE;
+            if (seat.getSeatType() == SeatType.VIP) {
+                seatMultiplier = vipMultiplier;
+            } else if (seat.getSeatType() == SeatType.Couple) {
+                seatMultiplier = coupleMultiplier;
             }
+            
+            // Day-of-week multiplier (weekend surcharge)
+            BigDecimal dayMultiplier = BigDecimal.ONE;
+            java.time.DayOfWeek day = showtime.getStartTime().getDayOfWeek();
+            if (day == java.time.DayOfWeek.SATURDAY || day == java.time.DayOfWeek.SUNDAY) {
+                BigDecimal weekendSurcharge = systemConfigService.getWeekendSurchargePercent()
+                        .divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP);
+                dayMultiplier = BigDecimal.ONE.add(weekendSurcharge);
+            }
+            
+            // Time-of-day multiplier (evening surcharge)
+            BigDecimal timeMultiplier = BigDecimal.ONE;
+            try {
+                String eveningTimeStr = systemConfigService.getEveningSurchargeTime();
+                if (eveningTimeStr != null && eveningTimeStr.contains(":")) {
+                    java.time.LocalTime eveningTime = java.time.LocalTime.parse(eveningTimeStr);
+                    if (!showtime.getStartTime().toLocalTime().isBefore(eveningTime)) {
+                        BigDecimal eveningSurcharge = systemConfigService.getEveningSurchargePercent()
+                                .divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP);
+                        timeMultiplier = BigDecimal.ONE.add(eveningSurcharge);
+                    }
+                }
+            } catch (Exception e) { /* use default timeMultiplier = 1 */ }
+            
+            seatPrice = basePrice
+                .multiply(seatMultiplier)
+                .multiply(dayMultiplier)
+                .multiply(timeMultiplier)
+                .intValue();
+
             totalBeforeTax += seatPrice;
 
             BookingSeat bookingSeat = new BookingSeat();
@@ -206,11 +202,7 @@ public class BookingService {
             }
         }
 
-        // Trigger notification
-        String notificationTitle = "Đặt vé thành công";
-        String notificationMessage = String.format("Vé xem phim %s của bạn đã được đặt. Vui lòng thanh toán trong vòng %d phút.",
-                showtime.getMovie().getTitle(), holdMinutes);
-        notificationService.createNotification(customer.getUserId(), notificationTitle, notificationMessage);
+
 
         return savedBooking;
     }
