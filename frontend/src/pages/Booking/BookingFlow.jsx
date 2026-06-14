@@ -14,6 +14,8 @@ import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import fnbApi from '@/api/fnbApi';
+import bookingApi from '@/api/bookingApi';
+import showtimeApi from '@/api/showtimeApi';
 import { useAuth } from '@/contexts/auth-context';
 const TYPE_LABELS = {
   drink: '🥤 Đồ uống',
@@ -151,6 +153,35 @@ function BookingContent() {
     router(`/payment?${queryParams.toString()}`);
   };
 
+  const handleCancelTransaction = async () => {
+    try {
+      const pendingBookingId = sessionStorage.getItem('pendingBookingId');
+      if (pendingBookingId) {
+        await bookingApi.cancelBooking(pendingBookingId);
+        sessionStorage.removeItem('pendingBookingId');
+      } else if (showtimeId) {
+        // Just release seats
+        await showtimeApi.releaseAllHolds(showtimeId);
+      }
+      
+      toast({
+        title: 'Đã hủy giao dịch',
+        description: 'Các ghế bạn chọn đã được nhả.',
+      });
+      
+      setPendingSeats([]);
+      setOrderItems([]);
+      setConcessionOpen(false);
+      setStep(1);
+    } catch (err) {
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể hủy giao dịch, vui lòng thử lại sau.',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const renderStepper = () => (
     <div className="flex items-center justify-center mb-8 px-4">
       <div className="flex items-center w-full max-w-3xl">
@@ -175,17 +206,19 @@ function BookingContent() {
   return (
     <div className="container mx-auto px-4 py-6">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => step === 2 ? setStep(1) : router(-1)}>
-          <ArrowLeft className="size-5" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold">Đặt vé xem phim</h1>
-          {step === 2 && movie && (
-            <p className="text-muted-foreground">
-              {movie.title} - {time}, {new Date(date).toLocaleDateString('vi-VN')}
-            </p>
-          )}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => step === 2 ? setStep(1) : router(-1)}>
+            <ArrowLeft className="size-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">Đặt vé xem phim</h1>
+            {step === 2 && movie && (
+              <p className="text-muted-foreground">
+                {movie.title} - {time}, {new Date(date).toLocaleDateString('vi-VN')}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -196,6 +229,7 @@ function BookingContent() {
           movies={movies} 
           cinemas={cinemas} 
           initialMovieId={movieIdParam} 
+          initialDate={date}
           onNext={handleNextFromStep1} 
         />
       )}
@@ -212,7 +246,7 @@ function BookingContent() {
           showTime={time} 
           pricing={dynamicPricing} 
           onConfirm={handleConfirmSeats} 
-          onCancel={() => setStep(1)} 
+          onCancel={handleCancelTransaction} 
           maxSeats={8} 
         />
       )}

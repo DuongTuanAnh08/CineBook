@@ -43,6 +43,60 @@ public class PromoService {
         return promo;
     }
 
+    @org.springframework.transaction.annotation.Transactional
+    public PromoCode validateAndReservePromo(String code, Long userId, Long bookingId, Integer orderValue) {
+        PromoCode promo = promoCodeRepository.findByCodeForUpdate(code)
+                .orElseThrow(() -> new RuntimeException("Promo not found"));
+
+        if (promo.getStatus() != PromoStatus.Active) {
+            throw new RuntimeException("Promo is inactive");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isBefore(promo.getValidFrom()) || now.isAfter(promo.getValidUntil())) {
+            throw new RuntimeException("Promo is expired or not yet valid");
+        }
+
+        if (promo.getMinOrderValue() != null && orderValue < promo.getMinOrderValue()) {
+            throw new RuntimeException("Order value does not meet minimum requirement");
+        }
+
+        if (promo.getUsageLimit() != null && promo.getUsedCount() >= promo.getUsageLimit()) {
+            throw new RuntimeException("Promo usage limit exceeded");
+        }
+
+        long userUsageCount = promoUsageRepository.countByPromoIdAndUserId(promo.getId(), userId);
+        if (userUsageCount > 0) {
+            throw new RuntimeException("User has already used this promo");
+        }
+
+        // Reserve the promo
+        promo.setUsedCount(promo.getUsedCount() + 1);
+        promoCodeRepository.save(promo);
+
+        com.cinebook.backend.modules.promos.entity.PromoUsage usage = new com.cinebook.backend.modules.promos.entity.PromoUsage();
+        usage.setPromoId(promo.getId());
+        usage.setUserId(userId);
+        usage.setBookingId(bookingId);
+        promoUsageRepository.save(usage);
+
+        return promo;
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public void releasePromoUsage(Long promoId, Long bookingId) {
+        java.util.Optional<com.cinebook.backend.modules.promos.entity.PromoUsage> usageOpt = promoUsageRepository.findByBookingId(bookingId);
+        if (usageOpt.isPresent()) {
+            promoUsageRepository.deleteByBookingId(bookingId);
+            promoCodeRepository.findById(promoId).ifPresent(promo -> {
+                if (promo.getUsedCount() > 0) {
+                    promo.setUsedCount(promo.getUsedCount() - 1);
+                    promoCodeRepository.save(promo);
+                }
+            });
+        }
+    }
+
     public org.springframework.data.domain.Page<PromoCode> getAllPromos(org.springframework.data.domain.Pageable pageable) {
         return promoCodeRepository.findAll(pageable);
     }

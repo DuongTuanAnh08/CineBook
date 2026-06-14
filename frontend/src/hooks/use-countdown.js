@@ -31,7 +31,7 @@ export function useCountdown({
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [totalSeconds, onExpire, isStarted]);
+  }, [totalSeconds <= 0, isStarted, onExpire]);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   const isExpired = totalSeconds <= 0;
@@ -60,6 +60,8 @@ export function useBookingTimer(expiresAt, onExpire) {
     setTotalSeconds(calculateRemaining());
   }, [calculateRemaining]);
   useEffect(() => {
+    if (!expiresAt) return; // Không đếm nếu chưa có expiresAt
+
     if (totalSeconds <= 0) {
       onExpire?.();
       return;
@@ -74,7 +76,7 @@ export function useBookingTimer(expiresAt, onExpire) {
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [totalSeconds, onExpire]);
+  }, [totalSeconds <= 0, expiresAt, onExpire]);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   const isExpired = totalSeconds <= 0;

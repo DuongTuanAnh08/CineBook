@@ -21,6 +21,7 @@ public class BookingScheduler {
 
     private final BookingRepository bookingRepository;
     private final SeatHoldRepository seatHoldRepository;
+    private final com.cinebook.backend.modules.promos.service.PromoService promoService;
 
 
     @Scheduled(fixedRate = 60000)
@@ -34,8 +35,13 @@ public class BookingScheduler {
             log.info("Found {} pending bookings to expire", pendingBookings.size());
             for (Booking booking : pendingBookings) {
                 booking.setStatus(BookingStatus.Expired);
-                
-
+                if (booking.getPromoId() != null) {
+                    try {
+                        promoService.releasePromoUsage(booking.getPromoId(), booking.getId());
+                    } catch (Exception e) {
+                        log.error("Error releasing promo: ", e);
+                    }
+                }
             }
             bookingRepository.saveAll(pendingBookings);
         }

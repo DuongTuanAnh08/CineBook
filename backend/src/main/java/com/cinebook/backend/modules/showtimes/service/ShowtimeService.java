@@ -98,19 +98,20 @@ public class ShowtimeService {
                 .collect(Collectors.toSet());
 
         List<SeatHold> activeHolds = seatHoldRepository.findActiveHoldsByShowtime(showtimeId, LocalDateTime.now());
-        java.util.Map<Long, Long> heldSeatMap = activeHolds.stream()
-                .collect(Collectors.toMap(h -> h.getSeat().getSeatId(), h -> h.getUser().getUserId()));
-
         return allSeats.stream().map(seat -> {
             boolean isBooked = bookedSeatIds.contains(seat.getSeatId());
-            String status = "Available";
+            String status = isBooked ? "Booked" : "Available";
             Long heldByUserId = null;
-
-            if (isBooked) {
-                status = "Booked";
-            } else if (heldSeatMap.containsKey(seat.getSeatId())) {
-                status = "Held";
-                heldByUserId = heldSeatMap.get(seat.getSeatId());
+            String holdExpiresAt = null;
+            if ("Available".equals(status)) {
+                java.util.Optional<SeatHold> hold = activeHolds.stream()
+                        .filter(h -> h.getSeat().getSeatId().equals(seat.getSeatId()))
+                        .findFirst();
+                if (hold.isPresent()) {
+                    status = "Held";
+                    heldByUserId = hold.get().getUser().getUserId();
+                    holdExpiresAt = hold.get().getExpiresAt().toString();
+                }
             }
 
             return SeatStatusDto.builder()
@@ -121,6 +122,7 @@ public class ShowtimeService {
                     .seatType(seat.getSeatType().name())
                     .status(status)
                     .heldByUserId(heldByUserId)
+                    .holdExpiresAt(holdExpiresAt)
                     .price(calculateTicketPrice(showtime, seat))
                     .build();
         }).collect(Collectors.toList());
@@ -170,6 +172,13 @@ public class ShowtimeService {
         User user = userRepository.findByEmailAndDeletedAtIsNull(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         seatHoldRepository.deleteUserHold(showtimeId, seatId, user.getUserId());
+    }
+
+    @Transactional
+    public void releaseAllHoldsForUser(Long showtimeId, String username) {
+        User user = userRepository.findByEmailAndDeletedAtIsNull(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        seatHoldRepository.deleteByShowtimeAndUser(showtimeId, user.getUserId());
     }
 
     private Integer calculateTicketPrice(Showtime showtime, Seat seat) {

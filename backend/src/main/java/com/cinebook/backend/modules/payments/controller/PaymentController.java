@@ -33,6 +33,8 @@ public class PaymentController {
     private final PaymentRepository paymentRepository;
 
     private final com.cinebook.backend.modules.promos.service.PromoService promoService;
+    private final com.cinebook.backend.modules.bookings.service.BookingService bookingService;
+    private final com.cinebook.backend.modules.auth.EmailService emailService;
 
     @Value("${app.frontend.url:http://localhost:3000}")
     private String frontendUrl;
@@ -104,15 +106,13 @@ public class PaymentController {
                     booking.setStatus(BookingStatus.Confirmed);
                     bookingRepository.save(booking);
 
-                    if (booking.getPromoId() != null) {
-                        try {
-                            promoService.recordUsage(booking.getPromoId(), booking.getCustomer().getUserId(), booking.getId());
-                        } catch (Exception e) {
-                            // Log the error but don't fail the payment
-                            System.err.println("Error recording promo usage: " + e.getMessage());
-                        }
+                    // Send Email Confirmation
+                    try {
+                        com.cinebook.backend.modules.bookings.dto.MyBookingDto bookingDto = bookingService.getBookingById(booking.getId());
+                        emailService.sendBookingConfirmation(booking.getCustomer().getEmail(), bookingDto);
+                    } catch (Exception e) {
+                        System.err.println("Error sending booking email: " + e.getMessage());
                     }
-
 
                 } else {
                     payment.setStatus(PaymentStatus.Failed);

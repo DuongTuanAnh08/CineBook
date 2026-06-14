@@ -23,6 +23,10 @@ const showtimeApi = {
 
     releaseSeat: (showtimeId, seatId) => {
         return axiosClient.delete(`/showtimes/${showtimeId}/seats/${seatId}/hold`);
+    },
+
+    releaseAllHolds: (showtimeId) => {
+        return axiosClient.delete(`/showtimes/${showtimeId}/seats/hold/all`);
     }
 };
 

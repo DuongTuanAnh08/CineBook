@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PromoUsageRepository extends JpaRepository<PromoUsage, Long> {
     long countByPromoIdAndUserId(Long promoId, Long userId);
+    void deleteByBookingId(Long bookingId);
+    java.util.Optional<PromoUsage> findByBookingId(Long bookingId);
 }

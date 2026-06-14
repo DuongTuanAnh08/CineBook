@@ -13,5 +13,6 @@ public class SeatStatusDto {
     private String seatType;
     private String status; // "Available", "Booked", or "Held"
     private Long heldByUserId;
+    private String holdExpiresAt; // ISO 8601 string
     private Integer price;
 }

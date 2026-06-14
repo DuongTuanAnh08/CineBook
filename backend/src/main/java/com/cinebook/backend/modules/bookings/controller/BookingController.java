@@ -33,6 +33,15 @@ public class BookingController {
         return ResponseEntity.ok(ApiResponse.ok(data));
     }
 
+    @PostMapping("/{id}/cancel")
+    @PreAuthorize("hasRole('Customer')")
+    public ApiResponse<String> cancelMyBooking(
+            @PathVariable Long id,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+        bookingService.cancelMyBooking(id, userDetails.getUsername());
+        return ApiResponse.ok("Booking cancelled successfully");
+    }
+
     @GetMapping("/admin")
     @PreAuthorize("hasAnyRole('SystemAdmin', 'ScheduleManager')")
     public ApiResponse<org.springframework.data.domain.Page<com.cinebook.backend.modules.bookings.dto.BookingAdminDto>> getAllBookingsAdmin(org.springframework.data.domain.Pageable pageable) {

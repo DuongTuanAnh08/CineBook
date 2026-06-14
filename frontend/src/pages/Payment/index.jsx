@@ -167,6 +167,7 @@ function PaymentContent() {
       }
 
       const bookingId = res.data.id || res.data.bookingId;
+      sessionStorage.setItem('pendingBookingId', bookingId);
 
       // Step 2: Nếu chọn VNPay, lấy URL và redirect
       if (method === 'vnpay') {

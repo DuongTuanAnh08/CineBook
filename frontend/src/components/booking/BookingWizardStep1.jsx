@@ -8,10 +8,10 @@ import { vi } from 'date-fns/locale';
 import { Clock, MapPin, Loader2 } from 'lucide-react';
 import showtimeApi from '@/api/showtimeApi';
 
-export function BookingWizardStep1({ movies, cinemas, initialMovieId, onNext }) {
+export function BookingWizardStep1({ movies, cinemas, initialMovieId, initialDate, onNext }) {
   const [selectedMovieId, setSelectedMovieId] = useState(initialMovieId || '');
   const [selectedCinemaId, setSelectedCinemaId] = useState('all');
-  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [selectedDate, setSelectedDate] = useState(initialDate || format(new Date(), 'yyyy-MM-dd'));
   
   const [showtimes, setShowtimes] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,7 +39,17 @@ export function BookingWizardStep1({ movies, cinemas, initialMovieId, onNext }) 
           if (res.success && res.data?.content) {
             const allShowtimes = res.data.content;
             // Filter by movie
-            const movieShowtimes = allShowtimes.filter(s => s.movieId.toString() === selectedMovieId.toString());
+            const movieShowtimes = allShowtimes
+              .filter(s => s.movieId.toString() === selectedMovieId.toString())
+              .map(s => {
+                const [datePart, timePart] = s.startTime.split('T');
+                return {
+                  ...s,
+                  id: s.showtimeId,
+                  date: datePart,
+                  startTime: timePart.substring(0, 5) // "HH:mm"
+                };
+              });
             setShowtimes(movieShowtimes);
           }
         })

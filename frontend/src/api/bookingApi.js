@@ -11,6 +11,10 @@ const bookingApi = {
         });
     },
 
+    cancelBooking: (id) => {
+        return axiosClient.post(`/bookings/${id}/cancel`);
+    },
+
     createBooking: (data) => {
         return axiosClient.post('/bookings', data);
     },

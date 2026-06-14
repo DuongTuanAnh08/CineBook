@@ -175,7 +175,7 @@ public class BookingService {
 
         if (promoCode != null && !promoCode.isEmpty()) {
             try {
-                com.cinebook.backend.modules.promos.entity.PromoCode promo = promoService.validatePromo(promoCode, customerId, savedBooking.getTotalBeforeTax());
+                com.cinebook.backend.modules.promos.entity.PromoCode promo = promoService.validateAndReservePromo(promoCode, customerId, savedBooking.getId(), savedBooking.getTotalBeforeTax());
                 int discountAmount = 0;
                 if (promo.getDiscountType() == com.cinebook.backend.modules.promos.entity.PromoDiscountType.Percentage) {
                     discountAmount = savedBooking.getTotalBeforeTax() * promo.getDiscountValue().intValue() / 100;
@@ -205,6 +205,37 @@ public class BookingService {
 
 
         return savedBooking;
+    }
+
+    @Transactional
+    public void cancelMyBooking(Long bookingId, String email) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+        
+        if (!booking.getCustomer().getEmail().equals(email)) {
+            throw new RuntimeException("Not authorized to cancel this booking");
+        }
+        
+        if (booking.getStatus() != BookingStatus.Pending) {
+            throw new RuntimeException("Only pending bookings can be cancelled");
+        }
+        
+        booking.setStatus(BookingStatus.Cancelled);
+        bookingRepository.save(booking);
+        
+        // Release promo
+        if (booking.getPromoId() != null) {
+            promoService.releasePromoUsage(booking.getPromoId(), booking.getId());
+        }
+        
+        // Release seat holds
+        com.cinebook.backend.modules.showtimes.repository.SeatHoldRepository seatHoldRepository = 
+            org.springframework.web.context.support.WebApplicationContextUtils.getWebApplicationContext(
+                org.springframework.web.context.request.RequestContextHolder.getRequestAttributes() != null ? 
+                ((org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()).getRequest().getServletContext() : null
+            ).getBean(com.cinebook.backend.modules.showtimes.repository.SeatHoldRepository.class);
+            
+        seatHoldRepository.deleteByShowtimeAndUser(booking.getShowtime().getShowtimeId(), booking.getCustomer().getUserId());
     }
 
     public org.springframework.data.domain.Page<com.cinebook.backend.modules.bookings.dto.BookingAdminDto> getAllBookingsAdmin(org.springframework.data.domain.Pageable pageable) {

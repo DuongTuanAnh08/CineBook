@@ -60,6 +60,15 @@ public class ShowtimeController {
         return ApiResponse.ok("Seat released successfully");
     }
 
+    @DeleteMapping("/{id}/seats/hold/all")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<String> releaseAllHolds(
+            @PathVariable Long id,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+        showtimeService.releaseAllHoldsForUser(id, userDetails.getUsername());
+        return ApiResponse.ok("All seats released successfully");
+    }
+
     @PostMapping
     @PreAuthorize("hasAnyRole('SystemAdmin', 'ScheduleManager')")
     public ApiResponse<ShowtimeDto> createShowtime(@RequestBody ShowtimeRequest request) {
