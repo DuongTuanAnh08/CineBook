@@ -48,7 +48,9 @@ CineBook is a full-stack cinema booking system featuring a modern, dynamic user 
 3. Run the Spring Boot application:
    ```bash
    $env:DB_PASSWORD="123456"; .\mvnw spring-boot:run
-   $env:DB_PASSWORD="mật_khẩu_của_bạn"; .\mvnw clean spring-boot:run
+   $env:DB_PASSWORD="mật_khẩu_của_bạn";
+    .\mvnw clean spring-boot:run
+   $env:DB_PASSWORD="123456"; $env:GOOGLE_CLIENT_ID="219011529691-co0vj5gls3url1dd2ljkl3tsvtqr8f7s.apps.googleusercontent.com"; .\mvnw spring-boot:run
    ./mvnw spring-boot:run
    ```
    Alternatively, you can run the built JAR:

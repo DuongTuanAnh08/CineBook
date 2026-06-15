@@ -330,7 +330,14 @@ public class BookingService {
                     .seatType(s.getSeatType().name())
                     .price(s.getPriceAtBooking())
                     .ticketCode(bookingCode + "-" + s.getSeat().getSeatLabel())
-                    .qrCodeValue(bookingCode + "-" + s.getSeat().getSeatLabel())
+                    .qrCodeValue(String.format("Mã vé: %s-%s\nPhim: %s\nRạp: %s\nPhòng: %s\nSuất chiếu: %s %s\nGhế: %s",
+                            bookingCode, s.getSeat().getSeatLabel(),
+                            booking.getShowtime().getMovie().getTitle(),
+                            booking.getShowtime().getRoom().getCinema().getName(),
+                            booking.getShowtime().getRoom().getName(),
+                            booking.getShowtime().getStartTime().toLocalDate().toString(),
+                            booking.getShowtime().getStartTime().toLocalTime().toString(),
+                            s.getSeat().getSeatLabel()))
                     .build()).collect(java.util.stream.Collectors.toList());
 
             if (!fnbItemDtos.isEmpty()) {
@@ -339,7 +346,9 @@ public class BookingService {
                         .seatType("FNB")
                         .price(booking.getTotalFnbAmount())
                         .ticketCode(bookingCode + "-FNB")
-                        .qrCodeValue(bookingCode + "-FNB")
+                        .qrCodeValue(String.format("Mã đơn: %s-FNB\nBắp nước: %s",
+                                bookingCode,
+                                fnbItemDtos.stream().map(item -> item.getProductName() + " (x" + item.getQuantity() + ")").collect(java.util.stream.Collectors.joining(", "))))
                         .build());
             }
 
@@ -384,7 +393,14 @@ public class BookingService {
                 .seatType(s.getSeatType().name())
                 .price(s.getPriceAtBooking())
                 .ticketCode(bookingCode + "-" + s.getSeat().getSeatLabel())
-                .qrCodeValue(bookingCode + "-" + s.getSeat().getSeatLabel())
+                .qrCodeValue(String.format("Mã vé: %s-%s\nPhim: %s\nRạp: %s\nPhòng: %s\nSuất chiếu: %s %s\nGhế: %s",
+                        bookingCode, s.getSeat().getSeatLabel(),
+                        booking.getShowtime().getMovie().getTitle(),
+                        booking.getShowtime().getRoom().getCinema().getName(),
+                        booking.getShowtime().getRoom().getName(),
+                        booking.getShowtime().getStartTime().toLocalDate().toString(),
+                        booking.getShowtime().getStartTime().toLocalTime().toString(),
+                        s.getSeat().getSeatLabel()))
                 .build()).collect(java.util.stream.Collectors.toList());
 
         if (!fnbItemDtos.isEmpty()) {
@@ -393,7 +409,9 @@ public class BookingService {
                     .seatType("FNB")
                     .price(booking.getTotalFnbAmount())
                     .ticketCode(bookingCode + "-FNB")
-                    .qrCodeValue(bookingCode + "-FNB")
+                    .qrCodeValue(String.format("Mã đơn: %s-FNB\nBắp nước: %s",
+                            bookingCode,
+                            fnbItemDtos.stream().map(item -> item.getProductName() + " (x" + item.getQuantity() + ")").collect(java.util.stream.Collectors.joining(", "))))
                     .build());
         }
 

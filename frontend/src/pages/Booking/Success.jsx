@@ -157,7 +157,7 @@ function SuccessContent() {
             // Fallback: QR từ bookingId nếu API chưa trả về ticket data
             <>
               <div className="p-3 bg-white rounded-xl shadow-sm border">
-                <QRCodeSVG value={bookingId} size={140} level="M" />
+                <QRCodeSVG value={`Mã đặt vé: ${bookingId}`} size={140} level="M" />
               </div>
               <p className="text-xs text-muted-foreground text-center">
                 Xuất trình mã QR tại quầy để nhận vé

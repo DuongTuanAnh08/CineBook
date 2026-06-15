@@ -100,7 +100,13 @@ public class EmailService {
         content.append("<div style='text-align: center;'>");
         if (booking.getTickets() != null) {
             for (com.cinebook.backend.modules.bookings.dto.TicketDto ticket : booking.getTickets()) {
-                String qrUrl = "https://quickchart.io/qr?text=" + ticket.getQrCodeValue() + "&size=150";
+                String encodedQr = "";
+                try {
+                    encodedQr = java.net.URLEncoder.encode(ticket.getQrCodeValue(), java.nio.charset.StandardCharsets.UTF_8.toString());
+                } catch (Exception e) {
+                    encodedQr = ticket.getTicketCode();
+                }
+                String qrUrl = "https://quickchart.io/qr?text=" + encodedQr + "&size=150";
                 content.append("<div style='display: inline-block; margin: 10px; padding: 15px; border: 1px solid #eee; border-radius: 8px;'>");
                 content.append("<img src='").append(qrUrl).append("' alt='QR Code' />");
                 content.append("<p style='margin: 10px 0 0 0; font-family: monospace; font-weight: bold;'>").append(ticket.getTicketCode()).append("</p>");
