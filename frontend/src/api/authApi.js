@@ -22,6 +22,9 @@ const authApi = {
   updateProfile: (data) => {
     return axiosClient.put('/auth/profile', data);
   },
+  changePassword: (data) => {
+    return axiosClient.post('/auth/change-password', data);
+  },
   forgotPassword: (data) => {
     return axiosClient.post('/auth/forgot-password', data);
   },
