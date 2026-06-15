@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Plus, MoreHorizontal, Pencil, Trash2, Clock, List, AlertCircle, Eye, Loader2 } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
-import { useToast } from "@/hooks/use-toast";
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 import movieApi from '../../../api/movieApi';
@@ -32,7 +32,7 @@ const getLocalYYYYMMDD = () => {
 const TODAY = getLocalYYYYMMDD();
 
 export default function AdminShowtimesPage() {
-  const { toast } = useToast();
+  const [editingShowtime, setEditingShowtime] = useState(null);
   
   // Data states
   const [movies, setMovies] = useState([]);
@@ -71,7 +71,7 @@ export default function AdminShowtimesPage() {
       }
     } catch (error) {
       console.error(error);
-      toast({ title: "Lỗi", description: "Không thể tải sơ đồ ghế của suất chiếu này", variant: "destructive" });
+      toast.error("Không thể tải sơ đồ ghế của suất chiếu này");
     } finally {
       setIsLoadingSeats(false);
     }
@@ -124,7 +124,7 @@ export default function AdminShowtimesPage() {
       setShowtimes(mappedShowtimes);
     } catch (error) {
       console.error("Failed to fetch data", error);
-      toast({ title: "Lỗi", description: "Không thể tải dữ liệu", variant: "destructive" });
+      toast.error("Không thể tải dữ liệu");
     }
   };
 
@@ -142,6 +142,7 @@ export default function AdminShowtimesPage() {
   const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered, 10);
 
   const openAdd = () => {
+    setEditingShowtime(null);
     setFormData({ 
       movieId: movies[0]?.movieId?.toString() || '', 
       cinemaId: cinemas[0]?.cinemaId?.toString() || '', 
@@ -151,6 +152,31 @@ export default function AdminShowtimesPage() {
     });
     setErrorMsg('');
     setIsDialogOpen(true);
+  };
+
+  const handleEdit = (showtime) => {
+    setEditingShowtime(showtime);
+    setFormData({
+      movieId: showtime.movieId.toString(),
+      cinemaId: showtime.cinemaId.toString(),
+      roomId: showtime.roomId.toString(),
+      date: showtime.date,
+      startTime: showtime.timeString
+    });
+    setErrorMsg('');
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (showtimeId) => {
+    if (window.confirm("Bạn có chắc chắn muốn hủy suất chiếu này không?")) {
+      try {
+        await showtimeApi.deleteShowtime(showtimeId);
+        toast.success("Đã hủy suất chiếu thành công");
+        fetchData();
+      } catch (error) {
+        toast.error(error.error?.message || error.message || "Không thể hủy suất chiếu");
+      }
+    }
   };
 
   const handleSave = async () => {
@@ -169,13 +195,19 @@ export default function AdminShowtimesPage() {
         startTime: startTimeStr
       };
 
-      await showtimeApi.createShowtime(payload);
-      toast({ title: "Thành công", description: "Đã thêm suất chiếu mới" });
+      if (editingShowtime) {
+        await showtimeApi.updateShowtime(editingShowtime.showtimeId, payload);
+        toast.success("Đã cập nhật suất chiếu thành công");
+      } else {
+        await showtimeApi.createShowtime(payload);
+        toast.success("Đã thêm suất chiếu mới");
+        setSelectedDate(formData.date); // Tự động chuyển bộ lọc về ngày vừa tạo
+      }
       setIsDialogOpen(false);
-      setSelectedDate(formData.date); // Tự động chuyển bộ lọc về ngày vừa tạo
+      setEditingShowtime(null);
       fetchData(); // Reload
     } catch (error) {
-      setErrorMsg(error.response?.data?.error?.message || error.message || "Đã có lỗi xảy ra");
+      setErrorMsg(error.error?.message || error.message || "Đã có lỗi xảy ra");
     }
   };
 
@@ -275,7 +307,7 @@ export default function AdminShowtimesPage() {
                     <TableHead>Giờ chiếu</TableHead>
                     <TableHead>Ghế trống</TableHead>
                     <TableHead>Trạng thái</TableHead>
-                    <TableHead className="w-12" />
+                    <TableHead className="text-right pr-6">Tác vụ</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -304,16 +336,40 @@ export default function AdminShowtimesPage() {
                             {occupancy}% lấp đầy
                           </Badge>
                         </TableCell>
-                        <TableCell>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="gap-1 hover:text-primary"
-                            onClick={() => handleViewSeats(s)}
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                            Xem ghế
-                          </Button>
+                        <TableCell className="text-right pr-6">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="gap-1 hover:text-primary h-8 px-2"
+                              onClick={() => handleViewSeats(s)}
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              Xem ghế
+                            </Button>
+                            {occupancy === 0 && (
+                              <>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="gap-1 hover:text-primary text-blue-500 hover:text-blue-600 h-8 px-2"
+                                  onClick={() => handleEdit(s)}
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                  Sửa
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="gap-1 hover:text-destructive text-red-500 hover:text-red-600 h-8 px-2"
+                                  onClick={() => handleDelete(s.showtimeId)}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  Hủy
+                                </Button>
+                              </>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -399,11 +455,14 @@ export default function AdminShowtimesPage() {
         </Tabs>
       </Card>
 
-      {/* Add Modal */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      {/* Add/Edit Modal */}
+      <Dialog open={isDialogOpen} onOpenChange={(open) => {
+        setIsDialogOpen(open);
+        if (!open) setEditingShowtime(null);
+      }}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Thêm suất chiếu mới</DialogTitle>
+            <DialogTitle>{editingShowtime ? "Chỉnh sửa suất chiếu" : "Thêm suất chiếu mới"}</DialogTitle>
           </DialogHeader>
           
           {errorMsg && (
@@ -457,7 +516,10 @@ export default function AdminShowtimesPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Hủy</Button>
+            <Button variant="outline" onClick={() => {
+              setIsDialogOpen(false);
+              setEditingShowtime(null);
+            }}>Hủy</Button>
             <Button onClick={handleSave}>Lưu thông tin</Button>
           </DialogFooter>
         </DialogContent>

@@ -103,7 +103,7 @@ export default function AdminNews() {
       resetForm();
       fetchNews();
     } catch (error) {
-      toast.error(error.response?.data?.error?.message || 'Có lỗi xảy ra khi lưu bài viết');
+      toast.error(error.error?.message || error.message || 'Có lỗi xảy ra khi lưu bài viết');
     }
   };
 

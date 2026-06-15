@@ -40,7 +40,7 @@ public class PaymentController {
     private String frontendUrl;
 
     @PostMapping("/create-url")
-    @PreAuthorize("hasRole('Customer')")
+    @PreAuthorize("hasAnyRole('Customer', 'SystemAdmin', 'ScheduleManager')")
     public ResponseEntity<ApiResponse<String>> createUrl(@RequestParam Long bookingId, HttpServletRequest request) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));

@@ -11,10 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Settings, Bell, Shield, Palette, Globe, Save, Percent } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import configApi from '@/api/configApi';
 export default function AdminSettingsPage() {
-  const { toast } = useToast();
 
   const [emailNotif, setEmailNotif] = useState(true);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
@@ -34,8 +33,6 @@ export default function AdminSettingsPage() {
   const [basePrice, setBasePrice] = useState(75000);
   const [seatVipMultiplier, setSeatVipMultiplier] = useState(1.5);
   const [seatCoupleMultiplier, setSeatCoupleMultiplier] = useState(2.0);
-  const [room3DMultiplier, setRoom3DMultiplier] = useState(1.2);
-  const [roomIMAXMultiplier, setRoomIMAXMultiplier] = useState(1.5);
   const [holdTime, setHoldTime] = useState(10);
   const [maxSeats, setMaxSeats] = useState(8);
 
@@ -52,8 +49,6 @@ export default function AdminSettingsPage() {
             if (config.configKey === 'base_price') setBasePrice(Number(config.configValue));
             if (config.configKey === 'seat_vip_multiplier') setSeatVipMultiplier(Number(config.configValue));
             if (config.configKey === 'seat_couple_multiplier') setSeatCoupleMultiplier(Number(config.configValue));
-            if (config.configKey === 'room_3d_multiplier') setRoom3DMultiplier(Number(config.configValue));
-            if (config.configKey === 'room_imax_multiplier') setRoomIMAXMultiplier(Number(config.configValue));
             if (config.configKey === 'seat_hold_minutes') setHoldTime(Number(config.configValue));
             if (config.configKey === 'max_seats_per_booking') setMaxSeats(Number(config.configValue));
             if (config.configKey === 'cinema_name') setCinemaName(config.configValue);
@@ -79,8 +74,6 @@ export default function AdminSettingsPage() {
           configApi.updateConfig('base_price', String(basePrice)),
           configApi.updateConfig('seat_vip_multiplier', String(seatVipMultiplier)),
           configApi.updateConfig('seat_couple_multiplier', String(seatCoupleMultiplier)),
-          configApi.updateConfig('room_3d_multiplier', String(room3DMultiplier)),
-          configApi.updateConfig('room_imax_multiplier', String(roomIMAXMultiplier)),
           configApi.updateConfig('seat_hold_minutes', String(holdTime)),
           configApi.updateConfig('max_seats_per_booking', String(maxSeats)),
           configApi.updateConfig('cinema_name', cinemaName),
@@ -92,12 +85,9 @@ export default function AdminSettingsPage() {
           configApi.updateConfig('email_notif', String(emailNotif)),
           configApi.updateConfig('maintenance_mode', String(maintenanceMode))
         ]);
-      toast({
-        title: 'Thành công',
-        description: 'Đã lưu thay đổi cài đặt.',
-      });
+      toast.success('Đã lưu thay đổi cài đặt.');
     } catch (err) {
-      toast({ title: 'Lỗi', description: 'Không thể lưu cài đặt', variant: 'destructive' });
+      toast.error(err.error?.message || err.message || 'Không thể lưu cài đặt');
     }
   };
   return (
@@ -188,14 +178,6 @@ export default function AdminSettingsPage() {
                     <div className="grid gap-2">
                       <Label>Hệ số Ghế Đôi (So với vé thường)</Label>
                       <Input type="number" step="0.1" value={seatCoupleMultiplier} onChange={e => setSeatCoupleMultiplier(e.target.value)} />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label>Hệ số Phòng 3D (So với vé thường)</Label>
-                      <Input type="number" step="0.1" value={room3DMultiplier} onChange={e => setRoom3DMultiplier(e.target.value)} />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label>Hệ số Phòng IMAX (So với vé thường)</Label>
-                      <Input type="number" step="0.1" value={roomIMAXMultiplier} onChange={e => setRoomIMAXMultiplier(e.target.value)} />
                     </div>
                   </div>
             </div>

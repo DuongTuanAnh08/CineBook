@@ -252,27 +252,52 @@ public class ShowtimeService {
         Showtime showtime = showtimeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Showtime not found"));
 
+        // Kiểm tra xem đã có vé nào được đặt cho suất chiếu này chưa
+        int bookedCount = bookingSeatRepository.findBookedSeatsByShowtime(id).size();
+        if (bookedCount > 0) {
+            throw AppException.badRequest("Không thể chỉnh sửa suất chiếu đã có vé bán.");
+        }
+
+        Movie targetMovie = showtime.getMovie();
         if (request.getMovieId() != null) {
-            Movie movie = movieRepository.findById(request.getMovieId())
+            targetMovie = movieRepository.findById(request.getMovieId())
                     .orElseThrow(() -> new RuntimeException("Movie not found"));
-            showtime.setMovie(movie);
+            showtime.setMovie(targetMovie);
         }
         if (request.getCinemaId() != null) {
             Cinema cinema = cinemaRepository.findById(request.getCinemaId())
                     .orElseThrow(() -> new RuntimeException("Cinema not found"));
             showtime.setCinema(cinema);
         }
+        Room targetRoom = showtime.getRoom();
         if (request.getRoomId() != null) {
-            Room room = roomRepository.findById(request.getRoomId())
+            targetRoom = roomRepository.findById(request.getRoomId())
                     .orElseThrow(() -> new RuntimeException("Room not found"));
-            showtime.setRoom(room);
+            showtime.setRoom(targetRoom);
         }
+        LocalDateTime targetStartTime = showtime.getStartTime();
         if (request.getStartTime() != null) {
-            if (request.getStartTime().isBefore(LocalDateTime.now())) {
+            targetStartTime = request.getStartTime();
+            if (targetStartTime.isBefore(LocalDateTime.now())) {
                 throw AppException.badRequest("Không thể cập nhật suất chiếu sang thời gian trong quá khứ.");
             }
-            showtime.setStartTime(request.getStartTime());
-            showtime.setEndTime(request.getStartTime().plusMinutes(showtime.getMovie().getDurationMin()));
+            showtime.setStartTime(targetStartTime);
+        }
+
+        // Cập nhật EndTime dựa trên Movie mới/cũ và StartTime mới/cũ
+        LocalDateTime targetEndTime = targetStartTime.plusMinutes(targetMovie.getDurationMin());
+        showtime.setEndTime(targetEndTime);
+        LocalDateTime targetEndTimeWithBuffer = targetEndTime.plusMinutes(15);
+
+        // Kiểm tra conflict trùng lịch
+        boolean conflict = showtimeRepository.existsConflictingShowtimeForUpdate(
+                targetRoom.getRoomId(), 
+                id, 
+                targetStartTime, 
+                targetEndTimeWithBuffer
+        );
+        if (conflict) {
+            throw AppException.badRequest("Lịch chiếu này bị trùng thời gian với một lịch chiếu khác trong cùng phòng.");
         }
 
         if (request.getStatus() != null) {
@@ -286,6 +311,13 @@ public class ShowtimeService {
     public void deleteShowtime(Long id) {
         Showtime showtime = showtimeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Showtime not found"));
+
+        // Kiểm tra xem đã có vé nào được đặt cho suất chiếu này chưa
+        int bookedCount = bookingSeatRepository.findBookedSeatsByShowtime(id).size();
+        if (bookedCount > 0) {
+            throw AppException.badRequest("Không thể xóa suất chiếu đã có vé bán.");
+        }
+
         showtime.setStatus("Cancelled");
         showtimeRepository.save(showtime);
     }

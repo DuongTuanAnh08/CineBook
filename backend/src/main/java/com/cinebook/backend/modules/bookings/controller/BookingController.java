@@ -18,7 +18,7 @@ public class BookingController {
     private final BookingService bookingService;
 
     @PostMapping
-    @PreAuthorize("hasRole('Customer')")
+    @PreAuthorize("hasAnyRole('Customer', 'SystemAdmin', 'ScheduleManager')")
     public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> createBooking(@Valid @RequestBody CreateBookingRequest request) {
         Booking booking = bookingService.createBooking(
                 request.getCustomerId(),
@@ -34,7 +34,7 @@ public class BookingController {
     }
 
     @PostMapping("/{id}/cancel")
-    @PreAuthorize("hasRole('Customer')")
+    @PreAuthorize("hasAnyRole('Customer', 'SystemAdmin', 'ScheduleManager')")
     public ApiResponse<String> cancelMyBooking(
             @PathVariable Long id,
             @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
@@ -57,14 +57,14 @@ public class BookingController {
     }
 
     @GetMapping("/my-bookings")
-    @PreAuthorize("hasRole('Customer')")
+    @PreAuthorize("hasAnyRole('Customer', 'SystemAdmin', 'ScheduleManager')")
     public ApiResponse<java.util.List<com.cinebook.backend.modules.bookings.dto.MyBookingDto>> getMyBookings(
             @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
         return ApiResponse.ok(bookingService.getMyBookings(userDetails.getUsername()));
     }
 
     @GetMapping("/my-tickets")
-    @PreAuthorize("hasRole('Customer')")
+    @PreAuthorize("hasAnyRole('Customer', 'SystemAdmin', 'ScheduleManager')")
     public ApiResponse<java.util.List<com.cinebook.backend.modules.bookings.dto.MyBookingDto>> getMyTickets(
             @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
         return ApiResponse.ok(bookingService.getMyBookings(userDetails.getUsername()));

@@ -78,7 +78,7 @@ export function ReviewModal({ isOpen, onClose, booking, onReviewSuccess }) {
         throw new Error(res.error?.message || "Có lỗi xảy ra");
       }
     } catch (error) {
-      toast.error(error.response?.data?.error?.message || error.message || "Không thể gửi đánh giá lúc này.");
+      toast.error(error.error?.message || error.message || "Không thể gửi đánh giá lúc này.");
     } finally {
       setIsSubmitting(false);
     }

@@ -141,7 +141,7 @@ export default function AdminPromotionsPage() {
       setIsDialogOpen(false);
       fetchPromos();
     } catch (error) {
-      toast.error(error.response?.data?.error?.message || "Lỗi khi lưu khuyến mãi");
+      toast.error(error.error?.message || error.message || "Lỗi khi lưu khuyến mãi");
     }
   };
 
