@@ -28,6 +28,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.DayOfWeek;
@@ -213,6 +216,8 @@ public class ShowtimeService {
 
     @Transactional
     public ShowtimeDto createShowtime(ShowtimeRequest request) {
+        validateCinemaAccess(request.getCinemaId());
+        
         Movie movie = movieRepository.findById(request.getMovieId())
                 .orElseThrow(() -> new RuntimeException("Movie not found"));
         Cinema cinema = cinemaRepository.findById(request.getCinemaId())
@@ -252,6 +257,8 @@ public class ShowtimeService {
         Showtime showtime = showtimeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Showtime not found"));
 
+        validateCinemaAccess(showtime.getCinema().getCinemaId());
+        
         // Kiểm tra xem đã có vé nào được đặt cho suất chiếu này chưa
         int bookedCount = bookingSeatRepository.findBookedSeatsByShowtime(id).size();
         if (bookedCount > 0) {
@@ -265,6 +272,7 @@ public class ShowtimeService {
             showtime.setMovie(targetMovie);
         }
         if (request.getCinemaId() != null) {
+            validateCinemaAccess(request.getCinemaId());
             Cinema cinema = cinemaRepository.findById(request.getCinemaId())
                     .orElseThrow(() -> new RuntimeException("Cinema not found"));
             showtime.setCinema(cinema);
@@ -312,6 +320,8 @@ public class ShowtimeService {
         Showtime showtime = showtimeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Showtime not found"));
 
+        validateCinemaAccess(showtime.getCinema().getCinemaId());
+
         // Kiểm tra xem đã có vé nào được đặt cho suất chiếu này chưa
         int bookedCount = bookingSeatRepository.findBookedSeatsByShowtime(id).size();
         if (bookedCount > 0) {
@@ -320,5 +330,26 @@ public class ShowtimeService {
 
         showtime.setStatus("Cancelled");
         showtimeRepository.save(showtime);
+    }
+
+    private void validateCinemaAccess(Long cinemaId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            boolean isSystemAdmin = auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_SystemAdmin"));
+            if (isSystemAdmin) {
+                return;
+            }
+            boolean isScheduleManager = auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ScheduleManager"));
+            if (isScheduleManager) {
+                String email = auth.getName();
+                com.cinebook.backend.modules.users.User user = userRepository.findByEmailAndDeletedAtIsNull(email)
+                        .orElseThrow(() -> AppException.unauthorized("User not found"));
+                if (user.getCinema() == null || !user.getCinema().getCinemaId().equals(cinemaId)) {
+                    throw AppException.forbidden("You do not have permission to manage showtimes for this cinema.");
+                }
+            }
+        }
     }
 }

@@ -66,7 +66,7 @@ export default function AdminReviewsPage() {
     r.customerName?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filteredReviews, 10);
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filteredReviews);
 
   return (
     <div className="space-y-6">

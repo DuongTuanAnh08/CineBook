@@ -23,12 +23,15 @@ import java.util.Map;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
+import com.cinebook.backend.modules.users.UserRepository;
+
 @Service
 @RequiredArgsConstructor
 public class RoomService {
     private final RoomRepository roomRepository;
     private final SeatRepository seatRepository;
     private final CinemaRepository cinemaRepository;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public Page<RoomDto> getAllRooms(Pageable pageable) {
@@ -55,8 +58,31 @@ public class RoomService {
                 .build();
     }
 
+    private void validateCinemaAccess(Long cinemaId) {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            boolean isSystemAdmin = auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_SystemAdmin"));
+            if (isSystemAdmin) {
+                return;
+            }
+            boolean isScheduleManager = auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ScheduleManager"));
+            if (isScheduleManager) {
+                String email = auth.getName();
+                com.cinebook.backend.modules.users.User user = userRepository.findByEmailAndDeletedAtIsNull(email)
+                        .orElseThrow(() -> AppException.unauthorized("User not found"));
+                if (user.getCinema() == null || !user.getCinema().getCinemaId().equals(cinemaId)) {
+                    throw AppException.forbidden("You do not have permission to manage rooms for this cinema.");
+                }
+            }
+        }
+    }
+
     @Transactional
     public RoomDto createRoom(RoomRequest request) {
+        validateCinemaAccess(request.getCinemaId());
+        
         Cinema cinema = cinemaRepository.findById(request.getCinemaId())
                 .orElseThrow(() -> new RuntimeException("Cinema not found"));
 
@@ -99,6 +125,7 @@ public class RoomService {
     public RoomDto updateRoomStatus(Long id, String status) {
         Room room = roomRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
+        validateCinemaAccess(room.getCinema().getCinemaId());
         room.setStatus(status);
         roomRepository.save(room);
         return mapToDto(room);
@@ -115,6 +142,7 @@ public class RoomService {
     public List<SeatConfigDto> configureSeats(Long roomId, List<SeatConfigDto> seatConfigs) {
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
+        validateCinemaAccess(room.getCinema().getCinemaId());
 
         // Load existing seats
         List<Seat> existingSeats = seatRepository.findByRoomRoomId(roomId);

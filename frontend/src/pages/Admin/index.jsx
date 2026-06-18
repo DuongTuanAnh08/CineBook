@@ -28,13 +28,13 @@ export default function AdminDashboard() {
         setLoading(true);
         const [kpiRes, bookingsRes] = await Promise.all([
           dashboardApi.getKpiSummary(),
-          dashboardApi.getRecentBookings()
+          dashboardApi.getRecentBookings(5)
         ]);
-        if (kpiRes.data?.data) {
-          setKpi(kpiRes.data.data);
+        if (kpiRes.success && kpiRes.data) {
+          setKpi(kpiRes.data);
         }
-        if (bookingsRes.data?.data) {
-          setRecentBookings(bookingsRes.data.data);
+        if (bookingsRes.success && bookingsRes.data) {
+          setRecentBookings(bookingsRes.data);
         }
       } catch (error) {
         console.error("Failed to load dashboard data", error);

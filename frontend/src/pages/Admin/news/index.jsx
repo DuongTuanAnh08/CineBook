@@ -32,7 +32,7 @@ export default function AdminNews() {
     status: 'Published'
   });
 
-  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(news, 10);
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(news);
 
   const fetchNews = async () => {
     try {

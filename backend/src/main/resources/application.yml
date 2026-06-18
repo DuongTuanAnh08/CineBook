@@ -41,6 +41,7 @@ spring:
     baseline-version: 1
     out-of-order: true
     ignore-migration-patterns: "*:missing,*:future,*:ignored"
+    repair-on-migrate: true
 
 
   mail:

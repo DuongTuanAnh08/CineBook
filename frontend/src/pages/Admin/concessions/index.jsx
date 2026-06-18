@@ -80,7 +80,7 @@ export default function AdminConcessionsPage() {
     return matchType && matchSearch;
   });
 
-  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered, 10);
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered);
 
   const openAdd = () => {
     setEditingItem(null);

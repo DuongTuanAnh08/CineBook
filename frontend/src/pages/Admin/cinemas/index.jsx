@@ -64,7 +64,7 @@ export default function AdminCinemasPage() {
     return matchSearch && matchCity;
   });
 
-  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered, 10);
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered);
 
   const openAdd = () => {
     setEditingCinema(null);

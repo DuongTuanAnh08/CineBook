@@ -14,6 +14,7 @@ import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useClientPagination } from '@/hooks/use-client-pagination';
 import { ClientPagination } from '@/components/ui/client-pagination';
+import { formatSeatType } from '@/pages/MyTickets';
 
 export default function ResaleTicketPage() {
   const [resaleListings, setResaleListings] = useState([]);
@@ -52,7 +53,7 @@ export default function ResaleTicketPage() {
     return result;
   }, [searchQuery, filterMovie, filterCinema, sortBy, activeListings]);
 
-  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered, 10);
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered);
 
   const clearFilters = () => {
     setSearchQuery('');
@@ -147,13 +148,13 @@ export default function ResaleTicketPage() {
                         <Calendar className="w-4 h-4" /> {listing.showDate} {listing.showTime}
                       </div>
                       <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4" /> {listing.cinemaName}
+                        <MapPin className="w-4 h-4 shrink-0" /> <span className="truncate">{listing.cinemaName} • {listing.roomName}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Armchair className="w-4 h-4" /> Ghế {listing.seatNumber}
                       </div>
                       <div className="flex items-center gap-2">
-                        <Ticket className="w-4 h-4" /> {listing.ticketType || 'Thường'}
+                        <Ticket className="w-4 h-4" /> {listing.ticketType ? listing.ticketType.split(',').map(t => formatSeatType(t.trim())).join(', ') : 'Ghế Thường'}
                       </div>
                       {listing.includesFnb && (
                         <div className="flex items-center gap-2 text-primary font-medium">

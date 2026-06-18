@@ -150,6 +150,7 @@ public class ResaleListingService {
         String movieTitle = "";
         String moviePoster = "";
         String cinemaName = "";
+        String roomName = "";
         String showDate = "";
         String showTime = "";
         Integer originalPrice = 0;
@@ -164,8 +165,11 @@ public class ResaleListingService {
                     movieTitle = showtime.getMovie().getTitle();
                     moviePoster = showtime.getMovie().getPosterUrl();
                 }
-                if (showtime.getRoom() != null && showtime.getRoom().getCinema() != null) {
-                    cinemaName = showtime.getRoom().getCinema().getName();
+                if (showtime.getRoom() != null) {
+                    roomName = showtime.getRoom().getName();
+                    if (showtime.getRoom().getCinema() != null) {
+                        cinemaName = showtime.getRoom().getCinema().getName();
+                    }
                 }
                 if (showtime.getStartTime() != null) {
                     showDate = showtime.getStartTime().toLocalDate().toString();
@@ -186,9 +190,19 @@ public class ResaleListingService {
                     }
                     seats = seatBuilder.toString();
                 }
-                // Just take the first seat type
-                if (bookingSeats.get(0).getSeatType() != null) {
-                    ticketType = bookingSeats.get(0).getSeatType().name().toLowerCase();
+
+                // Determine ticket types based on the actually listed seats
+                java.util.List<String> listedLabels = java.util.Arrays.asList(seats.split(",\\s*"));
+                java.util.Set<String> types = new java.util.HashSet<>();
+                for (BookingSeat bs : bookingSeats) {
+                    if (bs.getSeat() != null && listedLabels.contains(bs.getSeat().getSeatLabel())) {
+                        if (bs.getSeatType() != null) {
+                            types.add(bs.getSeatType().name());
+                        }
+                    }
+                }
+                if (!types.isEmpty()) {
+                    ticketType = String.join(", ", types);
                 }
             }
         }
@@ -199,6 +213,7 @@ public class ResaleListingService {
                 .movieTitle(movieTitle)
                 .moviePoster(moviePoster)
                 .cinemaName(cinemaName)
+                .roomName(roomName)
                 .showDate(showDate)
                 .showTime(showTime)
                 .seatNumber(seats)

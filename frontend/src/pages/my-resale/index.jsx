@@ -18,6 +18,7 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useClientPagination } from '@/hooks/use-client-pagination';
 import { ClientPagination } from '@/components/ui/client-pagination';
+import { formatSeatType } from '@/pages/MyTickets';
 const TICKET_TYPE_LABELS = {
   standard: 'Thường',
   vip: 'VIP',
@@ -68,7 +69,7 @@ export default function MyResaleListingsPage() {
     fetchListings();
   }, []);
 
-  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(listings, 10);
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(listings);
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -187,7 +188,7 @@ export default function MyResaleListingsPage() {
                               {listing.movieTitle}
                             </h3>
                             <p className="text-xs font-mono text-muted-foreground mt-0.5">
-                              #{listing.id.toUpperCase()} • {TICKET_TYPE_LABELS[listing.ticketType]}
+                              #{listing.id.toUpperCase()} • {listing.ticketType ? listing.ticketType.split(',').map(t => formatSeatType(t.trim())).join(', ') : 'Ghế Thường'}
                             </p>
                           </div>
                           <Badge className={cn('shrink-0', STATUS_STYLES[listingStatus])}>
@@ -206,7 +207,7 @@ export default function MyResaleListingsPage() {
                           </div>
                           <div className="flex items-center gap-1 col-span-2 truncate">
                             <MapPin className="w-3 h-3 shrink-0" />
-                            <span className="truncate">{listing.cinemaName}</span>
+                            <span className="truncate">{listing.cinemaName} • {listing.roomName}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Armchair className="w-3 h-3" />

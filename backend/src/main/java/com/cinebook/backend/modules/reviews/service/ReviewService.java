@@ -17,6 +17,7 @@ public class ReviewService {
     private final ReviewRepository repository;
     private final UserRepository userRepository;
     private final com.cinebook.backend.modules.bookings.repository.BookingRepository bookingRepository;
+    private final com.cinebook.backend.modules.movies.repository.MovieRepository movieRepository;
 
     public Review createReview(Long customerId, Long movieId, Long bookingId, Integer rating, String comment) {
         com.cinebook.backend.modules.bookings.entity.Booking booking = bookingRepository.findById(bookingId)
@@ -49,7 +50,30 @@ public class ReviewService {
                     .build();
         }
         
-        return repository.save(review);
+        Review savedReview = repository.save(review);
+        updateMovieRating(movieId);
+        return savedReview;
+    }
+
+    private void updateMovieRating(Long movieId) {
+        List<Review> reviews = repository.findByMovieIdOrderByCreatedAtDesc(movieId).stream()
+                .filter(r -> r.getStatus() == ReviewStatus.Active)
+                .collect(Collectors.toList());
+        
+        com.cinebook.backend.modules.movies.entity.Movie movie = movieRepository.findById(movieId)
+                .orElseThrow(() -> new RuntimeException("Movie not found"));
+        
+        if (reviews.isEmpty()) {
+            movie.setAvgRating(java.math.BigDecimal.ZERO);
+            movie.setReviewCount(0);
+        } else {
+            double sum = reviews.stream().mapToInt(Review::getRating).sum();
+            double avg = sum / reviews.size();
+            avg = Math.round(avg * 10.0) / 10.0;
+            movie.setAvgRating(java.math.BigDecimal.valueOf(avg));
+            movie.setReviewCount(reviews.size());
+        }
+        movieRepository.save(movie);
     }
 
     public List<ReviewDto> getReviewsByMovieId(Long movieId) {
@@ -73,7 +97,9 @@ public class ReviewService {
     public ReviewDto updateReviewStatus(Long id, ReviewStatus status) {
         Review review = repository.findById(id).orElseThrow(() -> new RuntimeException("Review not found"));
         review.setStatus(status);
-        return mapToDto(repository.save(review));
+        Review savedReview = repository.save(review);
+        updateMovieRating(savedReview.getMovieId());
+        return mapToDto(savedReview);
     }
 
     private ReviewDto mapToDto(Review r) {

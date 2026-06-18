@@ -295,6 +295,7 @@ public class AuthService {
                 .phone(user.getPhone())
                 .dateOfBirth(user.getDateOfBirth())
                 .address(user.getAddress())
+                .cinemaId(user.getCinema() != null ? user.getCinema().getCinemaId() : null)
                 .build();
     }
 
@@ -310,6 +311,7 @@ public class AuthService {
                 .phone(user.getPhone())
                 .dateOfBirth(user.getDateOfBirth())
                 .address(user.getAddress())
+                .cinemaId(user.getCinema() != null ? user.getCinema().getCinemaId() : null)
                 .build();
     }
 
@@ -389,6 +391,7 @@ public class AuthService {
                         .phone(user.getPhone())
                         .dateOfBirth(user.getDateOfBirth())
                         .address(user.getAddress())
+                        .cinemaId(user.getCinema() != null ? user.getCinema().getCinemaId() : null)
                         .build())
                 .build();
     }

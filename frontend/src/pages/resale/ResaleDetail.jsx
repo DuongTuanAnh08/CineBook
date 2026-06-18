@@ -12,6 +12,7 @@ import { Calendar, Clock, MapPin, Armchair, Phone, User, Tag, ArrowLeft, AlertTr
 import { Link } from 'react-router-dom';
 import { Navigate } from 'react-router-dom'; const notFound = () => <Navigate to='/404' />;
 import { cn } from '@/lib/utils';
+import { formatSeatType } from '@/pages/MyTickets';
 const TICKET_TYPE_LABELS = {
   standard: 'Thường',
   vip: 'VIP',
@@ -152,7 +153,7 @@ export default function ResaleDetailPage({
               }, {
                 icon: Tag,
                 label: 'Loại ghế',
-                value: TICKET_TYPE_LABELS[listing.ticketType]
+                value: listing.ticketType ? listing.ticketType.split(',').map(t => formatSeatType(t.trim())).join(', ') : 'Ghế Thường'
               }].map(({
                 icon: Icon,
                 label,

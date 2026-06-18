@@ -16,6 +16,7 @@ public class ResaleListingResponse {
     private String movieTitle;
     private String moviePoster;
     private String cinemaName;
+    private String roomName;
     private String showDate;
     private String showTime;
     private String seatNumber;

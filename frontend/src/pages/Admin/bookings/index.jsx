@@ -84,7 +84,7 @@ export default function AdminBookingsPage() {
     return matchSearch && matchStatus;
   });
 
-  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered, 10);
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered);
 
   const totalRevenue = bookings.filter(b => b.status === 'Confirmed').reduce((a, b) => a + (b.amount || 0), 0);
 

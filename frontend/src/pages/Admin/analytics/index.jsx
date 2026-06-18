@@ -174,8 +174,8 @@ export default function AdminAnalyticsPage() {
 
     // Fetch Revenue Chart
     dashboardApi.getRevenueChart().then(res => {
-      if (res.data?.data) {
-        const newChartData = res.data.data.map(item => ({
+      if (res.success && res.data) {
+        const newChartData = res.data.map(item => ({
           month: item.label.replace('Month ', 'T'),
           revenue: (item.value || 0) / 1000000,
           tickets: 0
@@ -186,17 +186,17 @@ export default function AdminAnalyticsPage() {
 
     // Fetch Genre Chart
     dashboardApi.getGenreChart().then(res => {
-      if (res.data?.data) setGenreDataState(res.data.data);
+      if (res.success && res.data) setGenreDataState(res.data);
     }).catch(console.error);
 
     // Fetch Cinema Chart
     dashboardApi.getCinemaChart().then(res => {
-      if (res.data?.data) setCinemaDataState(res.data.data);
+      if (res.success && res.data) setCinemaDataState(res.data);
     }).catch(console.error);
 
     // Fetch Weekday Chart
     dashboardApi.getWeekdayChart().then(res => {
-      if (res.data?.data) setWeekdayDataState(res.data.data);
+      if (res.success && res.data) setWeekdayDataState(res.data);
     }).catch(console.error);
   }, []);
 

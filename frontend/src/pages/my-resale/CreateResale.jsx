@@ -16,6 +16,7 @@ import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import bookingApi from '@/api/bookingApi';
 import resaleApi from '@/api/resaleApi';
+import { formatSeatType } from '@/pages/MyTickets';
 import { toast } from 'sonner';
 // Removed mockTickets
 const TICKET_TYPE_LABELS = {
@@ -272,6 +273,8 @@ function CreateResaleContent() {
                       {selectedTicket.seatNumber.split(',').map(s => s.trim()).map(seat => {
                         const isListed = listedSeats.includes(seat);
                         const isSelected = selectedSeats.includes(seat);
+                        const ticketObj = selectedTicket.tickets?.find(t => t.seatLabel === seat);
+                        const typeText = formatSeatType(ticketObj?.seatType);
                         return <button key={seat} disabled={isListed} onClick={() => {
                           if (isSelected) {
                             setSelectedSeats(selectedSeats.filter(s => s !== seat));
@@ -279,7 +282,7 @@ function CreateResaleContent() {
                             setSelectedSeats([...selectedSeats, seat]);
                           }
                         }} className={cn('px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors', isListed ? 'border-muted bg-muted text-muted-foreground opacity-50 cursor-not-allowed' : isSelected ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/50')}>
-                            {seat} {isListed && '(Đã đăng)'}
+                            {typeText}: {seat} {isListed && '(Đã đăng)'}
                           </button>;
                       })}
                     </div>
@@ -287,7 +290,7 @@ function CreateResaleContent() {
                 );
               })()}
               
-              {selectedTicket.tickets?.some(t => t.seatType === 'FNB') && (() => {
+              {selectedTicket.fnbItems && selectedTicket.fnbItems.length > 0 && (() => {
                 const { fnb: fnbListed } = getListedItems(selectedTicket);
                 return (
                   <div className="space-y-2">

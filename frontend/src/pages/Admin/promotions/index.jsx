@@ -165,7 +165,7 @@ export default function AdminPromotionsPage() {
   const activeCount = currentPromos.filter(p => p.derivedStatus === 'Active').length;
   const expiredCount = currentPromos.filter(p => p.derivedStatus === 'Expired' || p.derivedStatus === 'Inactive').length;
 
-  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered, 10);
+  const { currentDataOnPage, currentPage, totalPages, handlePageChange, startIndex, endIndex, totalItems } = useClientPagination(filtered);
 
   return (
     <div className="space-y-6 p-6">
