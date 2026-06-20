@@ -28,7 +28,7 @@ export default function AdminDashboard() {
         setLoading(true);
         const [kpiRes, bookingsRes] = await Promise.all([
           dashboardApi.getKpiSummary(),
-          dashboardApi.getRecentBookings(5)
+          dashboardApi.getRecentBookings(5, { sort: { createdAt: -1 } })
         ]);
         if (kpiRes.success && kpiRes.data) {
           setKpi(kpiRes.data);
