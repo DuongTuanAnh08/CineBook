@@ -6,6 +6,7 @@ import com.cinebook.backend.modules.movies.entity.Movie;
 import com.cinebook.backend.modules.cinemas.entity.Cinema;
 import com.cinebook.backend.modules.rooms.entity.Room;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "Showtimes")
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Showtime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

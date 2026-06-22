@@ -48,6 +48,20 @@ public class BookingController {
         return ApiResponse.ok(bookingService.getAllBookingsAdmin(pageable));
     }
 
+    @GetMapping("/admin/export")
+    @PreAuthorize("hasAnyRole('SystemAdmin', 'ScheduleManager')")
+    public ResponseEntity<byte[]> exportBookingsToExcel() {
+        try {
+            byte[] excelContent = bookingService.exportBookingsToExcel();
+            return ResponseEntity.ok()
+                    .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"bookings_report.xlsx\"")
+                    .contentType(org.springframework.http.MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .body(excelContent);
+        } catch (java.io.IOException e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
     @PutMapping("/admin/{id}/status")
     @PreAuthorize("hasAnyRole('SystemAdmin', 'ScheduleManager')")
     public ApiResponse<com.cinebook.backend.modules.bookings.dto.BookingAdminDto> updateBookingStatus(

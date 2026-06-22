@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CinemaRepository extends JpaRepository<Cinema, Long> {
+    org.springframework.data.domain.Page<Cinema> findByCinemaId(Long cinemaId, org.springframework.data.domain.Pageable pageable);
 }

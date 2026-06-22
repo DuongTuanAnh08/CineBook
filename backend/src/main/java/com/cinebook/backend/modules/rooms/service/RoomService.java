@@ -34,7 +34,26 @@ public class RoomService {
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
-    public Page<RoomDto> getAllRooms(Pageable pageable) {
+    public Page<RoomDto> getAllRooms(Long cinemaId, Pageable pageable) {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            boolean isScheduleManager = auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ScheduleManager"));
+            if (isScheduleManager) {
+                String email = auth.getName();
+                com.cinebook.backend.modules.users.User user = userRepository.findByEmailAndDeletedAtIsNull(email)
+                        .orElseThrow(() -> AppException.unauthorized("User not found"));
+                if (user.getCinema() != null) {
+                    cinemaId = user.getCinema().getCinemaId();
+                } else {
+                    return Page.empty(pageable);
+                }
+            }
+        }
+
+        if (cinemaId != null) {
+            return roomRepository.findByCinemaCinemaId(cinemaId, pageable).map(this::mapToDto);
+        }
         return roomRepository.findAll(pageable).map(this::mapToDto);
     }
 

@@ -21,8 +21,10 @@ public class RoomController {
     private final RoomService roomService;
 
     @GetMapping
-    public ApiResponse<Page<RoomDto>> getAllRooms(Pageable pageable) {
-        return ApiResponse.ok(roomService.getAllRooms(pageable));
+    public ApiResponse<Page<RoomDto>> getAllRooms(
+            @RequestParam(required = false) Long cinemaId,
+            Pageable pageable) {
+        return ApiResponse.ok(roomService.getAllRooms(cinemaId, pageable));
     }
 
     @GetMapping("/{id}")

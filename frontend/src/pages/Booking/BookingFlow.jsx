@@ -75,15 +75,20 @@ function BookingContent() {
   const [activeTab, setActiveTab] = useState('drink');
   
   const isWeekend = new Date(date).getDay() === 0 || new Date(date).getDay() === 6;
-  const isEvening = time ? parseInt(time.split(':')[0]) >= 18 : false;
+  const eveningTime = settings?.eveningSurchargeTime || '17:00';
+  const isEvening = time ? time >= eveningTime : false;
   let surchargeMultiplier = 1;
   if (isWeekend) surchargeMultiplier += (settings?.weekendSurcharge ?? 20) / 100;
   if (isEvening) surchargeMultiplier += (settings?.eveningSurcharge ?? 10) / 100;
   
+  const basePrice = settings?.basePrice ?? 75000;
+  const seatVipMultiplier = settings?.seatVipMultiplier ?? 1.5;
+  const seatCoupleMultiplier = settings?.seatCoupleMultiplier ?? 2.0;
+
   const dynamicPricing = {
-    standard: 75000 * surchargeMultiplier,
-    vip: 100000 * surchargeMultiplier,
-    couple: 180000 * surchargeMultiplier
+    standard: basePrice * surchargeMultiplier,
+    vip: basePrice * seatVipMultiplier * surchargeMultiplier,
+    couple: basePrice * seatCoupleMultiplier * surchargeMultiplier
   };
 
   const getQty = itemId => orderItems.find(o => o.item.id === itemId)?.quantity ?? 0;

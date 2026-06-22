@@ -33,6 +33,10 @@ const bookingApi = {
 
     getBookingById: (id) => {
         return axiosClient.get(`/bookings/${id}`);
+    },
+
+    exportBookingsAdmin: () => {
+        return axiosClient.get('/bookings/admin/export', { responseType: 'blob' });
     }
 };
 

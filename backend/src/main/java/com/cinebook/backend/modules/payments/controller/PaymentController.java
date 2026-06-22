@@ -35,6 +35,7 @@ public class PaymentController {
     private final com.cinebook.backend.modules.promos.service.PromoService promoService;
     private final com.cinebook.backend.modules.bookings.service.BookingService bookingService;
     private final com.cinebook.backend.modules.auth.EmailService emailService;
+    private final com.cinebook.backend.modules.config.service.SystemConfigService systemConfigService;
 
     @Value("${app.frontend.url:http://localhost:3000}")
     private String frontendUrl;
@@ -108,8 +109,11 @@ public class PaymentController {
 
                     // Send Email Confirmation
                     try {
-                        com.cinebook.backend.modules.bookings.dto.MyBookingDto bookingDto = bookingService.getBookingById(booking.getId());
-                        emailService.sendBookingConfirmation(booking.getCustomer().getEmail(), bookingDto);
+                        String emailNotif = systemConfigService.getConfigValue("email_notif");
+                        if (!"false".equalsIgnoreCase(emailNotif)) {
+                            com.cinebook.backend.modules.bookings.dto.MyBookingDto bookingDto = bookingService.getBookingById(booking.getId());
+                            emailService.sendBookingConfirmation(booking.getCustomer().getEmail(), bookingDto);
+                        }
                     } catch (Exception e) {
                         System.err.println("Error sending booking email: " + e.getMessage());
                     }

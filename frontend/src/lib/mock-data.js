@@ -44,6 +44,12 @@ export const initialSettings = {
   vatPercent: 8,
   weekendSurcharge: 20,
   eveningSurcharge: 10,
+  eveningSurchargeTime: '17:00',
+  basePrice: 75000,
+  seatVipMultiplier: 1.5,
+  seatCoupleMultiplier: 2.0,
+  holdTime: 10,
+  maxSeats: 8
 };
 
 // Fallbacks for data-context

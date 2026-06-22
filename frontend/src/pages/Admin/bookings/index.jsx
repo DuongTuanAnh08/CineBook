@@ -76,6 +76,24 @@ export default function AdminBookingsPage() {
     }
   };
 
+  const handleExportExcel = async () => {
+    try {
+      toast.loading('Đang khởi tạo tệp báo cáo...', { id: 'export-excel' });
+      const blob = await bookingApi.exportBookingsAdmin();
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `bao-cao-dat-ve-${dayjs().format('YYYYMMDD-HHmmss')}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Xuất báo cáo thành công', { id: 'export-excel' });
+    } catch (error) {
+      console.error("Failed to export bookings", error);
+      toast.error('Có lỗi xảy ra khi xuất báo cáo', { id: 'export-excel' });
+    }
+  };
+
   const filtered = bookings.filter(b => {
     const matchSearch = (b.id || '').toLowerCase().includes(search.toLowerCase()) || 
                         (b.customer || '').toLowerCase().includes(search.toLowerCase()) || 
@@ -96,7 +114,7 @@ export default function AdminBookingsPage() {
             <h1 className="text-3xl font-bold tracking-tight">Quản lý Đặt vé</h1>
             <p className="text-muted-foreground mt-1">Theo dõi và quản lý tất cả đơn đặt vé</p>
           </div>
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" className="gap-2" onClick={handleExportExcel}>
             <Download className="w-4 h-4" />
             Xuất báo cáo
           </Button>

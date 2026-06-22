@@ -36,6 +36,11 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     org.springframework.data.domain.Page<Booking> findAllByOrderByCreatedAtDesc(org.springframework.data.domain.Pageable pageable);
 
+    org.springframework.data.domain.Page<Booking> findByShowtimeCinemaCinemaId(Long cinemaId, org.springframework.data.domain.Pageable pageable);
+
+    List<Booking> findByShowtimeCinemaCinemaIdOrderByCreatedAtDesc(Long cinemaId);
+
+    List<Booking> findAllByOrderByCreatedAtDesc();
 
         org.springframework.data.domain.Page<Booking> findAllByOrderByCreatedAtAsc(org.springframework.data.domain.Pageable pageable);
 

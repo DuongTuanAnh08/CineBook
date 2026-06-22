@@ -13,8 +13,23 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CinemaService {
     private final CinemaRepository cinemaRepository;
+    private final com.cinebook.backend.modules.users.UserRepository userRepository;
 
     public Page<Cinema> getAllCinemas(Pageable pageable) {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            boolean isScheduleManager = auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ScheduleManager"));
+            if (isScheduleManager) {
+                String email = auth.getName();
+                com.cinebook.backend.modules.users.User user = userRepository.findByEmailAndDeletedAtIsNull(email).orElse(null);
+                if (user != null && user.getCinema() != null) {
+                    return cinemaRepository.findByCinemaId(user.getCinema().getCinemaId(), pageable);
+                } else {
+                    return Page.empty(pageable);
+                }
+            }
+        }
         return cinemaRepository.findAll(pageable);
     }
 

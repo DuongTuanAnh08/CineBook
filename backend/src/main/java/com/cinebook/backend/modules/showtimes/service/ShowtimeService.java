@@ -54,6 +54,21 @@ public class ShowtimeService {
 
     @Transactional(readOnly = true)
     public Page<ShowtimeDto> getAllShowtimes(Long movieId, Long cinemaId, java.time.LocalDate date, Pageable pageable) {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            boolean isScheduleManager = auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ScheduleManager"));
+            if (isScheduleManager) {
+                String email = auth.getName();
+                com.cinebook.backend.modules.users.User user = userRepository.findByEmailAndDeletedAtIsNull(email).orElse(null);
+                if (user != null && user.getCinema() != null) {
+                    cinemaId = user.getCinema().getCinemaId();
+                } else {
+                    return Page.empty(pageable);
+                }
+            }
+        }
+
         LocalDateTime startDate = null;
         LocalDateTime endDate = null;
         if (date != null) {
@@ -85,6 +100,7 @@ public class ShowtimeService {
                 .status(s.getStatus())
                 .totalSeats(s.getRoom().getCapacity())
                 .availableSeats(s.getRoom().getCapacity() - bookedCount)
+                .price(calculateBaseTicketPrice(s))
                 .build();
     }
 
@@ -184,16 +200,8 @@ public class ShowtimeService {
         seatHoldRepository.deleteByShowtimeAndUser(showtimeId, user.getUserId());
     }
 
-    private Integer calculateTicketPrice(Showtime showtime, Seat seat) {
+    public Integer calculateBaseTicketPrice(Showtime showtime) {
         BigDecimal basePrice = systemConfigService.getBasePrice();
-        
-        // Seat Multiplier
-        BigDecimal seatMultiplier = BigDecimal.ONE;
-        if ("VIP".equalsIgnoreCase(seat.getSeatType().name())) {
-            seatMultiplier = systemConfigService.getSeatVipMultiplier();
-        } else if ("COUPLE".equalsIgnoreCase(seat.getSeatType().name())) {
-            seatMultiplier = systemConfigService.getSeatCoupleMultiplier();
-        }
 
         // Day Multiplier
         BigDecimal dayMultiplier = BigDecimal.ONE;
@@ -204,14 +212,32 @@ public class ShowtimeService {
 
         // Time Multiplier
         BigDecimal timeMultiplier = BigDecimal.ONE;
-        String eveningTimeStr = systemConfigService.getEveningSurchargeTime();
-        LocalTime eveningTime = LocalTime.parse(eveningTimeStr);
-        if (!showtime.getStartTime().toLocalTime().isBefore(eveningTime)) {
-            timeMultiplier = BigDecimal.ONE.add(systemConfigService.getEveningSurchargePercent().divide(BigDecimal.valueOf(100)));
+        try {
+            String eveningTimeStr = systemConfigService.getEveningSurchargeTime();
+            if (eveningTimeStr != null && eveningTimeStr.contains(":")) {
+                LocalTime eveningTime = LocalTime.parse(eveningTimeStr);
+                if (!showtime.getStartTime().toLocalTime().isBefore(eveningTime)) {
+                    timeMultiplier = BigDecimal.ONE.add(systemConfigService.getEveningSurchargePercent().divide(BigDecimal.valueOf(100)));
+                }
+            }
+        } catch (Exception e) { /* use default timeMultiplier = 1 */ }
+
+        BigDecimal finalPrice = basePrice.multiply(dayMultiplier).multiply(timeMultiplier);
+        return finalPrice.intValue();
+    }
+
+    private Integer calculateTicketPrice(Showtime showtime, Seat seat) {
+        Integer baseTicketPrice = calculateBaseTicketPrice(showtime);
+        
+        // Seat Multiplier
+        BigDecimal seatMultiplier = BigDecimal.ONE;
+        if ("VIP".equalsIgnoreCase(seat.getSeatType().name())) {
+            seatMultiplier = systemConfigService.getSeatVipMultiplier();
+        } else if ("COUPLE".equalsIgnoreCase(seat.getSeatType().name())) {
+            seatMultiplier = systemConfigService.getSeatCoupleMultiplier();
         }
 
-        BigDecimal finalPrice = basePrice.multiply(seatMultiplier).multiply(dayMultiplier).multiply(timeMultiplier);
-        return finalPrice.intValue();
+        return BigDecimal.valueOf(baseTicketPrice).multiply(seatMultiplier).intValue();
     }
 
     @Transactional

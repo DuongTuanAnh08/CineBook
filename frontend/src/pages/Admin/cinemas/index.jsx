@@ -14,8 +14,10 @@ import { toast } from 'sonner';
 import cinemaApi from '@/api/cinemaApi';
 import { useClientPagination } from '@/hooks/use-client-pagination';
 import { ClientPagination } from '@/components/ui/client-pagination';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function AdminCinemasPage() {
+  const { user } = useAuth();
   const [cinemas, setCinemas] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -150,10 +152,12 @@ export default function AdminCinemasPage() {
             <h1 className="text-3xl font-bold tracking-tight">Quản lý Rạp chiếu</h1>
             <p className="text-muted-foreground mt-1">Danh sách chi nhánh rạp trên toàn quốc</p>
           </div>
-          <Button className="gap-2" onClick={openAdd}>
-            <Plus className="w-4 h-4" />
-            Thêm rạp mới
-          </Button>
+          {user?.role !== 'manager' && (
+            <Button className="gap-2" onClick={openAdd}>
+              <Plus className="w-4 h-4" />
+              Thêm rạp mới
+            </Button>
+          )}
         </div>
 
         {/* Stats */}
@@ -219,12 +223,16 @@ export default function AdminCinemasPage() {
                       <DropdownMenuItem className="gap-2">
                         <Eye className="w-4 h-4" /> Xem chi tiết
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="gap-2" onClick={() => openEdit(cinema)}>
-                        <Pencil className="w-4 h-4" /> Chỉnh sửa
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="gap-2 text-destructive focus:text-destructive" onClick={() => confirmDelete(cinema.id)}>
-                        <Trash2 className="w-4 h-4" /> Xóa
-                      </DropdownMenuItem>
+                      {user?.role !== 'manager' && (
+                        <>
+                          <DropdownMenuItem className="gap-2" onClick={() => openEdit(cinema)}>
+                            <Pencil className="w-4 h-4" /> Chỉnh sửa
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="gap-2 text-destructive focus:text-destructive" onClick={() => confirmDelete(cinema.id)}>
+                            <Trash2 className="w-4 h-4" /> Xóa
+                          </DropdownMenuItem>
+                        </>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </CardHeader>
