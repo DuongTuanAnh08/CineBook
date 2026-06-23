@@ -60,7 +60,7 @@ public class ShowtimeController {
         return ApiResponse.ok("Seat released successfully");
     }
 
-    @DeleteMapping("/{id}/seats/hold/all")
+    @DeleteMapping("/{id}/holds")
     @PreAuthorize("isAuthenticated()")
     public ApiResponse<String> releaseAllHolds(
             @PathVariable Long id,

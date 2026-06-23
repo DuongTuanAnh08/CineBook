@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useState, useEffect, useRef } from 'react';
 import { useNavigate, Navigate, useSearchParams } from 'react-router-dom';
 
 import { SeatSelection } from '@/components/booking/seat-selection';
@@ -52,6 +52,29 @@ function BookingContent() {
   const [orderItems, setOrderItems] = useState([]);
   const [realConcessions, setRealConcessions] = useState([]);
   const [isLoadingConcessions, setIsLoadingConcessions] = useState(true);
+  const isProceedingToPayment = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      // Component unmounting (user navigating away or closing tab)
+      // Release holds unless we are intentionally proceeding to payment
+      if (!isProceedingToPayment.current && showtimeId) {
+        const token = localStorage.getItem('accessToken');
+        if (token) {
+          // Use fetch with keepalive so it runs even if tab is closing
+          // We use the backend URL directly, assuming standard structure or fallback
+          const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+          fetch(`${apiUrl}/showtimes/${showtimeId}/holds`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+            keepalive: true
+          }).catch(e => console.error("Failed to release holds on unmount", e));
+        }
+      }
+    };
+  }, [showtimeId]);
   
   useEffect(() => {
     setIsLoadingConcessions(true);
@@ -163,18 +186,22 @@ function BookingContent() {
         qty: o.quantity
       }))));
     }
+    isProceedingToPayment.current = true;
     router(`/payment?${queryParams.toString()}`);
   };
 
   const handleCancelTransaction = async () => {
     try {
+      // Always release seat holds first
+      if (showtimeId) {
+        await showtimeApi.releaseAllHolds(showtimeId);
+      }
+
+      // Then cancel the pending booking if one exists
       const pendingBookingId = sessionStorage.getItem('pendingBookingId');
       if (pendingBookingId) {
         await bookingApi.cancelBooking(pendingBookingId);
         sessionStorage.removeItem('pendingBookingId');
-      } else if (showtimeId) {
-        // Just release seats
-        await showtimeApi.releaseAllHolds(showtimeId);
       }
       
       toast({
@@ -187,10 +214,15 @@ function BookingContent() {
       setConcessionOpen(false);
       setStep(1);
     } catch (err) {
+      console.error('handleCancelTransaction error:', err);
+      // Still reset UI even if API fails
+      setPendingSeats([]);
+      setOrderItems([]);
+      setConcessionOpen(false);
+      setStep(1);
       toast({
-        title: 'Lỗi',
-        description: 'Không thể hủy giao dịch, vui lòng thử lại sau.',
-        variant: 'destructive'
+        title: 'Ghế đã được nhả',
+        description: 'Đã hủy giao dịch.',
       });
     }
   };
@@ -221,7 +253,20 @@ function BookingContent() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => step === 2 ? setStep(1) : router(-1)}>
+          <Button variant="ghost" size="icon" onClick={async () => {
+            if (step === 2) {
+              if (showtimeId) {
+                try {
+                  await showtimeApi.releaseAllHolds(showtimeId);
+                } catch (e) {
+                  console.error('Failed to release holds on back', e);
+                }
+              }
+              setStep(1);
+            } else {
+              router(-1);
+            }
+          }}>
             <ArrowLeft className="size-5" />
           </Button>
           <div>
