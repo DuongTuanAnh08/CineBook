@@ -29,6 +29,7 @@ export default function AdminSettingsPage() {
   const [weekendSurcharge, setWeekendSurcharge] = useState(20);
   const [eveningSurcharge, setEveningSurcharge] = useState(10);
   const [eveningSurchargeTime, setEveningSurchargeTime] = useState('17:00');
+  const [eveningSurchargeEndTime, setEveningSurchargeEndTime] = useState('23:59');
   
   const [basePrice, setBasePrice] = useState(75000);
   const [seatVipMultiplier, setSeatVipMultiplier] = useState(1.5);
@@ -46,6 +47,7 @@ export default function AdminSettingsPage() {
             if (config.configKey === 'weekend_surcharge_percent') setWeekendSurcharge(Number(config.configValue));
             if (config.configKey === 'evening_surcharge_percent') setEveningSurcharge(Number(config.configValue));
             if (config.configKey === 'evening_surcharge_time') setEveningSurchargeTime(config.configValue);
+            if (config.configKey === 'evening_surcharge_end_time') setEveningSurchargeEndTime(config.configValue);
             if (config.configKey === 'base_price') setBasePrice(Number(config.configValue));
             if (config.configKey === 'seat_vip_multiplier') setSeatVipMultiplier(Number(config.configValue));
             if (config.configKey === 'seat_couple_multiplier') setSeatCoupleMultiplier(Number(config.configValue));
@@ -71,6 +73,7 @@ export default function AdminSettingsPage() {
           configApi.updateConfig('weekend_surcharge_percent', String(weekendSurcharge)),
           configApi.updateConfig('evening_surcharge_percent', String(eveningSurcharge)),
           configApi.updateConfig('evening_surcharge_time', eveningSurchargeTime),
+          configApi.updateConfig('evening_surcharge_end_time', eveningSurchargeEndTime),
           configApi.updateConfig('base_price', String(basePrice)),
           configApi.updateConfig('seat_vip_multiplier', String(seatVipMultiplier)),
           configApi.updateConfig('seat_couple_multiplier', String(seatCoupleMultiplier)),
@@ -219,9 +222,13 @@ export default function AdminSettingsPage() {
                 <Input id="evening-surcharge-time" type="time" value={eveningSurchargeTime} onChange={e => setEveningSurchargeTime(e.target.value)} />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="evening-surcharge-end-time">Giờ kết thúc phụ thu tối</Label>
+                <Input id="evening-surcharge-end-time" type="time" value={eveningSurchargeEndTime} onChange={e => setEveningSurchargeEndTime(e.target.value)} />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="evening-surcharge">Phụ thu buổi tối (%)</Label>
                 <Input id="evening-surcharge" type="number" value={eveningSurcharge} onChange={e => setEveningSurcharge(e.target.value)} />
-                <p className="text-[10px] text-muted-foreground mt-1">Áp dụng từ {eveningSurchargeTime} trở đi</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Áp dụng từ {eveningSurchargeTime} đến {eveningSurchargeEndTime}</p>
               </div>
             </div>
           </CardContent>

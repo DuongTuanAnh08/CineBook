@@ -167,7 +167,7 @@ export default function MovieDetailPage() {
     P: 'bg-green-600',
     C13: 'bg-yellow-600',
     C16: 'bg-orange-600',
-    C18: 'bg-red-600',
+    C18: 'bg-red-650',
   }
 
   const ageRatingDescriptions = {

@@ -14,7 +14,7 @@ public class RepairFlywayTest {
         String url = "jdbc:mysql://" + host + ":" + port + "/" + name + "?useSSL=false&allowPublicKeyRetrieval=true";
         try (Connection c = DriverManager.getConnection(url, user, pwd);
              Statement s = c.createStatement()) {
-            s.execute("DELETE FROM flyway_schema_history WHERE version = '2'");
+            s.execute("UPDATE flyway_schema_history SET checksum = -1172684260 WHERE version = '12'");
             System.out.println("FLYWAY REPAIRED SUCCESSFULLY");
         }
     }

@@ -216,7 +216,18 @@ public class ShowtimeService {
             String eveningTimeStr = systemConfigService.getEveningSurchargeTime();
             if (eveningTimeStr != null && eveningTimeStr.contains(":")) {
                 LocalTime eveningTime = LocalTime.parse(eveningTimeStr);
-                if (!showtime.getStartTime().toLocalTime().isBefore(eveningTime)) {
+                String eveningEndTimeStr = systemConfigService.getEveningSurchargeEndTime();
+                LocalTime eveningEndTime = LocalTime.parse(eveningEndTimeStr != null ? eveningEndTimeStr : "23:59");
+                
+                LocalTime showtimeTime = showtime.getStartTime().toLocalTime();
+                boolean isSurchargeActive = false;
+                if (eveningEndTime.isAfter(eveningTime)) {
+                    isSurchargeActive = !showtimeTime.isBefore(eveningTime) && !showtimeTime.isAfter(eveningEndTime);
+                } else {
+                    isSurchargeActive = !showtimeTime.isBefore(eveningTime) || !showtimeTime.isAfter(eveningEndTime);
+                }
+
+                if (isSurchargeActive) {
                     timeMultiplier = BigDecimal.ONE.add(systemConfigService.getEveningSurchargePercent().divide(BigDecimal.valueOf(100)));
                 }
             }

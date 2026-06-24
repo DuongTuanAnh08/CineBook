@@ -33,6 +33,19 @@ public class BookingController {
         return ResponseEntity.ok(ApiResponse.ok(data));
     }
 
+    @PostMapping("/calculate")
+    @PreAuthorize("hasAnyRole('Customer', 'SystemAdmin', 'ScheduleManager')")
+    public ResponseEntity<ApiResponse<com.cinebook.backend.modules.bookings.dto.BookingCalculationResponse>> calculateBooking(@Valid @RequestBody CreateBookingRequest request) {
+        com.cinebook.backend.modules.bookings.dto.BookingCalculationResponse response = bookingService.calculateBooking(
+                request.getCustomerId(),
+                request.getShowtimeId(),
+                request.getSeatIds(),
+                request.getFnbItems(),
+                request.getPromoCode()
+        );
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasAnyRole('Customer', 'SystemAdmin', 'ScheduleManager')")
     public ApiResponse<String> cancelMyBooking(

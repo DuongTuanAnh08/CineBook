@@ -30,7 +30,6 @@ const mainNavItems = [
   { label: 'Đang Chiếu', href: '/movies/now-showing' },
   { label: 'Sắp Chiếu', href: '/movies/coming-soon' },
   { label: 'Rạp Chiếu', href: '/cinemas' },
-  { label: 'Khuyến Mãi', href: '/promotions' },
   { label: 'Tin Tức', href: '/news' },
   { label: 'Trao Đổi Vé', href: '/resale' },
 ]

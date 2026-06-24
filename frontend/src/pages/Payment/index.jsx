@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import { useNavigate, Navigate, useSearchParams } from 'react-router-dom';
 
 import { useData } from '@/contexts/data-context'
@@ -31,26 +31,6 @@ const PAYMENT_METHODS = [{
   label: 'VNPay',
   icon: VNPayIcon,
   desc: 'Thẻ ATM, Visa, MasterCard, QR Code'
-}, {
-  id: 'card',
-  label: 'Thẻ tín dụng / Ghi nợ',
-  icon: CreditCard,
-  desc: 'Visa, Mastercard, JCB'
-}, {
-  id: 'bank',
-  label: 'Chuyển khoản ngân hàng',
-  icon: Building2,
-  desc: 'Internet Banking'
-}, {
-  id: 'momo',
-  label: 'Ví MoMo',
-  icon: Smartphone,
-  desc: 'Quét QR hoặc số điện thoại'
-}, {
-  id: 'zalopay',
-  label: 'ZaloPay',
-  icon: Smartphone,
-  desc: 'Quét QR hoặc liên kết tài khoản'
 }];
 
 function PaymentContent() {
@@ -93,44 +73,68 @@ function PaymentContent() {
   const [processing, setProcessing] = useState(false);
   const { user } = useAuth();
   
-  const discount = (() => {
-    if (!promoApplied || !promoData) return 0;
-    if (promoData.discountType === 'Percentage') {
-      const calculated = Math.round(subtotal * (promoData.discountValue / 100));
-      return promoData.maxDiscountVnd ? Math.min(calculated, promoData.maxDiscountVnd) : calculated;
-    }
-    return promoData.discountValue;
-  })();
-  
-  // Calculate final amounts just like backend: VAT is applied AFTER discount
-  const newSubtotal = Math.max(0, subtotal - discount);
-  const calculatedVatAmount = Math.round(newSubtotal * (vatPercent / 100));
-  const finalTotal = newSubtotal + calculatedVatAmount;
+  const [calcResults, setCalcResults] = useState(null);
+  const [isLoadingCalc, setIsLoadingCalc] = useState(false);
 
-  const handleApplyPromo = async () => {
+  const fetchCalculation = async (appliedCode) => {
+    setIsLoadingCalc(true);
     setPromoError('');
-    if (!promoCode) return;
-    
     try {
-      const res = await promoApi.validatePromo({
-        code: promoCode,
-        userId: user?.id || user?.userId,
-        orderValue: subtotal
-      });
+      const payload = {
+        customerId: user?.userId || user?.id,
+        showtimeId: Number(showtimeId),
+        seatIds: seats.map(s => Number(s)),
+        fnbItems: concessions.map(c => ({
+          productId: Number(c.id),
+          quantity: Number(c.qty)
+        })),
+        promoCode: appliedCode || null
+      };
+      const res = await bookingApi.calculateBooking(payload);
       if (res.success && res.data) {
-        setPromoApplied(true);
-        setPromoData(res.data);
-        toast.success(`Đã áp dụng mã ${promoCode}.`);
-      } else {
-        setPromoError('Mã không hợp lệ hoặc không đủ điều kiện.');
-        setPromoApplied(false);
-        setPromoData(null);
+        setCalcResults(res.data);
+        if (appliedCode) {
+          setPromoApplied(true);
+          setPromoData({
+            discountType: res.data.promoDiscountType,
+            discountValue: res.data.promoDiscountValue
+          });
+          toast.success(`Đã áp dụng mã ${appliedCode}.`);
+        } else {
+          setPromoApplied(false);
+          setPromoData(null);
+        }
       }
     } catch (err) {
-      setPromoError(err.error?.message || err.message || 'Không thể kiểm tra mã khuyến mãi.');
+      setPromoError(err.response?.data?.error?.message || err.message || 'Mã không hợp lệ hoặc không đủ điều kiện.');
       setPromoApplied(false);
       setPromoData(null);
+      if (appliedCode) {
+        // Recalculate without promo code
+        fetchCalculation(null);
+      }
+    } finally {
+      setIsLoadingCalc(false);
     }
+  };
+
+  useEffect(() => {
+    if (user && showtimeId && seats.length > 0) {
+      fetchCalculation(null);
+    }
+  }, [user, showtimeId, params.get('seats'), concessionsParam]);
+
+  const discount = calcResults ? calcResults.discountAmount : 0;
+  const calculatedVatAmount = calcResults ? calcResults.vatAmount : Math.round(subtotal * (vatPercent / 100));
+  const finalTotal = calcResults ? calcResults.totalAmount : (subtotal + calculatedVatAmount);
+  
+  const displaySeatTotal = calcResults ? calcResults.ticketTotal : (subtotal - concessionTotal);
+  const displayConcessionTotal = calcResults ? calcResults.fnbTotal : concessionTotal;
+  const displayVatPercent = calcResults ? Math.round(calcResults.vatRate * 100) : vatPercent;
+
+  const handleApplyPromo = () => {
+    if (!promoCode) return;
+    fetchCalculation(promoCode);
   };
 
   const handlePayment = async () => {
@@ -259,78 +263,7 @@ function PaymentContent() {
               </CardContent>
             </Card>}
 
-          {/* Card details (only for card method) */}
-          {method === 'card' && <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle className="text-base">Thông tin thẻ</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Số thẻ</Label>
-                  <Input placeholder="1234 5678 9012 3456" maxLength={19} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Ngày hết hạn</Label>
-                    <Input placeholder="MM/YY" maxLength={5} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>CVV</Label>
-                    <Input placeholder="•••" maxLength={3} type="password" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Tên chủ thẻ</Label>
-                  <Input placeholder="NGUYEN VAN A" className="uppercase" />
-                </div>
-              </CardContent>
-            </Card>}
 
-          {/* Bank transfer */}
-          {method === 'bank' && <Card className="bg-card border-border">
-              <CardContent className="pt-6 space-y-3">
-                <div className="rounded-lg bg-secondary/50 p-4 space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Ngân hàng</span>
-                    <span className="font-medium">Vietcombank</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Số tài khoản</span>
-                    <span className="font-mono font-medium">1234 5678 90</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Chủ tài khoản</span>
-                    <span className="font-medium">CINEBOOK VN</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Nội dung CK</span>
-                    <span className="font-mono font-medium text-primary">CINEBOOK {seats.join('')}</span>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground text-center">
-                  Vé sẽ được gửi qua email sau khi hệ thống xác nhận thanh toán (5–15 phút)
-                </p>
-              </CardContent>
-            </Card>}
-
-          {/* MoMo / ZaloPay */}
-          {(method === 'momo' || method === 'zalopay') && <Card className="bg-card border-border">
-              <CardContent className="pt-6 flex flex-col items-center gap-3">
-                <div className="w-40 h-40 bg-secondary rounded-xl flex items-center justify-center">
-                  <div className="w-32 h-32 grid grid-cols-5 gap-0.5">
-                    {Array.from({
-                  length: 25
-                }).map((_, i) => <div key={i} className={cn('rounded-sm', Math.random() > 0.5 ? 'bg-foreground' : 'bg-transparent')} />)}
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Quét mã QR bằng app {method === 'momo' ? 'MoMo' : 'ZaloPay'} để thanh toán
-                </p>
-                <Badge variant="secondary" className="font-mono text-lg px-4 py-1">
-                  {finalTotal.toLocaleString('vi-VN')}₫
-                </Badge>
-              </CardContent>
-            </Card>}
         </div>
 
         {/* Right: Order summary */}
@@ -399,6 +332,7 @@ function PaymentContent() {
                   setPromoApplied(false);
                   setPromoCode('');
                   setPromoData(null);
+                  fetchCalculation(null);
                 }}>
                       Xóa
                     </button>
@@ -417,21 +351,26 @@ function PaymentContent() {
               <Separator className="bg-border" />
 
               {/* Price breakdown */}
-              <div className="space-y-2 text-sm">
+              <div className="space-y-2 text-sm relative">
+                {isLoadingCalc && (
+                  <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10 rounded">
+                    <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Tiền vé ({seats.length} ghế)</span>
-                  <span>{(seatTotal > 0 ? seatTotal : (subtotal - concessionTotal)).toLocaleString('vi-VN')}₫</span>
+                  <span>{displaySeatTotal.toLocaleString('vi-VN')}₫</span>
                 </div>
-                {concessionTotal > 0 && <div className="flex justify-between">
+                {displayConcessionTotal > 0 && <div className="flex justify-between">
                     <span className="text-muted-foreground">Đồ ăn & nước</span>
-                    <span>{concessionTotal.toLocaleString('vi-VN')}₫</span>
+                    <span>{displayConcessionTotal.toLocaleString('vi-VN')}₫</span>
                   </div>}
                 {promoApplied && <div className="flex justify-between text-green-500">
                     <span>Giảm giá ({promoData?.discountType === 'Percentage' ? `${promoData.discountValue}%` : 'Trực tiếp'})</span>
                     <span>-{discount.toLocaleString('vi-VN')}₫</span>
                   </div>}
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Thuế VAT ({vatPercent}%)</span>
+                  <span className="text-muted-foreground">Thuế VAT ({displayVatPercent}%)</span>
                   <span>{calculatedVatAmount.toLocaleString('vi-VN')}₫</span>
                 </div>
                 <div className="flex justify-between font-bold text-base pt-1">
