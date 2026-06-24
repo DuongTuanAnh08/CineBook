@@ -60,7 +60,7 @@ public class RoomService {
     @Transactional(readOnly = true)
     public RoomDto getRoomById(Long id) {
         return roomRepository.findById(id).map(this::mapToDto)
-            .orElseThrow(() -> new RuntimeException("Room not found"));
+            .orElseThrow(() -> AppException.notFound("Room not found."));
     }
 
     private RoomDto mapToDto(Room room) {
@@ -103,7 +103,7 @@ public class RoomService {
         validateCinemaAccess(request.getCinemaId());
         
         Cinema cinema = cinemaRepository.findById(request.getCinemaId())
-                .orElseThrow(() -> new RuntimeException("Cinema not found"));
+                .orElseThrow(() -> AppException.notFound("Cinema not found."));
 
         Integer capacity = request.getRows() * request.getColumns();
 
@@ -143,7 +143,7 @@ public class RoomService {
     @Transactional
     public RoomDto updateRoomStatus(Long id, String status) {
         Room room = roomRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Room not found"));
+                .orElseThrow(() -> AppException.notFound("Room not found."));
         validateCinemaAccess(room.getCinema().getCinemaId());
         room.setStatus(status);
         roomRepository.save(room);
@@ -160,8 +160,12 @@ public class RoomService {
     @Transactional
     public List<SeatConfigDto> configureSeats(Long roomId, List<SeatConfigDto> seatConfigs) {
         Room room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new RuntimeException("Room not found"));
+                .orElseThrow(() -> AppException.notFound("Room not found."));
         validateCinemaAccess(room.getCinema().getCinemaId());
+
+        if (!"UnderMaintenance".equals(room.getStatus()) && !"Inactive".equals(room.getStatus())) {
+            throw AppException.badRequest("Seat layout can only be configured when the room is Under Maintenance or Inactive.");
+        }
 
         // Load existing seats
         List<Seat> existingSeats = seatRepository.findByRoomRoomId(roomId);
@@ -197,7 +201,7 @@ public class RoomService {
                 seatRepository.deleteAll(seatsToDelete);
                 seatRepository.flush();
             } catch (Exception e) {
-                throw AppException.badRequest("Không thể xóa hoặc ẩn một số ghế vì các ghế đó đã được khách đặt vé hoặc đang giữ chỗ.");
+                throw AppException.badRequest("Cannot remove seats that have active bookings or holds.");
             }
         }
 

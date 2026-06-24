@@ -1,5 +1,6 @@
 package com.cinebook.backend.modules.bookings.service;
 
+import com.cinebook.backend.common.exception.AppException;
 import com.cinebook.backend.modules.bookings.entity.Booking;
 import com.cinebook.backend.modules.bookings.entity.BookingSeat;
 import com.cinebook.backend.modules.bookings.entity.BookingStatus;
@@ -52,10 +53,10 @@ public class BookingService {
     @Transactional
     public Booking createBooking(Long customerId, Long showtimeId, List<Long> seatIds, List<FnBItemRequest> fnbItems, String promoCode) {
         User customer = userRepository.findById(customerId)
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
+                .orElseThrow(() -> AppException.notFound("Customer not found."));
 
         Showtime showtime = showtimeRepository.findById(showtimeId)
-                .orElseThrow(() -> new RuntimeException("Showtime not found"));
+                .orElseThrow(() -> AppException.notFound("Showtime not found."));
                 
         Room room = showtime.getRoom();
 
@@ -79,7 +80,7 @@ public class BookingService {
 
         for (Long seatId : seatIds) {
             Seat seat = seatRepository.findById(seatId)
-                    .orElseThrow(() -> new RuntimeException("Seat not found: " + seatId));
+                    .orElseThrow(() -> AppException.notFound("Seat not found: " + seatId));
             
             int seatPrice;
             BigDecimal basePrice = systemConfigService.getBasePrice();
@@ -149,7 +150,7 @@ public class BookingService {
             List<FnBOrderItem> fnbOrderItems = new ArrayList<>();
             for (FnBItemRequest fnbReq : fnbItems) {
                 FnBProduct product = fnbProductRepository.findById(fnbReq.getProductId())
-                        .orElseThrow(() -> new RuntimeException("Product not found: " + fnbReq.getProductId()));
+                        .orElseThrow(() -> AppException.notFound("F&B product not found: " + fnbReq.getProductId()));
                 
                 FnBOrderItem fnbOrderItem = new FnBOrderItem();
                 fnbOrderItem.setBookingId(savedBooking.getId());
@@ -198,9 +199,10 @@ public class BookingService {
                 savedBooking.setVatAmount(newVatAmount);
                 savedBooking.setTotalAfterTax(newTotalAfterTax);
                 savedBooking = bookingRepository.save(savedBooking);
+            } catch (AppException e) {
+                throw e;
             } catch (Exception e) {
-                // If promo validation fails, we throw an exception to abort the booking
-                throw new RuntimeException("Invalid promo code: " + e.getMessage());
+                throw AppException.badRequest("Invalid promo code: " + e.getMessage());
             }
         }
 
@@ -210,14 +212,14 @@ public class BookingService {
     @Transactional
     public void cancelMyBooking(Long bookingId, String email) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
-        
+                .orElseThrow(() -> AppException.notFound("Booking not found."));
+
         if (!booking.getCustomer().getEmail().equals(email)) {
-            throw new RuntimeException("Not authorized to cancel this booking");
+            throw AppException.forbidden("You are not authorized to cancel this booking.");
         }
-        
+
         if (booking.getStatus() != BookingStatus.Pending) {
-            throw new RuntimeException("Only pending bookings can be cancelled");
+            throw AppException.badRequest("Only pending bookings can be cancelled.");
         }
         
         booking.setStatus(BookingStatus.Cancelled);
@@ -248,7 +250,7 @@ public class BookingService {
             if (isScheduleManager) {
                 String email = auth.getName();
                 com.cinebook.backend.modules.users.User user = userRepository.findByEmailAndDeletedAtIsNull(email)
-                        .orElseThrow(() -> new RuntimeException("User not found"));
+                        .orElseThrow(() -> AppException.notFound("User not found."));
                 if (user.getCinema() != null) {
                     bookings = bookingRepository.findByShowtimeCinemaCinemaId(user.getCinema().getCinemaId(), pageable);
                 } else {
@@ -292,7 +294,7 @@ public class BookingService {
 
     public com.cinebook.backend.modules.bookings.dto.BookingAdminDto updateBookingStatus(Long id, BookingStatus status) {
         Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
+                .orElseThrow(() -> AppException.notFound("Booking not found."));
         booking.setStatus(status);
         booking = bookingRepository.save(booking);
 
@@ -325,7 +327,7 @@ public class BookingService {
 
     public List<com.cinebook.backend.modules.bookings.dto.MyBookingDto> getMyBookings(String email) {
         User customer = userRepository.findByEmailAndDeletedAtIsNull(email)
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
+                .orElseThrow(() -> AppException.notFound("Customer not found."));
         List<Booking> bookings = bookingRepository.findByCustomer_UserIdAndStatusInOrderByCreatedAtDesc(
                 customer.getUserId(),
                 java.util.List.of(BookingStatus.Confirmed, BookingStatus.CheckedIn, BookingStatus.Cancelled)
@@ -392,7 +394,7 @@ public class BookingService {
     }
     public com.cinebook.backend.modules.bookings.dto.MyBookingDto getBookingById(Long bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found: " + bookingId));
+                .orElseThrow(() -> AppException.notFound("Booking not found: " + bookingId));
 
         List<BookingSeat> seats = bookingSeatRepository.findByBooking_Id(booking.getId());
         String seatNames = seats.stream()
@@ -463,7 +465,7 @@ public class BookingService {
             if (isScheduleManager) {
                 String email = auth.getName();
                 com.cinebook.backend.modules.users.User user = userRepository.findByEmailAndDeletedAtIsNull(email)
-                        .orElseThrow(() -> new RuntimeException("User not found"));
+                        .orElseThrow(() -> AppException.notFound("User not found."));
                 if (user.getCinema() != null) {
                     bookings = bookingRepository.findByShowtimeCinemaCinemaIdOrderByCreatedAtDesc(user.getCinema().getCinemaId());
                 } else {

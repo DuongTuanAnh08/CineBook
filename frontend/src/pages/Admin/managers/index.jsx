@@ -20,7 +20,7 @@ export default function AdminManagersPage() {
   const [search, setSearch] = useState('');
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({ fullName: '', email: '', phone: '', password: '', cinemaId: '' });
+  const [formData, setFormData] = useState({ fullName: '', email: '', phone: '', cinemaId: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchManagers = async () => {
@@ -50,8 +50,8 @@ export default function AdminManagersPage() {
   }, []);
 
   const handleCreateManager = async () => {
-    if (!formData.fullName || !formData.email || !formData.password || !formData.cinemaId || formData.cinemaId === 'none') {
-      return toast.error('Vui lòng điền đầy đủ thông tin bắt buộc (Họ tên, Email, Mật khẩu và Rạp chiếu)');
+    if (!formData.fullName || !formData.email || !formData.cinemaId || formData.cinemaId === 'none') {
+      return toast.error('Vui lòng điền đầy đủ thông tin bắt buộc (Họ tên, Email và Rạp chiếu)');
     }
     try {
       setIsSubmitting(true);
@@ -60,9 +60,9 @@ export default function AdminManagersPage() {
         cinemaId: Number(formData.cinemaId)
       };
       await adminUserApi.createManager(payload);
-      toast.success('Thêm Manager thành công');
+      toast.success('Thêm Manager thành công. Mật khẩu tạm thời đã được gửi đến email của Manager.');
       setIsDialogOpen(false);
-      setFormData({ fullName: '', email: '', phone: '', password: '', cinemaId: '' });
+      setFormData({ fullName: '', email: '', phone: '', cinemaId: '' });
       fetchManagers();
     } catch (error) {
       toast.error(error.error?.message || error.message || 'Có lỗi xảy ra khi thêm Manager');
@@ -116,10 +116,6 @@ export default function AdminManagersPage() {
                 <div className="space-y-2">
                   <Label>Email *</Label>
                   <Input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="manager@cinebook.com" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Mật khẩu *</Label>
-                  <Input type="password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} placeholder="••••••••" />
                 </div>
                 <div className="space-y-2">
                   <Label>Số điện thoại</Label>

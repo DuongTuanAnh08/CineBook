@@ -100,18 +100,17 @@ function BookingContent() {
   const isWeekend = new Date(date).getDay() === 0 || new Date(date).getDay() === 6;
   const eveningTime = settings?.eveningSurchargeTime || '17:00';
   const isEvening = time ? time >= eveningTime : false;
-  let surchargeMultiplier = 1;
-  if (isWeekend) surchargeMultiplier += (settings?.weekendSurcharge ?? 20) / 100;
-  if (isEvening) surchargeMultiplier += (settings?.eveningSurcharge ?? 10) / 100;
-  
+  const dayMultiplier = isWeekend ? 1 + (settings?.weekendSurcharge ?? 20) / 100 : 1;
+  const timeMultiplier = isEvening ? 1 + (settings?.eveningSurcharge ?? 10) / 100 : 1;
+
   const basePrice = settings?.basePrice ?? 75000;
   const seatVipMultiplier = settings?.seatVipMultiplier ?? 1.5;
   const seatCoupleMultiplier = settings?.seatCoupleMultiplier ?? 2.0;
 
   const dynamicPricing = {
-    standard: basePrice * surchargeMultiplier,
-    vip: basePrice * seatVipMultiplier * surchargeMultiplier,
-    couple: basePrice * seatCoupleMultiplier * surchargeMultiplier
+    standard: basePrice * dayMultiplier * timeMultiplier,
+    vip: basePrice * seatVipMultiplier * dayMultiplier * timeMultiplier,
+    couple: basePrice * seatCoupleMultiplier * dayMultiplier * timeMultiplier
   };
 
   const getQty = itemId => orderItems.find(o => o.item.id === itemId)?.quantity ?? 0;

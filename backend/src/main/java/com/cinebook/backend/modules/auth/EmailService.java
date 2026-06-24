@@ -47,6 +47,22 @@ public class EmailService {
         sendHtmlEmail(to, subject, content);
     }
 
+    public void sendManagerCredentials(String to, String fullName, String tempPassword) {
+        String subject = "CineBook - Thông tin tài khoản Schedule Manager";
+        String content = "<div style='font-family:Arial,sans-serif;max-width:600px;margin:0 auto;'>"
+                + "<h2 style='color:#e50914;'>Chào mừng đến với CineBook!</h2>"
+                + "<p>Xin chào <strong>" + fullName + "</strong>,</p>"
+                + "<p>Tài khoản Schedule Manager của bạn đã được tạo thành công. Dưới đây là thông tin đăng nhập:</p>"
+                + "<div style='background:#f5f5f5;padding:16px;border-radius:8px;margin:16px 0;'>"
+                + "<p style='margin:4px 0;'><strong>Email:</strong> " + to + "</p>"
+                + "<p style='margin:4px 0;'><strong>Mật khẩu tạm thời:</strong> <code style='background:#e0e0e0;padding:2px 6px;border-radius:4px;'>" + tempPassword + "</code></p>"
+                + "</div>"
+                + "<p style='color:#e53e3e;'>Vui lòng đổi mật khẩu ngay sau khi đăng nhập lần đầu.</p>"
+                + "<p>Trân trọng,<br/>Đội ngũ CineBook</p>"
+                + "</div>";
+        sendHtmlEmail(to, subject, content);
+    }
+
     private void sendHtmlEmail(String to, String subject, String htmlContent) {
         try {
             if (senderEmail == null || senderEmail.isEmpty()) {

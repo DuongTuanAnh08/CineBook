@@ -44,7 +44,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<?>> handleDataIntegrityViolation(org.springframework.dao.DataIntegrityViolationException ex) {
         log.warn("Data integrity violation: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error("DUPLICATE_ENTRY", "Dữ liệu đã tồn tại hoặc vi phạm ràng buộc cơ sở dữ liệu. Vui lòng kiểm tra lại."));
+                .body(ApiResponse.error("DUPLICATE_ENTRY", "A record with this value already exists. Please check for duplicates."));
     }
 
     @ExceptionHandler(Exception.class)

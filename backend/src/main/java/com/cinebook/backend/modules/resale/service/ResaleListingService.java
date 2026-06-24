@@ -57,6 +57,11 @@ public class ResaleListingService {
             throw AppException.forbidden("You do not own this booking");
         }
 
+        Showtime listingShowtime = booking.getShowtime();
+        if (listingShowtime.getStartTime().isBefore(LocalDateTime.now().plusHours(2))) {
+            throw AppException.badRequest("Ticket listing is not allowed less than 2 hours before the showtime starts.");
+        }
+
         // Prevent duplicate seats or FNB
         java.util.List<TicketExchangeListing> existingListings = resaleListingRepository.findByBookingIdAndStatusIn(
             request.getBookingId(), 
