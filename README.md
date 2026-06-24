@@ -1,49 +1,93 @@
-# 🎬 CineBook - Nền tảng đặt vé xem phim trực tuyến
+# CineBook - Cinema Booking System
 
-CineBook là một hệ thống ứng dụng web chuyên nghiệp dùng để quản lý hệ thống rạp chiếu phim và đặt vé xem phim trực tuyến. Ứng dụng cung cấp trải nghiệm mượt mà cho cả Khách hàng (người xem phim) và Quản trị viên (Ban quản lý rạp).
+CineBook is a full-stack cinema booking system featuring a modern, dynamic user interface with React + Vite and a robust backend built with Spring Boot.
 
-## ✨ Tính năng nổi bật
+## Architecture
 
-### 👑 Dành cho Quản trị viên (Admin Dashboard)
-- **Quản lý Phim (Movies):** Thêm mới, chỉnh sửa, cập nhật trạng thái phim (Đang chiếu, Sắp chiếu).
-- **Quản lý Lịch chiếu (Showtimes):** Lên lịch chiếu cho từng phim tại từng rạp cụ thể.
-- **Quản lý Rạp & Phòng chiếu (Cinemas & Rooms):** Thiết lập thông tin hệ thống rạp, cấu hình ghế ngồi trong từng phòng chiếu.
-- **Quản lý Đặt vé (Bookings):** Theo dõi trạng thái đặt vé, lịch sử giao dịch.
-- **Quản lý Khuyến mãi (Promotions):** Tạo các chương trình ưu đãi, voucher giảm giá.
-- **Quản lý Khách hàng (Customers):** Quản lý thông tin tài khoản, lịch sử mua hàng của người dùng.
-- **Thống kê & Báo cáo (Analytics):** Thống kê doanh thu, tỷ lệ lấp đầy phòng chiếu, xu hướng xem phim.
-- **Cấu hình hệ thống (Settings):** Tuỳ chỉnh các thông số chung của hệ thống.
+* **Frontend**: React, Vite, TailwindCSS, `react-router-dom`, `axios`.
+* **Backend**: Spring Boot 3.5, Spring Security, JWT, Spring Data JPA.
+* **Database**: MySQL.
+* **Database Migrations**: Flyway.
+* **Payment Gateway**: VNPay.
 
-### 🍿 Dành cho Khách hàng (Customer Flow)
-- **Tài khoản & Xác thực:** Đăng ký an toàn với xác thực OTP, đăng nhập, hỗ trợ Mock-user để test trải nghiệm.
-- **Khám phá & Tìm kiếm:** Thanh tìm kiếm đa năng trên Navbar, lọc danh sách phim "Đang chiếu" (Now Showing), "Sắp chiếu" (Coming Soon).
-- **Thông tin Khuyến mãi & Rạp:** Tìm kiếm các rạp chiếu phim trong hệ thống và theo dõi các chương trình ưu đãi.
-- **Quy trình Đặt vé Trực quan:**
-  1. Chọn phim và khung giờ chiếu phù hợp.
-  2. Lựa chọn chỗ ngồi trên sơ đồ phòng chiếu trực quan.
-  3. Thanh toán đơn giản.
-  4. Xác nhận vé điện tử (Ticket confirmation).
-- **Trang cá nhân:** Quản lý thông tin tài khoản (Profile), theo dõi và kiểm tra lịch sử vé đã đặt (My Tickets).
+## Prerequisites
 
-## 🚀 Công nghệ sử dụng
-Dự án được xây dựng với cấu trúc hiện đại, tập trung vào trải nghiệm người dùng (UX) và hiệu năng. *(Tech stack chi tiết có trong package.json)*
+* **Node.js** (v18+)
+* **Java 17**
+* **MySQL 8.0**
+* **Maven** (Embedded `mvnw` provided)
 
-## 📦 Hướng dẫn cài đặt (Local Development)
+## Setup Instructions
 
-1. Clone dự án về máy:
-   ```bash
-   git clone https://github.com/DuongTuanAnh08/CineBook.git
+### 1. Database Setup
+
+1. Start your local MySQL server.
+2. Create a database named `cinebook`.
+   ```sql
+   CREATE DATABASE cinebook CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
    ```
-2. Cài đặt các gói thư viện (dependencies):
+3. Update `backend/src/main/resources/application.yml` with your local MySQL credentials:
+   ```yaml
+   spring:
+     datasource:
+       url: jdbc:mysql://localhost:3306/cinebook
+       username: root
+       password: 123456
+   ```
+
+### 2. Backend Setup
+
+1. Navigate to the `backend` directory:
+   ```bash
+   cd backend
+   ```
+2. Build the project:
+   ```bash
+   ./mvnw clean package -DskipTests
+   ```
+3. Run the Spring Boot application:
+   ```bash
+   $env:DB_PASSWORD="123456"; .\mvnw spring-boot:run
+   $env:DB_PASSWORD="mật_khẩu_của_bạn";
+    .\mvnw clean spring-boot:run
+   $env:DB_PASSWORD="123456"; $env:GOOGLE_CLIENT_ID="219011529691-co0vj5gls3url1dd2ljkl3tsvtqr8f7s.apps.googleusercontent.com"; .\mvnw spring-boot:run
+   ./mvnw spring-boot:run
+   ```
+   Alternatively, you can run the built JAR:
+   ```bash
+   java -jar target/backend-0.0.1-SNAPSHOT.jar
+   ```
+
+*Note: Flyway will automatically run database migrations and seed default data upon startup.*
+
+### 3. Frontend Setup
+
+1. Navigate to the root directory (where `package.json` is located):
+   ```bash
+   cd ..
+   ```
+2. Install dependencies:
    ```bash
    npm install
-   # hoặc yarn install
    ```
-3. Chạy ứng dụng trong môi trường phát triển (Development):
+3. Create a `.env` file at the root directory with the following variables:
+   ```env
+   VITE_API_BASE_URL=http://localhost:8080/api
+   VITE_GOOGLE_CLIENT_ID=your-google-client-id
+   ```
+4. Start the development server:
    ```bash
    npm run dev
-   # hoặc yarn dev
    ```
 
----
-*Dự án CineBook được xây dựng nhằm mang lại nền tảng quản lý và trải nghiệm đặt vé xem phim tối ưu nhất.*
+## Security & Compliance
+
+This project complies with strict security standards including:
+* **Stateless Token Auth**: JWTs are used for authentication. 
+* **Role-based Access Control (RBAC)**: Validated on both the client (via protected routes) and backend (via Spring Security Method Security).
+* **Clickjacking Protection**: Configured via Content Security Policy `frame-ancestors 'none'`.
+* **API Rate Limiting** & CSRF Protection.
+
+## VNPay Sandbox
+
+The checkout process uses VNPay Sandbox. Test credentials and configuration are located in `backend/src/main/resources/application.yml`.
