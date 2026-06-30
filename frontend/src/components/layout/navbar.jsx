@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/auth-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { useTheme } from 'next-themes'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +25,8 @@ import {
   LayoutDashboard,
   Clapperboard,
   RefreshCw,
+  Sun,
+  Moon,
 } from 'lucide-react'
 
 const mainNavItems = [
@@ -35,6 +38,7 @@ const mainNavItems = [
 ]
 
 export function Navbar() {
+  const { theme, setTheme } = useTheme()
   const { user, isAuthenticated, logout } = useAuth()
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
@@ -53,7 +57,7 @@ export function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-background/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
       <div className="container mx-auto px-4 max-w-[1400px]">
         <div className="flex h-[68px] items-center justify-between gap-4">
 
@@ -77,7 +81,7 @@ export function Navbar() {
                   `px-3.5 py-2 text-sm font-semibold transition-colors rounded-md ${
                     isActive
                       ? 'text-primary bg-primary/10'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                   }`
                 }
               >
@@ -97,7 +101,7 @@ export function Navbar() {
                   placeholder="Tìm phim, diễn viên..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-52 pl-9 pr-3 h-9 bg-white/5 border-white/8 focus:border-primary/60 focus:bg-white/8 text-sm transition-all focus:w-64"
+                  className="w-52 pl-9 pr-3 h-9 bg-muted border-input focus:border-primary/60 focus:bg-background text-sm transition-all focus:w-64"
                 />
               </div>
             </form>
@@ -115,14 +119,26 @@ export function Navbar() {
             {/* Language Switcher Mockup */}
             <div className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mr-1">
               <span className="cursor-pointer hover:text-primary text-primary transition-colors">VI</span>
-              <span className="text-white/10">|</span>
+              <span className="text-muted-foreground/30">|</span>
               <span className="cursor-pointer hover:text-primary transition-colors">EN</span>
             </div>
+
+            {/* Theme Toggle Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="h-9 w-9 text-muted-foreground hover:text-foreground relative rounded-lg"
+              aria-label="Toggle theme"
+            >
+              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            </Button>
 
             {isAuthenticated && user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/6 transition-colors focus:outline-none">
+                  <button className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted transition-colors focus:outline-none">
                     <Avatar className="h-7 w-7 border border-primary/50">
                       <AvatarImage src={user.avatar} alt={user.name} />
                       <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
@@ -134,14 +150,14 @@ export function Navbar() {
                     </span>
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-card border-white/10">
+                <DropdownMenuContent align="end" className="w-56 bg-card border-border">
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col gap-0.5">
                       <p className="text-sm font-semibold text-foreground">{user.name}</p>
                       <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                     </div>
                   </DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-white/5" />
+                  <DropdownMenuSeparator className="bg-border" />
                   {isAdmin && (
                     <>
                       <DropdownMenuItem asChild>
@@ -150,7 +166,7 @@ export function Navbar() {
                           Trang Quản Trị
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator className="bg-white/5" />
+                      <DropdownMenuSeparator className="bg-border" />
                     </>
                   )}
                   <DropdownMenuItem asChild>
@@ -175,7 +191,7 @@ export function Navbar() {
                       </DropdownMenuItem>
                     </>
                   )}
-                  <DropdownMenuSeparator className="bg-white/5" />
+                  <DropdownMenuSeparator className="bg-border" />
                   <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive focus:text-destructive">
                     <LogOut className="mr-2 h-4 w-4" />
                     Đăng xuất
@@ -207,7 +223,7 @@ export function Navbar() {
 
         {/* Mobile search */}
         {isSearchOpen && (
-          <div className="md:hidden py-3 border-t border-white/8">
+          <div className="md:hidden py-3 border-t border-border">
             <form onSubmit={handleSearch}>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -216,7 +232,7 @@ export function Navbar() {
                   placeholder="Tìm phim, diễn viên..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 bg-white/6 border-white/10"
+                  className="w-full pl-10 bg-muted border-input"
                   autoFocus
                 />
               </div>
@@ -226,7 +242,7 @@ export function Navbar() {
 
         {/* Mobile nav menu */}
         {isMobileMenuOpen && (
-          <nav className="lg:hidden py-3 border-t border-white/8">
+          <nav className="lg:hidden py-3 border-t border-border">
             <div className="flex flex-col gap-0.5">
               {mainNavItems.map((item) => (
                 <NavLink
@@ -235,8 +251,8 @@ export function Navbar() {
                   className={({ isActive }) =>
                     `px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${
                       isActive
-                        ? 'text-foreground bg-white/8'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+                        ? 'text-foreground bg-muted'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                     }`
                   }
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -247,7 +263,7 @@ export function Navbar() {
               {!isAuthenticated && (
                 <Link
                   to="/login"
-                  className="px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-md transition-colors sm:hidden"
+                  className="px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors sm:hidden"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Đăng nhập

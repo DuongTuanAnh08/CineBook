@@ -18,7 +18,7 @@ const footerLinks = {
 
 export function Footer() {
   return (
-    <footer className="bg-background border-t border-white/5">
+    <footer className="bg-background border-t border-border">
       <div className="container mx-auto px-4 max-w-[1400px] py-14">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
 
@@ -40,7 +40,7 @@ export function Footer() {
                 href="https://facebook.com"
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 hover:bg-primary hover:text-primary-foreground transition-colors text-muted-foreground"
+                className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary hover:bg-primary hover:text-primary-foreground transition-colors text-muted-foreground"
                 aria-label="Facebook"
               >
                 <Facebook className="w-4 h-4" />
@@ -49,7 +49,7 @@ export function Footer() {
                 href="https://youtube.com"
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 hover:bg-primary hover:text-primary-foreground transition-colors text-muted-foreground"
+                className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary hover:bg-primary hover:text-primary-foreground transition-colors text-muted-foreground"
                 aria-label="YouTube"
               >
                 <Youtube className="w-4 h-4" />
@@ -58,7 +58,7 @@ export function Footer() {
                 href="https://instagram.com"
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 hover:bg-primary hover:text-primary-foreground transition-colors text-muted-foreground"
+                className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary hover:bg-primary hover:text-primary-foreground transition-colors text-muted-foreground"
                 aria-label="Instagram"
               >
                 <Instagram className="w-4 h-4" />

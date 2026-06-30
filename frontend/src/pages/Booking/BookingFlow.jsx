@@ -280,15 +280,15 @@ function BookingContent() {
   );
 
   return (
-    <div className="min-h-screen bg-[#08080a] text-foreground pb-12">
+    <div className="min-h-screen bg-background text-foreground pb-12">
       {/* ── Top Header Navigation & Stepper ── */}
-      <header className="border-b border-white/5 bg-[#121215]/80 backdrop-blur-md sticky top-0 z-50">
+      <header className="border-b border-border bg-card/85 backdrop-blur-md sticky top-0 z-50">
         <div className="container max-w-[1400px] mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 
               size="icon" 
-              className="text-zinc-400 hover:text-white"
+              className="text-muted-foreground hover:text-foreground"
               onClick={async () => {
                 if (step === 2) {
                   if (showtimeId) {
@@ -308,28 +308,28 @@ function BookingContent() {
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <span className="font-extrabold text-white text-lg tracking-tight">Đặt Vé Trực Tuyến</span>
+            <span className="font-extrabold text-foreground text-lg tracking-tight">Đặt Vé Trực Tuyến</span>
           </div>
-
+ 
           {/* Stepper progress indicator */}
           <div className="hidden md:flex items-center gap-6 text-sm">
             <div className="flex items-center gap-2">
-              <span className={cn("w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-colors", step >= 1 ? "bg-primary text-primary-foreground border-primary" : "border-zinc-700 text-zinc-500")}>1</span>
-              <span className={cn("font-bold", step >= 1 ? "text-primary" : "text-zinc-500")}>Chọn Vé</span>
+              <span className={cn("w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-colors", step >= 1 ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground/60")}>1</span>
+              <span className={cn("font-bold", step >= 1 ? "text-primary" : "text-muted-foreground/60")}>Chọn Vé</span>
             </div>
-            <div className={cn("h-[1px] w-8 transition-colors", step >= 2 ? "bg-primary" : "bg-zinc-800")} />
+            <div className={cn("h-[1px] w-8 transition-colors", step >= 2 ? "bg-primary" : "bg-border")} />
             <div className="flex items-center gap-2">
-              <span className={cn("w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-colors", step >= 2 ? "bg-primary text-primary-foreground border-primary" : "border-zinc-700 text-zinc-500")}>2</span>
-              <span className={cn("font-bold", step >= 2 ? "text-primary" : "text-zinc-500")}>Bắp Nước (Snacks)</span>
+              <span className={cn("w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-colors", step >= 2 ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground/60")}>2</span>
+              <span className={cn("font-bold", step >= 2 ? "text-primary" : "text-muted-foreground/60")}>Bắp Nước (Snacks)</span>
             </div>
-            <div className={cn("h-[1px] w-8 transition-colors", concessionOpen ? "bg-primary" : "bg-zinc-800")} />
+            <div className={cn("h-[1px] w-8 transition-colors", concessionOpen ? "bg-primary" : "bg-border")} />
             <div className="flex items-center gap-2">
-              <span className={cn("w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-colors", concessionOpen ? "bg-primary text-primary-foreground border-primary" : "border-zinc-700 text-zinc-500")}>3</span>
-              <span className={cn("font-bold", concessionOpen ? "text-primary" : "text-zinc-500")}>Thanh Toán</span>
+              <span className={cn("w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-colors", concessionOpen ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground/60")}>3</span>
+              <span className={cn("font-bold", concessionOpen ? "text-primary" : "text-muted-foreground/60")}>Thanh Toán</span>
             </div>
           </div>
-
-          <div className="flex items-center gap-4 text-xs font-semibold text-zinc-400">
+ 
+          <div className="flex items-center gap-4 text-xs font-semibold text-muted-foreground/80">
             <span>VI | EN</span>
           </div>
         </div>
@@ -361,10 +361,10 @@ function BookingContent() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
             
             {/* Left Column (2/3 width): Seat Selection Grid */}
-            <div className="lg:col-span-2 bg-[#121215] border border-white/5 rounded-2xl p-6 shadow-2xl relative">
+            <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6 shadow-2xl relative">
               <div className="mb-6">
-                <h2 className="text-xl font-black text-white tracking-tight border-l-4 border-primary pl-3">Chọn ghế ngồi</h2>
-                <p className="text-xs text-zinc-400 mt-1 uppercase font-bold tracking-wider">
+                <h2 className="text-xl font-black text-foreground tracking-tight border-l-4 border-primary pl-3">Chọn ghế ngồi</h2>
+                <p className="text-xs text-muted-foreground mt-1 uppercase font-bold tracking-wider">
                   {movie.title} • {cinema?.name} • {room} • {time}
                 </p>
               </div>
@@ -394,13 +394,13 @@ function BookingContent() {
             <div className="lg:col-span-1 space-y-8">
               
               {/* Concessions Widget (Snacks / Combo Selector) */}
-              <div className="bg-[#121215] border border-white/5 rounded-2xl p-6 shadow-2xl space-y-4">
-                <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">Dịch vụ Bắp & Nước</h3>
-                  <span className="text-[10px] text-zinc-400 font-semibold bg-white/5 rounded px-2 py-0.5">Snacks</span>
+              <div className="bg-card border border-border rounded-2xl p-6 shadow-2xl space-y-4">
+                <div className="flex items-center justify-between border-b border-border pb-3">
+                  <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Dịch vụ Bắp & Nước</h3>
+                  <span className="text-[10px] text-muted-foreground/80 font-semibold bg-muted rounded px-2 py-0.5">Snacks</span>
                 </div>
 
-                <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1.5 scrollbar-thin scrollbar-thumb-white/5 scrollbar-track-transparent">
+                <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1.5 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
                   {isLoadingConcessions ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -411,26 +411,26 @@ function BookingContent() {
                     activeItems.slice(0, 5).map(item => {
                       const qty = getQty(item.id);
                       return (
-                        <div key={item.id} className={cn("flex gap-3 items-center border rounded-xl p-3 transition-all", qty > 0 ? "border-primary/20 bg-primary/5" : "border-white/5 bg-white/5 hover:border-white/10")}>
+                        <div key={item.id} className={cn("flex gap-3 items-center border rounded-xl p-3 transition-all", qty > 0 ? "border-primary/25 bg-primary/5" : "border-border bg-muted/40 hover:border-border/80")}>
                           {item.imageUrl ? (
-                            <img src={item.imageUrl} alt={item.name} className="w-12 h-12 rounded-lg object-cover bg-zinc-800 shrink-0" />
+                            <img src={item.imageUrl} alt={item.name} className="w-12 h-12 rounded-lg object-cover bg-muted shrink-0" />
                           ) : (
-                            <div className="w-12 h-12 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-500 shrink-0">🍿</div>
+                            <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center text-muted-foreground shrink-0">🍿</div>
                           )}
                           <div className="flex-1 min-w-0">
-                            <h4 className="text-xs font-bold text-white leading-tight truncate">{item.name}</h4>
-                            <p className="text-[10px] text-zinc-400 line-clamp-1 mt-0.5">{item.description}</p>
+                            <h4 className="text-xs font-bold text-foreground leading-tight truncate">{item.name}</h4>
+                            <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">{item.description}</p>
                             <p className="text-xs font-bold text-primary mt-1">{new Intl.NumberFormat('vi-VN').format(item.price)}₫</p>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             <button
                               type="button"
                               onClick={() => changeQty(item, -1)}
-                              className="w-6 h-6 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-white/10"
+                              className="w-6 h-6 rounded-full bg-muted border border-input flex items-center justify-center text-foreground hover:bg-muted/80"
                             >
                               <Minus className="w-3 h-3" />
                             </button>
-                            <span className="text-xs font-bold text-white w-4 text-center">{qty}</span>
+                            <span className="text-xs font-bold text-foreground w-4 text-center">{qty}</span>
                             <button
                               type="button"
                               onClick={() => changeQty(item, 1)}
@@ -447,12 +447,12 @@ function BookingContent() {
               </div>
 
               {/* Order Summary Widget */}
-              <div className="bg-[#121215] border border-white/5 rounded-2xl p-6 shadow-2xl space-y-4">
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-white/5 pb-3">Chi tiết hóa đơn</h3>
+              <div className="bg-card border border-border rounded-2xl p-6 shadow-2xl space-y-4">
+                <h3 className="text-sm font-bold text-foreground uppercase tracking-wider border-b border-border pb-3">Chi tiết hóa đơn</h3>
                 
                 {/* Seats Selected list */}
                 <div className="flex items-center justify-between text-xs py-1">
-                  <span className="text-zinc-400 font-semibold">Ghế chọn:</span>
+                  <span className="text-muted-foreground font-semibold">Ghế chọn:</span>
                   {pendingSeats.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
                       {pendingSeats.map(s => (
@@ -462,20 +462,20 @@ function BookingContent() {
                       ))}
                     </div>
                   ) : (
-                    <span className="text-zinc-500 italic">Chưa chọn ghế</span>
+                    <span className="text-muted-foreground/60 italic">Chưa chọn ghế</span>
                   )}
                 </div>
-
+ 
                 {/* Sub items cost break-down */}
-                <div className="space-y-2.5 pt-2 border-t border-white/5 text-xs text-zinc-300">
+                <div className="space-y-2.5 pt-2 border-t border-border text-xs text-muted-foreground">
                   <div className="flex justify-between">
                     <span>Vé xem phim ({pendingSeats.length} ghế)</span>
-                    <span className="font-bold text-white">{new Intl.NumberFormat('vi-VN').format(currentSeatTotal)}₫</span>
+                    <span className="font-bold text-foreground">{new Intl.NumberFormat('vi-VN').format(currentSeatTotal)}₫</span>
                   </div>
                   {orderItems.length > 0 && (
-                    <div className="space-y-1.5 pl-2 border-l border-white/10">
+                    <div className="space-y-1.5 pl-2 border-l border-border">
                       {orderItems.map(o => (
-                        <div key={o.item.id} className="flex justify-between text-[11px] text-zinc-400">
+                        <div key={o.item.id} className="flex justify-between text-[11px] text-muted-foreground/80">
                           <span>{o.item.name} (x{o.quantity})</span>
                           <span>{new Intl.NumberFormat('vi-VN').format(o.item.price * o.quantity)}₫</span>
                         </div>
@@ -484,30 +484,30 @@ function BookingContent() {
                   )}
                   {orderItems.length > 0 && (
                     <div className="flex justify-between text-[11px] pt-1">
-                      <span className="text-zinc-400">Tiền bắp nước:</span>
-                      <span className="font-bold text-white">{new Intl.NumberFormat('vi-VN').format(concessionTotal)}₫</span>
+                      <span className="text-muted-foreground">Tiền bắp nước:</span>
+                      <span className="font-bold text-foreground">{new Intl.NumberFormat('vi-VN').format(concessionTotal)}₫</span>
                     </div>
                   )}
                 </div>
-
+ 
                 {/* Subtotal + Tax VAT 10% */}
-                <div className="border-t border-white/5 pt-3.5 space-y-2 text-xs">
-                  <div className="flex justify-between text-zinc-400">
+                <div className="border-t border-border pt-3.5 space-y-2 text-xs">
+                  <div className="flex justify-between text-muted-foreground">
                     <span>Tạm tính (chưa thuế):</span>
                     <span>{new Intl.NumberFormat('vi-VN').format(currentSubtotal)}₫</span>
                   </div>
-                  <div className="flex justify-between text-zinc-400">
+                  <div className="flex justify-between text-muted-foreground">
                     <span>VAT (10%):</span>
                     <span>{new Intl.NumberFormat('vi-VN').format(Math.round(currentSubtotal * 0.1))}₫</span>
                   </div>
-                  <div className="flex justify-between text-base font-extrabold text-white border-t border-white/5 pt-3">
+                  <div className="flex justify-between text-base font-extrabold text-foreground border-t border-border pt-3">
                     <span>Tổng cộng:</span>
                     <span className="text-xl text-primary font-black">
                       {new Intl.NumberFormat('vi-VN').format(currentSubtotal + Math.round(currentSubtotal * 0.1))}₫
                     </span>
                   </div>
                 </div>
-
+ 
                 {/* Confirm transaction CTA */}
                 <div className="pt-2">
                   <Button
@@ -521,7 +521,7 @@ function BookingContent() {
                   <button
                     type="button"
                     onClick={handleCancelTransaction}
-                    className="w-full text-center text-xs text-zinc-500 hover:text-zinc-400 underline font-medium mt-3"
+                    className="w-full text-center text-xs text-muted-foreground hover:text-foreground underline font-medium mt-3"
                   >
                     Hủy giao dịch & Nhả ghế
                   </button>

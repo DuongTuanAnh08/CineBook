@@ -56,19 +56,19 @@ export function SeatButton({
               isSelected && 'bg-primary border border-primary text-black font-extrabold shadow-lg shadow-primary/20 hover:scale-105 scale-105 cursor-pointer',
               
               // Standard available
-              isAvailable && !isSelected && seat.type === 'standard' && 'bg-[#27272a] border border-zinc-700 hover:bg-zinc-800 hover:border-zinc-500 text-zinc-300 cursor-pointer',
+              isAvailable && !isSelected && seat.type === 'standard' && 'bg-secondary border border-border hover:bg-muted text-foreground cursor-pointer',
               
               // VIP available
-              isAvailable && !isSelected && seat.type === 'vip' && 'bg-transparent border border-primary/60 text-primary hover:bg-primary/10 hover:border-primary text-primary hover:scale-105 cursor-pointer',
+              isAvailable && !isSelected && seat.type === 'vip' && 'bg-transparent border border-primary/60 text-primary hover:bg-primary/10 hover:border-primary hover:scale-105 cursor-pointer',
               
               // Couple available
-              isAvailable && !isSelected && seat.type === 'couple' && 'bg-red-950/20 border border-red-800/60 text-red-500 hover:bg-red-950/40 hover:border-red-500 hover:scale-105 cursor-pointer',
+              isAvailable && !isSelected && seat.type === 'couple' && 'bg-red-500/10 dark:bg-red-950/20 border border-red-500/40 dark:border-red-800/60 text-red-500 hover:bg-red-500/20 dark:hover:bg-red-950/40 hover:border-red-500 hover:scale-105 cursor-pointer',
               
               // Booked / Sold
-              isBooked && 'bg-[#18181b] border border-zinc-800/40 text-zinc-600 cursor-not-allowed opacity-40',
+              isBooked && 'bg-muted border border-border text-muted-foreground cursor-not-allowed opacity-40',
               
               // Held
-              isHeld && 'bg-red-950/40 border border-red-700/60 text-red-500 cursor-not-allowed opacity-60',
+              isHeld && 'bg-red-500/15 dark:bg-red-950/40 border border-red-500/45 dark:border-red-700/60 text-red-500 cursor-not-allowed opacity-60',
               
               // Disabled state
               disabled && !isSelected && 'opacity-40 cursor-not-allowed hover:scale-100'

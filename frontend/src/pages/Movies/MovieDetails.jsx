@@ -441,7 +441,7 @@ export default function MovieDetailPage() {
   return (
     <>
       {/* ── 1. Hero Banner Section ── */}
-      <div className="relative overflow-hidden min-h-[500px] flex items-center bg-zinc-950">
+      <div className="relative overflow-hidden min-h-[500px] flex items-center bg-background/95">
         {movie.backdrop && (
           <div className="absolute inset-0">
             <img
@@ -459,7 +459,7 @@ export default function MovieDetailPage() {
           {/* Back Button */}
           <Link 
             to="/movies" 
-            className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white mb-8 font-semibold transition-colors group"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-8 font-semibold transition-colors group"
           >
             <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
             Quay lại danh sách
@@ -468,7 +468,7 @@ export default function MovieDetailPage() {
           {/* Movie Metadata Header */}
           <div className="flex flex-col md:flex-row gap-8 items-start">
             {/* Poster */}
-            <div className="w-[200px] md:w-[240px] shrink-0 rounded-2xl overflow-hidden aspect-[2/3] border border-white/10 shadow-2xl relative bg-zinc-900 group">
+            <div className="w-[200px] md:w-[240px] shrink-0 rounded-2xl overflow-hidden aspect-[2/3] border border-border shadow-2xl relative bg-muted group">
               <img
                 src={movie.poster}
                 alt={movie.title}
@@ -476,7 +476,7 @@ export default function MovieDetailPage() {
               />
               {/* Play icon badge representing preview availability */}
               {trailerEmbedUrl && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                <div className="absolute inset-0 flex items-center justify-center bg-black/25 dark:bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                   <Play className="w-12 h-12 text-primary fill-current" />
                 </div>
               )}
@@ -486,45 +486,45 @@ export default function MovieDetailPage() {
             <div className="space-y-5">
               <div className="flex flex-wrap gap-2">
                 {movie.genres.map(g => (
-                  <Badge key={g} variant="secondary" className="bg-white/10 hover:bg-white/15 text-zinc-300 border-0 text-xs font-semibold px-2.5 py-0.5">
+                  <Badge key={g} variant="secondary" className="bg-secondary text-muted-foreground border-0 text-xs font-semibold px-2.5 py-0.5">
                     {g}
                   </Badge>
                 ))}
               </div>
 
-              <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
+              <h1 className="text-4xl md:text-5xl font-black text-foreground tracking-tight leading-tight">
                 {movie.title}
               </h1>
               {movie.originalTitle && (
-                <p className="text-lg text-zinc-400 font-medium -mt-2">
+                <p className="text-lg text-muted-foreground font-medium -mt-2">
                   {movie.originalTitle}
                 </p>
               )}
 
               {/* Age badge + Clock duration + Release date + Star rating */}
-              <div className="flex flex-wrap items-center gap-5 text-sm text-zinc-300 pt-1">
+              <div className="flex flex-wrap items-center gap-5 text-sm text-muted-foreground pt-1">
                 <div className="flex items-center gap-2">
                   <Badge className={`text-white border-0 font-bold px-2 py-0.5 text-xs rounded-md ${ageRatingColors[movie.ageRating] || 'bg-gray-600'}`}>
                     {movie.ageRating}
                   </Badge>
-                  <span className="text-xs text-zinc-400">
+                  <span className="text-xs text-muted-foreground/60">
                     {ageRatingDescriptions[movie.ageRating]}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-zinc-400" />
+                  <Clock className="w-4 h-4 text-muted-foreground" />
                   <span>{movie.duration} phút</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4 text-zinc-400" />
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
                   <span>
                     {format(new Date(movie.releaseDate), 'dd/MM/yyyy')}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 text-primary">
                   <Star className="w-4 h-4 fill-current text-primary" />
-                  <span className="font-extrabold text-white">{currentRating.toFixed(1)}/5</span>
-                  <span className="text-xs text-zinc-400">({reviews.length} đánh giá)</span>
+                  <span className="font-extrabold text-foreground">{currentRating.toFixed(1)}/5</span>
+                  <span className="text-xs text-muted-foreground/60">({reviews.length} đánh giá)</span>
                 </div>
               </div>
             </div>
@@ -534,13 +534,13 @@ export default function MovieDetailPage() {
 
       {/* ── 2. Official Trailer Section ── */}
       {trailerEmbedUrl && (
-        <section className="py-12 border-t border-white/5 bg-background">
+        <section className="py-12 border-t border-border bg-background">
           <div className="container max-w-[1000px] mx-auto px-4">
             <div className="text-center mb-6">
-              <h2 className="text-xl font-extrabold text-white uppercase tracking-wider">Trailer chính thức</h2>
-              <p className="text-xs text-zinc-400 mt-1">Xem trước giới thiệu phim đặc sắc</p>
+              <h2 className="text-xl font-extrabold text-foreground uppercase tracking-wider">Trailer chính thức</h2>
+              <p className="text-xs text-muted-foreground mt-1">Xem trước giới thiệu phim đặc sắc</p>
             </div>
-            <div className="relative aspect-video rounded-2xl overflow-hidden border border-white/5 bg-zinc-950 shadow-2xl">
+            <div className="relative aspect-video rounded-2xl overflow-hidden border border-border bg-muted shadow-2xl">
               <iframe
                 src={trailerEmbedUrl}
                 title={`Trailer: ${movie.title}`}
@@ -554,7 +554,7 @@ export default function MovieDetailPage() {
       )}
 
       {/* ── 3. Split Main Grid: Info vs. Booking Widget ── */}
-      <section className="py-16 bg-[#09090b] border-t border-white/5">
+      <section className="py-16 bg-muted/30 border-t border-border">
         <div className="container max-w-[1400px] mx-auto px-4 grid grid-cols-1 lg:grid-cols-3 gap-10">
           
           {/* Left Column: Synopsis & Cast (2/3 width) */}
@@ -562,33 +562,33 @@ export default function MovieDetailPage() {
             
             {/* Synopsis */}
             <div className="space-y-4">
-              <h2 className="text-2xl font-black text-white tracking-tight border-l-4 border-primary pl-3">Nội dung phim</h2>
-              <p className="text-zinc-300 text-sm md:text-base leading-relaxed whitespace-pre-line">
+              <h2 className="text-2xl font-black text-foreground tracking-tight border-l-4 border-primary pl-3">Nội dung phim</h2>
+              <p className="text-muted-foreground text-sm md:text-base leading-relaxed whitespace-pre-line">
                 {movie.description || movie.synopsis}
               </p>
               <div className="pt-2 flex items-center gap-2 text-sm">
-                <span className="text-zinc-400">Đạo diễn:</span>
-                <span className="font-bold text-white hover:text-primary transition-colors cursor-pointer">{movie.director}</span>
+                <span className="text-muted-foreground/60">Đạo diễn:</span>
+                <span className="font-bold text-foreground hover:text-primary transition-colors cursor-pointer">{movie.director}</span>
               </div>
             </div>
 
             {/* Top Cast */}
             <div className="space-y-6">
-              <h2 className="text-2xl font-black text-white tracking-tight border-l-4 border-primary pl-3">Diễn viên chính</h2>
+              <h2 className="text-2xl font-black text-foreground tracking-tight border-l-4 border-primary pl-3">Diễn viên chính</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {(movie.cast || []).map((actor) => (
                   <div 
                     key={actor.id} 
-                    className="flex flex-col items-center p-4 rounded-2xl border border-white/5 bg-card/45 hover:border-primary/20 hover:bg-card/75 transition-all text-center group"
+                    className="flex flex-col items-center p-4 rounded-2xl border border-border bg-card/45 hover:border-primary/20 hover:bg-card/75 transition-all text-center group"
                   >
-                    <Avatar className="mb-3 size-20 border border-white/10 ring-2 ring-primary/10 transition-transform group-hover:scale-105">
+                    <Avatar className="mb-3 size-20 border border-border ring-2 ring-primary/10 transition-transform group-hover:scale-105">
                       <AvatarImage src={actor.avatar} alt={actor.name} />
-                      <AvatarFallback className="bg-zinc-800 text-white font-black text-lg">
+                      <AvatarFallback className="bg-secondary text-foreground font-black text-lg">
                         {actor.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <h4 className="font-bold text-white text-sm line-clamp-1 leading-tight">{actor.name}</h4>
-                    <p className="mt-1 text-xs text-zinc-400 line-clamp-1">{actor.role}</p>
+                    <h4 className="font-bold text-foreground text-sm line-clamp-1 leading-tight">{actor.name}</h4>
+                    <p className="mt-1 text-xs text-muted-foreground line-clamp-1">{actor.role}</p>
                   </div>
                 ))}
               </div>
@@ -598,26 +598,26 @@ export default function MovieDetailPage() {
 
           {/* Right Column: Book Your Seats Widget (1/3 width) */}
           <div className="lg:col-span-1">
-            <div className="bg-[#121215] border border-white/5 rounded-2xl p-6 shadow-2xl space-y-6 sticky top-28">
-              <div className="flex items-center gap-2 border-b border-white/5 pb-3">
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-2xl space-y-6 sticky top-28">
+              <div className="flex items-center gap-2 border-b border-border pb-3">
                 <Ticket className="w-5 h-5 text-primary" />
-                <h3 className="text-lg font-black text-white tracking-tight">Mua vé xem phim</h3>
+                <h3 className="text-lg font-black text-foreground tracking-tight">Mua vé xem phim</h3>
               </div>
               
               {/* Step 1: Chọn Rạp */}
               {availableCinemas.length > 0 ? (
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider block">1. Chọn rạp chiếu</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">1. Chọn rạp chiếu</label>
                   <select
                     value={selectedCinemaId}
                     onChange={(e) => {
                       setSelectedCinemaId(e.target.value);
                       setSelectedShowtimeId('');
                     }}
-                    className="w-full bg-white/5 border border-white/10 hover:border-white/15 focus:border-primary text-white rounded-xl px-3 py-2.5 h-11 text-sm focus:outline-none cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%23a1a1aa%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem] bg-[right_0.75rem_center] bg-no-repeat"
+                    className="w-full bg-muted border border-input hover:border-border focus:border-primary text-foreground rounded-xl px-3 py-2.5 h-11 text-sm focus:outline-none cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%23a1a1aa%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem] bg-[right_0.75rem_center] bg-no-repeat"
                   >
                     {availableCinemas.map(c => (
-                      <option key={c.id} value={c.id} className="bg-[#121212] text-white">{c.name}</option>
+                      <option key={c.id} value={c.id} className="bg-popover text-foreground">{c.name}</option>
                     ))}
                   </select>
                 </div>
@@ -629,7 +629,7 @@ export default function MovieDetailPage() {
 
               {/* Step 2: Chọn Ngày */}
               <div className="space-y-2">
-                <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider block">2. Chọn ngày chiếu</label>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">2. Chọn ngày chiếu</label>
                 <div className="flex gap-1.5 overflow-x-auto pb-1.5 scrollbar-hide -mx-2 px-2">
                   {dates.map(date => {
                     const isSelected = selectedDate === date.value;
@@ -641,7 +641,7 @@ export default function MovieDetailPage() {
                           setSelectedDate(date.value);
                           setSelectedShowtimeId('');
                         }}
-                        className={`flex-shrink-0 flex flex-col items-center justify-center rounded-xl px-3.5 py-2 text-center transition-all ${isSelected ? 'bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/20 scale-105' : 'bg-white/5 hover:bg-white/10 text-white'}`}
+                        className={`flex-shrink-0 flex flex-col items-center justify-center rounded-xl px-3.5 py-2 text-center transition-all ${isSelected ? 'bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/20 scale-105' : 'bg-muted hover:bg-muted/80 text-foreground'}`}
                       >
                         <span className="text-[9px] font-normal capitalize tracking-wider">{date.label}</span>
                         <span className="text-xs font-bold mt-0.5">{date.date}</span>
@@ -653,7 +653,7 @@ export default function MovieDetailPage() {
 
               {/* Step 3: Chọn Suất Chiếu */}
               <div className="space-y-3">
-                <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center justify-between block">
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center justify-between block">
                   <span>3. Chọn Suất Chiếu</span>
                   {selectedShowtime && (
                     <Badge variant="outline" className="text-[10px] text-primary border-primary/20 bg-primary/5">
@@ -678,25 +678,25 @@ export default function MovieDetailPage() {
                           type="button"
                           disabled={isPast || showtime.availableSeats === 0}
                           onClick={() => setSelectedShowtimeId(showtime.id)}
-                          className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all ${isPast || showtime.availableSeats === 0 ? 'opacity-30 cursor-not-allowed border-white/5 bg-black/10' : isSelected ? 'border-primary bg-primary/10 text-primary scale-105 shadow-sm font-black' : 'border-white/5 bg-white/5 hover:border-white/20 text-white'}`}
+                          className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all ${isPast || showtime.availableSeats === 0 ? 'opacity-30 cursor-not-allowed border-border bg-black/10 dark:bg-black/40' : isSelected ? 'border-primary bg-primary/10 text-primary scale-105 shadow-sm font-black' : 'border-border bg-muted hover:bg-muted/80 text-foreground'}`}
                         >
                           <span className="text-sm font-bold">{showtime.startTime}</span>
-                          <span className="text-[9px] text-zinc-400 mt-1">{showtime.availableSeats} ghế trống</span>
+                          <span className="text-[9px] text-muted-foreground/60 mt-1">{showtime.availableSeats} ghế trống</span>
                         </button>
                       );
                     })}
                   </div>
                 ) : (
-                  <div className="text-xs text-muted-foreground text-center py-6 bg-white/5 rounded-xl border border-white/5">
+                  <div className="text-xs text-muted-foreground text-center py-6 bg-muted rounded-xl border border-border">
                     Không có suất chiếu vào ngày này
                   </div>
                 )}
               </div>
 
               {/* Step 4: Giá Vé & Nút Mua Vé */}
-              <div className="border-t border-white/5 pt-4 space-y-4">
+              <div className="border-t border-border pt-4 space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Giá vé từ:</span>
+                  <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Giá vé từ:</span>
                   <span className="text-2xl font-black text-primary">
                     {selectedShowtime 
                       ? `${new Intl.NumberFormat('vi-VN').format(selectedShowtime.price)} đ` 
@@ -722,10 +722,10 @@ export default function MovieDetailPage() {
       </section>
 
       {/* ── 4. Audience Reviews Section ── */}
-      <section className="py-16 bg-background border-t border-white/5">
+      <section className="py-16 bg-background border-t border-border">
         <div className="container max-w-[1400px] mx-auto px-4">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-black text-white tracking-tight border-l-4 border-primary pl-3">Đánh giá từ khán giả</h2>
+            <h2 className="text-2xl font-black text-foreground tracking-tight border-l-4 border-primary pl-3">Đánh giá từ khán giả</h2>
             <Button
               variant="outline"
               onClick={handleWriteReviewClick}
@@ -737,26 +737,26 @@ export default function MovieDetailPage() {
           </div>
 
           {/* Rating breakdown block */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-card/35 border border-white/5 rounded-2xl p-6 md:p-8 items-center mb-8">
-            <div className="text-center md:border-r md:border-white/5 space-y-2">
-              <div className="text-5xl font-black text-white">{ratingBreakdown.average.toFixed(1)}</div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-muted/30 border border-border rounded-2xl p-6 md:p-8 items-center mb-8">
+            <div className="text-center md:border-r md:border-border space-y-2">
+              <div className="text-5xl font-black text-foreground">{ratingBreakdown.average.toFixed(1)}</div>
               <div className="flex justify-center gap-1">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className={`w-5 h-5 ${i < Math.round(ratingBreakdown.average) ? 'fill-primary text-primary' : 'text-zinc-700 fill-zinc-700'}`} />
+                  <Star key={i} className={`w-5 h-5 ${i < Math.round(ratingBreakdown.average) ? 'fill-primary text-primary' : 'text-muted-foreground/40 fill-muted-foreground/30'}`} />
                 ))}
               </div>
-              <div className="text-xs text-zinc-400">Dựa trên {ratingBreakdown.total} đánh giá</div>
+              <div className="text-xs text-muted-foreground">Dựa trên {ratingBreakdown.total} đánh giá</div>
             </div>
             
             <div className="md:col-span-2 space-y-2.5">
               {[5, 4, 3, 2, 1].map(stars => (
                 <div key={stars} className="flex items-center gap-3 text-xs">
-                  <span className="w-3 text-zinc-400 text-right">{stars}</span>
-                  <Star className="w-3 h-3 fill-zinc-400 text-zinc-400" />
-                  <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
+                  <span className="w-3 text-muted-foreground text-right">{stars}</span>
+                  <Star className="w-3 h-3 fill-muted-foreground/45 text-muted-foreground/45" />
+                  <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                     <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${ratingBreakdown[stars]}%` }} />
                   </div>
-                  <span className="w-8 text-zinc-400 text-right">{ratingBreakdown[stars]}%</span>
+                  <span className="w-8 text-muted-foreground text-right">{ratingBreakdown[stars]}%</span>
                 </div>
               ))}
             </div>
@@ -764,17 +764,17 @@ export default function MovieDetailPage() {
 
           {/* Write Review Panel inline */}
           {hasWatched && !reviews.some(r => String(r.customerId) === String(user?.id)) && (
-            <div id="write-review-form" className="mb-8 bg-card/35 border border-white/5 rounded-2xl p-6">
-              <h3 className="mb-4 text-base font-bold text-white">Viết nhận xét của bạn</h3>
+            <div id="write-review-form" className="mb-8 bg-muted/30 border border-border rounded-2xl p-6">
+              <h3 className="mb-4 text-base font-bold text-foreground">Viết nhận xét của bạn</h3>
               <div className="flex flex-col gap-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-zinc-400">Đánh giá của bạn:</span>
+                  <span className="text-sm text-muted-foreground">Đánh giá của bạn:</span>
                   <div className="flex gap-1 cursor-pointer">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
                         onClick={() => setMyRating(i + 1)}
-                        className={`w-5 h-5 transition-colors ${i < myRating ? 'fill-primary text-primary' : 'text-zinc-600 hover:text-primary/70'}`}
+                        className={`w-5 h-5 transition-colors ${i < myRating ? 'fill-primary text-primary' : 'text-muted-foreground/40 hover:text-primary/70'}`}
                       />
                     ))}
                   </div>
@@ -783,7 +783,7 @@ export default function MovieDetailPage() {
                   placeholder="Chia sẻ cảm nhận của bạn về bộ phim..."
                   value={myComment}
                   onChange={(e) => setMyComment(e.target.value)}
-                  className="min-h-[100px] bg-white/5 border border-white/10 hover:border-white/15 focus:border-primary text-white rounded-xl"
+                  className="min-h-[100px] bg-muted border border-input focus:border-primary text-foreground rounded-xl"
                 />
                 <div className="flex justify-end">
                   <Button 
@@ -801,13 +801,13 @@ export default function MovieDetailPage() {
 
           {/* Reviews List */}
           {reviews.length === 0 ? (
-            <div className="text-center text-zinc-500 py-8 bg-white/5 rounded-2xl border border-white/5">
+            <div className="text-center text-muted-foreground py-8 bg-muted/20 rounded-2xl border border-border">
               Chưa có đánh giá nào cho phim này.
             </div>
           ) : (
             <div className="space-y-4">
               {reviews.map((review) => (
-                <div key={review.id} className="p-5 rounded-2xl border border-white/5 bg-card/25 flex gap-4">
+                <div key={review.id} className="p-5 rounded-2xl border border-border bg-card/25 flex gap-4">
                   <Avatar className="size-10 ring-2 ring-primary/10">
                     <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
                       {review.customerName ? review.customerName.charAt(0).toUpperCase() : 'U'}
@@ -816,18 +816,18 @@ export default function MovieDetailPage() {
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-semibold text-white text-sm">{review.customerName}</h4>
-                        <span className="text-[10px] text-zinc-400 block mt-0.5">
+                        <h4 className="font-semibold text-foreground text-sm">{review.customerName}</h4>
+                        <span className="text-[10px] text-muted-foreground block mt-0.5">
                           {format(new Date(review.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}
                         </span>
                       </div>
                       <div className="flex gap-0.5">
                         {Array.from({ length: 5 }).map((_, i) => (
-                          <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'fill-primary text-primary' : 'text-zinc-700'}`} />
+                          <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'fill-primary text-primary' : 'text-muted-foreground/30'}`} />
                         ))}
                       </div>
                     </div>
-                    <p className="text-sm text-zinc-300 leading-relaxed">{review.comment}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{review.comment}</p>
                   </div>
                 </div>
               ))}
@@ -837,9 +837,9 @@ export default function MovieDetailPage() {
       </section>
 
       {/* ── 5. Related Movies Section ── */}
-      <div className="border-t border-white/5 bg-card/10 py-16">
+      <div className="border-t border-border bg-muted/20 py-16">
         <div className="container max-w-[1400px] mx-auto px-4">
-          <h2 className="mb-8 text-2xl font-black text-white tracking-tight border-l-4 border-primary pl-3">Phim tương tự</h2>
+          <h2 className="mb-8 text-2xl font-black text-foreground tracking-tight border-l-4 border-primary pl-3">Phim tương tự</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
             {activeMovies
               .filter(
@@ -854,7 +854,7 @@ export default function MovieDetailPage() {
                   to={`/movies/${relatedMovie.id}`}
                   className="group block space-y-3"
                 >
-                  <div className="relative aspect-[2/3] overflow-hidden rounded-2xl border border-white/5 bg-card hover:border-primary/20 transition-all shadow-lg">
+                  <div className="relative aspect-[2/3] overflow-hidden rounded-2xl border border-border bg-card hover:border-primary/20 transition-all shadow-lg">
                     <img
                       src={relatedMovie.poster}
                       alt={relatedMovie.title}
@@ -867,12 +867,12 @@ export default function MovieDetailPage() {
                     </div>
                   </div>
                   <div>
-                    <h4 className="line-clamp-2 text-sm font-bold text-white transition-colors group-hover:text-primary leading-tight">
+                    <h4 className="line-clamp-2 text-sm font-bold text-foreground transition-colors group-hover:text-primary leading-tight">
                       {relatedMovie.title}
                     </h4>
                     <div className="mt-1.5 flex items-center gap-1">
                       <Star className="w-3.5 h-3.5 fill-primary text-primary" />
-                      <span className="text-xs text-zinc-400 font-semibold">
+                      <span className="text-xs text-muted-foreground font-semibold">
                         {(relatedMovie.rating || 0).toFixed(1)}
                       </span>
                     </div>

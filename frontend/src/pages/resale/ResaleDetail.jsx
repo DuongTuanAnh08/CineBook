@@ -227,7 +227,7 @@ export default function ResaleDetailPage({
                 </div>
                 <div className="flex items-center gap-2 pl-1">
                   <Phone className="w-4 h-4 text-muted-foreground shrink-0" />
-                  <a to={`tel:${listing.sellerPhone}`} className="font-mono font-medium text-primary hover:underline">
+                  <a href={`tel:${listing.sellerPhone}`} className="font-mono font-medium text-primary hover:underline">
                     {listing.sellerPhone}
                   </a>
                 </div>
@@ -239,7 +239,7 @@ export default function ResaleDetailPage({
         {/* Actions */}
         <div className="space-y-3">
           <Button asChild className="w-full gap-2" size="lg">
-            <a to={`tel:${listing.sellerPhone}`}>
+            <a href={`tel:${listing.sellerPhone}`}>
               <Phone className="w-4 h-4" />
               Liên hệ người bán: {listing.sellerPhone}
             </a>

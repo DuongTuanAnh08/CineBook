@@ -210,32 +210,32 @@ function PaymentContent() {
   }) : '';
 
   return (
-    <div className="min-h-screen bg-[#08080a] text-foreground pb-16">
+    <div className="min-h-screen bg-background text-foreground pb-16">
       {/* ── Top Header Navigation & Stepper ── */}
-      <header className="border-b border-white/5 bg-[#121215]/80 backdrop-blur-md sticky top-0 z-50">
+      <header className="border-b border-border bg-card/85 backdrop-blur-md sticky top-0 z-50">
         <div className="container max-w-[1400px] mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 
               size="icon" 
-              className="text-zinc-400 hover:text-white"
+              className="text-muted-foreground hover:text-foreground"
               onClick={() => router(-1)}
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <span className="font-extrabold text-white text-lg tracking-tight">Thanh Toán</span>
+            <span className="font-extrabold text-foreground text-lg tracking-tight">Thanh Toán</span>
           </div>
 
           {/* Stepper progress indicator */}
           <div className="hidden md:flex items-center gap-6 text-sm">
             <div className="flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border border-zinc-700 text-zinc-500">1</span>
-              <span className="font-bold text-zinc-500">Chọn Vé</span>
+              <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border border-border text-muted-foreground/60">1</span>
+              <span className="font-bold text-muted-foreground/60">Chọn Vé</span>
             </div>
-            <div className="h-[1px] w-8 bg-zinc-850" />
+            <div className="h-[1px] w-8 bg-border" />
             <div className="flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border border-zinc-700 text-zinc-500">2</span>
-              <span className="font-bold text-zinc-500">Bắp Nước</span>
+              <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border border-border text-muted-foreground/60">2</span>
+              <span className="font-bold text-muted-foreground/60">Bắp Nước</span>
             </div>
             <div className="h-[1px] w-8 bg-primary" />
             <div className="flex items-center gap-2">
@@ -244,7 +244,7 @@ function PaymentContent() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4 text-xs font-semibold text-zinc-400">
+          <div className="flex items-center gap-4 text-xs font-semibold text-muted-foreground/80">
             <span>VI | EN</span>
           </div>
         </div>
@@ -259,32 +259,32 @@ function PaymentContent() {
             
             {/* Header info */}
             <div>
-              <h1 className="text-2xl font-black text-white tracking-tight">Thanh Toán Đơn Hàng</h1>
-              <p className="text-xs text-zinc-400 mt-1">Vui lòng kiểm tra lại thông tin đơn hàng và tiến hành thanh toán an toàn.</p>
+              <h1 className="text-2xl font-black text-foreground tracking-tight">Thanh Toán Đơn Hàng</h1>
+              <p className="text-xs text-muted-foreground mt-1">Vui lòng kiểm tra lại thông tin đơn hàng và tiến hành thanh toán an toàn.</p>
             </div>
 
             {/* Order Summary Card */}
-            <div className="bg-[#121215] border border-white/5 rounded-2xl p-6 shadow-2xl space-y-6">
-              <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Thông tin vé</h3>
-                <span className="text-[10px] text-zinc-400 font-semibold bg-white/5 rounded px-2 py-0.5">CineBook</span>
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-2xl space-y-6">
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Thông tin vé</h3>
+                <span className="text-[10px] text-muted-foreground/80 font-semibold bg-muted rounded px-2 py-0.5">CineBook</span>
               </div>
 
               <div className="flex gap-4 items-start">
                 <img 
                   src={movie?.poster} 
                   alt={movie?.title} 
-                  className="w-16 rounded-xl object-cover aspect-[2/3] border border-white/5 shadow-md shrink-0" 
+                  className="w-16 rounded-xl object-cover aspect-[2/3] border border-border shadow-md shrink-0" 
                 />
                 <div className="flex-1 min-w-0 space-y-1">
-                  <h4 className="font-bold text-white text-base leading-tight truncate">{movie?.title}</h4>
-                  <p className="text-xs text-zinc-400 flex items-center gap-2"><Building2 className="w-3.5 h-3.5 text-primary" /> {cinema}</p>
-                  <p className="text-xs text-zinc-400 flex items-center gap-2"><CreditCard className="w-3.5 h-3.5 text-primary" /> {room}</p>
-                  <p className="text-xs text-zinc-400 flex items-center gap-2"><Calendar className="w-3.5 h-3.5 text-primary" /> {displayDate} - {time}</p>
+                  <h4 className="font-bold text-foreground text-base leading-tight truncate">{movie?.title}</h4>
+                  <p className="text-xs text-muted-foreground flex items-center gap-2"><Building2 className="w-3.5 h-3.5 text-primary" /> {cinema}</p>
+                  <p className="text-xs text-muted-foreground flex items-center gap-2"><CreditCard className="w-3.5 h-3.5 text-primary" /> {room}</p>
+                  <p className="text-xs text-muted-foreground flex items-center gap-2"><Calendar className="w-3.5 h-3.5 text-primary" /> {displayDate} - {time}</p>
                   
                   {/* Selected Seats Badges */}
                   <div className="flex flex-wrap items-center gap-1.5 pt-2">
-                    <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">Ghế:</span>
+                    <span className="text-[10px] text-muted-foreground/60 font-semibold uppercase tracking-wider">Ghế:</span>
                     {seats.map(s => (
                       <Badge key={s} className="bg-primary hover:bg-primary text-primary-foreground font-bold text-[10px] rounded px-2 py-0.5">
                         {s}
@@ -296,20 +296,20 @@ function PaymentContent() {
 
               {/* Concessions details */}
               {concessions.length > 0 && (
-                <div className="border-t border-white/5 pt-4 space-y-3">
-                  <h4 className="text-xs text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <div className="border-t border-border pt-4 space-y-3">
+                  <h4 className="text-xs text-muted-foreground font-bold uppercase tracking-wider flex items-center gap-1.5">
                     <ShoppingCart className="w-3.5 h-3.5 text-primary" />
                     Bắp nước đã chọn
                   </h4>
                   <div className="space-y-2">
                     {concessions.map(c => (
-                      <div key={c.id} className="flex justify-between text-xs text-zinc-300">
+                      <div key={c.id} className="flex justify-between text-xs text-muted-foreground">
                         <div className="flex items-center gap-2">
                           <span className="text-zinc-500">🍿</span>
                           <span>{c.name}</span>
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-white/5 border border-white/5 text-zinc-400">x{c.qty}</Badge>
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-muted border border-border text-muted-foreground">x{c.qty}</Badge>
                         </div>
-                        <span className="font-bold text-white">{new Intl.NumberFormat('vi-VN').format(c.price * c.qty)}₫</span>
+                        <span className="font-bold text-foreground">{new Intl.NumberFormat('vi-VN').format(c.price * c.qty)}₫</span>
                       </div>
                     ))}
                   </div>
@@ -318,19 +318,19 @@ function PaymentContent() {
             </div>
 
             {/* Discount / Promo Code Card */}
-            <div className="bg-[#121215] border border-white/5 rounded-2xl p-6 shadow-2xl space-y-4">
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-white/5 pb-3">Khuyến mãi / Ưu đãi</h3>
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-2xl space-y-4">
+              <h3 className="text-sm font-bold text-foreground uppercase tracking-wider border-b border-border pb-3">Khuyến mãi / Ưu đãi</h3>
               
               <div className="space-y-3">
                 {promoApplied ? (
-                  <div className="flex items-center justify-between rounded-xl bg-green-500/5 border border-green-500/20 px-4 py-2.5">
+                  <div className="flex items-center justify-between rounded-xl bg-green-500/5 border border-green-500/25 px-4 py-2.5">
                     <div className="flex items-center gap-2">
                       <Tag className="w-4 h-4 text-green-500" />
                       <span className="text-sm text-green-500 font-mono font-bold">{promoCode}</span>
                     </div>
                     <button 
                       type="button"
-                      className="text-xs text-zinc-500 hover:text-zinc-400 underline font-medium" 
+                      className="text-xs text-muted-foreground hover:text-foreground underline font-medium" 
                       onClick={() => {
                         setPromoApplied(false);
                         setPromoCode('');
@@ -344,7 +344,7 @@ function PaymentContent() {
                 ) : (
                   <div className="flex gap-2">
                     <div className="relative flex-1">
-                      <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                      <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
                       <Input 
                         placeholder="Nhập mã khuyến mãi (ví dụ: CINE50)" 
                         value={promoCode} 
@@ -352,7 +352,7 @@ function PaymentContent() {
                           setPromoCode(e.target.value.toUpperCase());
                           setPromoError('');
                         }} 
-                        className="pl-10 h-10 text-sm bg-white/5 border-white/10 rounded-xl focus:border-primary/60" 
+                        className="pl-10 h-10 text-sm bg-muted border-input rounded-xl focus:border-primary/60" 
                       />
                     </div>
                     <Button onClick={handleApplyPromo} className="bg-primary hover:bg-primary/95 text-primary-foreground font-bold h-10 px-5 rounded-xl">
@@ -370,34 +370,34 @@ function PaymentContent() {
             </div>
 
             {/* Payment Method Card (VNPay only) */}
-            <div className="bg-[#121215] border border-white/5 rounded-2xl p-6 shadow-2xl space-y-4">
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-white/5 pb-3">Phương thức thanh toán</h3>
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-2xl space-y-4">
+              <h3 className="text-sm font-bold text-foreground uppercase tracking-wider border-b border-border pb-3">Phương thức thanh toán</h3>
               
               <div className="space-y-4">
-                <div className="w-full flex items-center justify-between p-4 rounded-xl border border-primary/20 bg-primary/5 transition-all text-left relative">
+                <div className="w-full flex items-center justify-between p-4 rounded-xl border border-primary/25 bg-primary/5 transition-all text-left relative">
                   <div className="flex items-center gap-3.5">
                     <VNPayIcon />
                     <div>
-                      <p className="text-xs font-bold text-white flex items-center gap-2">
+                      <p className="text-xs font-bold text-foreground flex items-center gap-2">
                         Thanh toán qua VNPay
                         <span className="text-[9px] bg-green-500/20 text-green-500 px-1.5 py-0.5 rounded font-bold uppercase">Khuyên dùng</span>
                       </p>
-                      <p className="text-[10px] text-zinc-400 mt-0.5">Thẻ ATM nội địa, thẻ Visa/MasterCard hoặc quét mã QR Code để thanh toán ngay lập tức.</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Thẻ ATM nội địa, thẻ Visa/MasterCard hoặc quét mã QR Code để thanh toán ngay lập tức.</p>
                     </div>
                   </div>
                   {/* Pre-selected gold dot */}
                   <div className="w-4 h-4 rounded-full border-2 border-primary bg-primary flex items-center justify-center shrink-0">
-                    <div className="w-1.5 h-1.5 rounded-full bg-black" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-background" />
                   </div>
                 </div>
 
                 {/* Informative notice block */}
-                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-blue-500/5 border border-blue-500/10 text-xs text-zinc-300">
-                  <div className="mt-0.5 w-4 h-4 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 font-bold">i</div>
+                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-blue-500/5 border border-blue-500/20 text-xs text-muted-foreground">
+                  <div className="mt-0.5 w-4 h-4 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0 font-bold">i</div>
                   <div className="space-y-1">
-                    <p className="font-bold text-blue-400">Môi trường thử nghiệm (Sandbox):</p>
-                    <p className="text-zinc-400 leading-relaxed text-[11px]">Trang thanh toán thử nghiệm của VNPay sẽ tự động mở ra. Bạn có thể sử dụng thông tin thẻ ATM NCB test để kiểm tra:</p>
-                    <p className="text-primary font-mono text-[11px] mt-1 bg-white/5 p-2 rounded border border-white/5 leading-relaxed">
+                    <p className="font-bold text-blue-500">Môi trường thử nghiệm (Sandbox):</p>
+                    <p className="text-muted-foreground/80 leading-relaxed text-[11px]">Trang thanh toán thử nghiệm của VNPay sẽ tự động mở ra. Bạn có thể sử dụng thông tin thẻ ATM NCB test để kiểm tra:</p>
+                    <p className="text-primary font-mono text-[11px] mt-1 bg-muted p-2 rounded border border-border leading-relaxed">
                       Số thẻ: 9704198526191432119 <br/>
                       Tên chủ thẻ: NGUYEN VAN A <br/>
                       Ngày phát hành: 07/15 <br/>
@@ -412,25 +412,25 @@ function PaymentContent() {
 
           {/* Right Column (1/3 width): Total Breakdown & Pay CTA */}
           <div className="lg:col-span-1">
-            <div className="bg-[#121215] border border-white/5 rounded-2xl p-6 shadow-2xl space-y-5 sticky top-24">
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-white/5 pb-3">Chi tiết thanh toán</h3>
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-2xl space-y-5 sticky top-24">
+              <h3 className="text-sm font-bold text-foreground uppercase tracking-wider border-b border-border pb-3">Chi tiết thanh toán</h3>
               
               {/* Cost detailed item list */}
-              <div className="space-y-3.5 text-xs text-zinc-300 relative">
+              <div className="space-y-3.5 text-xs text-muted-foreground relative">
                 {isLoadingCalc && (
-                  <div className="absolute inset-0 bg-[#121215]/80 flex items-center justify-center z-10 rounded">
+                  <div className="absolute inset-0 bg-card/80 flex items-center justify-center z-10 rounded">
                     <Loader2 className="w-5 h-5 animate-spin text-primary" />
                   </div>
                 )}
                 
                 <div className="flex justify-between">
-                  <span className="text-zinc-400">Tiền vé ({seats.length} ghế)</span>
-                  <span className="font-bold text-white">{new Intl.NumberFormat('vi-VN').format(displaySeatTotal)}₫</span>
+                  <span className="text-muted-foreground/60">Tiền vé ({seats.length} ghế)</span>
+                  <span className="font-bold text-foreground">{new Intl.NumberFormat('vi-VN').format(displaySeatTotal)}₫</span>
                 </div>
                 {displayConcessionTotal > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-zinc-400">Tiền bắp nước</span>
-                    <span className="font-bold text-white">{new Intl.NumberFormat('vi-VN').format(displayConcessionTotal)}₫</span>
+                    <span className="text-muted-foreground/60">Tiền bắp nước</span>
+                    <span className="font-bold text-foreground">{new Intl.NumberFormat('vi-VN').format(displayConcessionTotal)}₫</span>
                   </div>
                 )}
                 {promoApplied && (
@@ -440,12 +440,12 @@ function PaymentContent() {
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-zinc-400">Thuế VAT ({displayVatPercent}%)</span>
-                  <span className="font-bold text-white">{new Intl.NumberFormat('vi-VN').format(calculatedVatAmount)}₫</span>
+                  <span className="text-muted-foreground/60">Thuế VAT ({displayVatPercent}%)</span>
+                  <span className="font-bold text-foreground">{new Intl.NumberFormat('vi-VN').format(calculatedVatAmount)}₫</span>
                 </div>
 
                 {/* Divider */}
-                <div className="border-t border-white/5 pt-4 flex justify-between items-center text-base font-extrabold text-white">
+                <div className="border-t border-border pt-4 flex justify-between items-center text-base font-extrabold text-foreground">
                   <span>Tổng cộng:</span>
                   <span className="text-xl text-primary font-black">
                     {new Intl.NumberFormat('vi-VN').format(finalTotal)}₫
@@ -473,7 +473,7 @@ function PaymentContent() {
                   )}
                 </Button>
                 
-                <p className="text-[10px] text-center text-zinc-500 font-medium flex items-center justify-center gap-1.5 pt-3">
+                <p className="text-[10px] text-center text-muted-foreground/60 font-medium flex items-center justify-center gap-1.5 pt-3">
                   <span>🛡️</span> Giao dịch được mã hóa và bảo mật bởi VNPay SSL
                 </p>
               </div>

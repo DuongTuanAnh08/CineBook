@@ -4,9 +4,63 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* CineBook Dark Cinema Theme */
+/* CineBook Theme Variables */
 :root {
-  /* Cinema Dark Theme - Always dark */
+  /* Cinema Light Theme - Default */
+  --background: oklch(0.98 0.005 250);
+  --foreground: oklch(0.15 0.01 250);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0.01 250);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0.01 250);
+  
+  /* Primary - Cinema Gold #FFB800 */
+  --primary: oklch(0.78 0.16 84);
+  --primary-foreground: oklch(0.08 0.01 250);
+  
+  /* Secondary - Light Gray */
+  --secondary: oklch(0.93 0.01 250);
+  --secondary-foreground: oklch(0.15 0.01 250);
+  
+  /* Muted - Subtle gray */
+  --muted: oklch(0.95 0.01 250);
+  --muted-foreground: oklch(0.45 0.01 250);
+  
+  /* Accent - Light Gold tint */
+  --accent: oklch(0.96 0.02 84);
+  --accent-foreground: oklch(0.2 0.05 84);
+  
+  /* Destructive */
+  --destructive: oklch(0.60 0.22 27);
+  --destructive-foreground: oklch(0.98 0.01 250);
+  
+  /* Borders & Inputs */
+  --border: oklch(0.89 0.01 250);
+  --input: oklch(0.89 0.01 250);
+  --ring: oklch(0.78 0.16 84);
+  
+  /* Charts */
+  --chart-1: oklch(0.78 0.16 84);
+  --chart-2: oklch(0.6 0.15 200);
+  --chart-3: oklch(0.7 0.18 150);
+  --chart-4: oklch(0.65 0.2 320);
+  --chart-5: oklch(0.55 0.24 27);
+  
+  --radius: 0.75rem;
+  
+  /* Sidebar - Admin Panel (Light) */
+  --sidebar: oklch(0.98 0.005 250);
+  --sidebar-foreground: oklch(0.15 0.01 250);
+  --sidebar-primary: oklch(0.78 0.16 84);
+  --sidebar-primary-foreground: oklch(0.08 0.01 250);
+  --sidebar-accent: oklch(0.92 0.01 250);
+  --sidebar-accent-foreground: oklch(0.15 0.01 250);
+  --sidebar-border: oklch(0.89 0.01 250);
+  --sidebar-ring: oklch(0.78 0.16 84);
+}
+
+.dark {
+  /* Cinema Dark Theme */
   --background: oklch(0.08 0.01 250);
   --foreground: oklch(0.95 0 0);
   --card: oklch(0.14 0.01 250);
@@ -26,7 +80,7 @@
   --muted: oklch(0.18 0.01 250);
   --muted-foreground: oklch(0.65 0 0);
   
-  /* Accent - Gold/Amber for highlights */
+  /* Accent - Gold/Amber */
   --accent: oklch(0.78 0.16 84);
   --accent-foreground: oklch(0.08 0.01 250);
   
@@ -46,44 +100,7 @@
   --chart-4: oklch(0.65 0.2 320);
   --chart-5: oklch(0.55 0.24 27);
   
-  --radius: 0.75rem;
-  
   /* Sidebar - Admin Panel */
-  --sidebar: oklch(0.08 0.01 250);
-  --sidebar-foreground: oklch(0.9 0 0);
-  --sidebar-primary: oklch(0.78 0.16 84);
-  --sidebar-primary-foreground: oklch(0.08 0.01 250);
-  --sidebar-accent: oklch(0.14 0.01 250);
-  --sidebar-accent-foreground: oklch(0.95 0 0);
-  --sidebar-border: oklch(0.20 0.01 250);
-  --sidebar-ring: oklch(0.78 0.16 84);
-}
-
-.dark {
-  --background: oklch(0.08 0.01 250);
-  --foreground: oklch(0.95 0 0);
-  --card: oklch(0.14 0.01 250);
-  --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.12 0.01 250);
-  --popover-foreground: oklch(0.95 0 0);
-  --primary: oklch(0.78 0.16 84);
-  --primary-foreground: oklch(0.08 0.01 250);
-  --secondary: oklch(0.20 0.01 250);
-  --secondary-foreground: oklch(0.9 0 0);
-  --muted: oklch(0.18 0.01 250);
-  --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.78 0.16 84);
-  --accent-foreground: oklch(0.08 0.01 250);
-  --destructive: oklch(0.55 0.24 27);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.20 0.01 250);
-  --input: oklch(0.18 0.01 250);
-  --ring: oklch(0.78 0.16 84);
-  --chart-1: oklch(0.78 0.16 84);
-  --chart-2: oklch(0.6 0.15 200);
-  --chart-3: oklch(0.7 0.18 150);
-  --chart-4: oklch(0.65 0.2 320);
-  --chart-5: oklch(0.55 0.24 27);
   --sidebar: oklch(0.08 0.01 250);
   --sidebar-foreground: oklch(0.9 0 0);
   --sidebar-primary: oklch(0.78 0.16 84);
@@ -136,12 +153,15 @@
 }
 
 @layer base {
+  html {
+    font-size: 16.5px;
+  }
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Outfit', system-ui, sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Outfit', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
 }
@@ -161,16 +181,16 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: oklch(0.12 0.01 250);
+  background: var(--muted);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: oklch(0.3 0.01 250);
+  background: var(--border);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.55 0.24 27);
+  background: var(--primary);
 }
 
 @layer components {
@@ -214,10 +234,28 @@
 }
 
 /* Fix dark mode calendar icon visibility */
-::-webkit-calendar-picker-indicator {
+.dark ::-webkit-calendar-picker-indicator {
   filter: invert(1) opacity(0.7);
 }
 
-::-webkit-calendar-picker-indicator:hover {
+.dark ::-webkit-calendar-picker-indicator:hover {
   filter: invert(1) opacity(1);
+}
+
+/* Premium Cinema design utilities */
+.mesh-glow {
+  background-image: 
+    radial-gradient(circle at 15% 15%, oklch(0.78 0.16 84 / 0.04) 0%, transparent 45%),
+    radial-gradient(circle at 85% 75%, oklch(0.78 0.16 84 / 0.03) 0%, transparent 50%);
+}
+
+.dark .mesh-glow {
+  background-image: 
+    radial-gradient(circle at 15% 15%, oklch(0.78 0.16 84 / 0.10) 0%, transparent 45%),
+    radial-gradient(circle at 85% 75%, oklch(0.78 0.16 84 / 0.07) 0%, transparent 50%);
+}
+
+.dot-pattern {
+  background-image: radial-gradient(var(--border) 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
 }
