@@ -257,10 +257,16 @@ public class ShowtimeService {
         
         Movie movie = movieRepository.findById(request.getMovieId())
                 .orElseThrow(() -> AppException.notFound("Movie not found."));
+        if (movie.getStatus() != null && "Hidden".equalsIgnoreCase(movie.getStatus())) {
+            throw AppException.badRequest("Cannot create showtime for a hidden movie.");
+        }
         Cinema cinema = cinemaRepository.findById(request.getCinemaId())
                 .orElseThrow(() -> AppException.notFound("Cinema not found."));
         Room room = roomRepository.findById(request.getRoomId())
                 .orElseThrow(() -> AppException.notFound("Room not found."));
+        if (room.getStatus() != null && !"Active".equalsIgnoreCase(room.getStatus())) {
+            throw AppException.badRequest("Cannot create showtime in a room under maintenance.");
+        }
 
         LocalDateTime startTime = request.getStartTime();
         if (startTime == null) {
@@ -305,6 +311,9 @@ public class ShowtimeService {
         if (request.getMovieId() != null) {
             targetMovie = movieRepository.findById(request.getMovieId())
                     .orElseThrow(() -> AppException.notFound("Movie not found."));
+            if (targetMovie.getStatus() != null && "Hidden".equalsIgnoreCase(targetMovie.getStatus()) && !targetMovie.getMovieId().equals(showtime.getMovie().getMovieId())) {
+                throw AppException.badRequest("Cannot update showtime to a hidden movie.");
+            }
             showtime.setMovie(targetMovie);
         }
         if (request.getCinemaId() != null) {
@@ -317,6 +326,9 @@ public class ShowtimeService {
         if (request.getRoomId() != null) {
             targetRoom = roomRepository.findById(request.getRoomId())
                     .orElseThrow(() -> AppException.notFound("Room not found."));
+            if (targetRoom.getStatus() != null && !"Active".equalsIgnoreCase(targetRoom.getStatus()) && !targetRoom.getRoomId().equals(showtime.getRoom().getRoomId())) {
+                throw AppException.badRequest("Cannot update showtime to a room under maintenance.");
+            }
             showtime.setRoom(targetRoom);
         }
         LocalDateTime targetStartTime = showtime.getStartTime();

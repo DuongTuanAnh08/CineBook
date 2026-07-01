@@ -381,13 +381,13 @@ export default function MovieDetailPage() {
     const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
     if (!reviews || reviews.length === 0) {
       return {
-        5: 62,
-        4: 24,
-        3: 9,
-        2: 3,
-        1: 2,
-        total: 2847,
-        average: movie?.rating || 4.5
+        5: 0,
+        4: 0,
+        3: 0,
+        2: 0,
+        1: 0,
+        total: 0,
+        average: movie?.rating || 0
       };
     }
     reviews.forEach(r => {

@@ -167,8 +167,9 @@ export default function AdminShowtimesPage() {
 
   const openAdd = () => {
     setEditingShowtime(null);
+    const firstActiveMovie = movies.find(m => m.status?.toLowerCase() !== 'hidden');
     setFormData({ 
-      movieId: movies[0]?.movieId?.toString() || '', 
+      movieId: firstActiveMovie?.movieId?.toString() || '', 
       cinemaId: selectedCinema !== 'all' ? selectedCinema : (cinemas[0]?.cinemaId?.toString() || ''), 
       roomId: '', 
       date: selectedDate, 
@@ -236,7 +237,22 @@ export default function AdminShowtimesPage() {
   };
 
   // Lọc phòng theo Rạp đã chọn trong Form
-  const formRooms = rooms.filter(r => r.cinemaId === Number(formData.cinemaId));
+  const formRooms = useMemo(() => {
+    return rooms.filter(r => 
+      r.cinemaId === Number(formData.cinemaId) && 
+      (r.status?.toLowerCase() === 'active' || (editingShowtime && r.roomId === editingShowtime.roomId))
+    );
+  }, [rooms, formData.cinemaId, editingShowtime]);
+
+  // Lọc phim hoạt động (không bị ẩn) dành cho Form
+  const activeMoviesForForm = useMemo(() => {
+    return movies.filter(m => {
+      if (editingShowtime && m.movieId === editingShowtime.movieId) {
+        return true;
+      }
+      return m.status?.toLowerCase() !== 'hidden';
+    });
+  }, [movies, editingShowtime]);
   
   // Các phòng của Rạp đang được chọn ở bộ lọc (dành cho màn hình Timeline)
   const timelineRooms = selectedCinema !== 'all' ? rooms.filter(r => r.cinemaId === Number(selectedCinema)) : [];
@@ -580,15 +596,42 @@ export default function AdminShowtimesPage() {
                       </div>
                     </div>
 
+                    {/* Room Headers Row */}
+                    <div className="grid grid-cols-9 gap-4 items-center mb-4 px-4 select-none">
+                      {/* Empty spacer for the time ruler column */}
+                      <div className="col-span-1" />
+                      
+                      {/* Room headers columns */}
+                      <div 
+                        className="col-span-8 grid gap-4"
+                        style={{ gridTemplateColumns: `repeat(${Math.max(4, timelineRooms.length)}, minmax(0, 1fr))` }}
+                      >
+                        {timelineRooms.map((room, roomIdx) => {
+                          const isVipRoom = room.name?.toLowerCase().includes('vip') || roomIdx === 3;
+                          return (
+                            <div key={room.roomId} className="bg-white/5 border border-white/5 rounded-xl px-3 py-2 text-center">
+                              <p className={cn("text-xs font-black", isVipRoom ? "text-primary" : "text-white")}>{room.name}</p>
+                              <p className="text-[10px] text-zinc-400 font-bold mt-0.5">Sức chứa: {room.capacity} ghế</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                     {/* Visual Timeline Stepper Grid */}
                     <div className="grid grid-cols-9 gap-4 items-start relative bg-[#0d0d0f] rounded-2xl border border-white/5 p-4">
                       
                       {/* Left vertical time ruler column */}
-                      <div className="col-span-1 h-[840px] relative flex flex-col justify-between text-[11px] font-black text-zinc-500 pr-4 select-none pt-2.5 pb-2.5 border-r border-white/5">
+                      <div className="col-span-1 h-[840px] relative text-[11px] font-black text-zinc-500 pr-4 select-none border-r border-white/5">
                         {Array.from({ length: 8 }).map((_, i) => {
                           const hour = 10 + i * 2; // Time starts at 10:00 to match Figma!
+                          const topPos = i * 120;
                           return (
-                            <div key={hour} className="flex items-center gap-1.5 justify-end h-8">
+                            <div 
+                              key={hour} 
+                              className="absolute right-4 flex items-center gap-1.5 justify-end h-8 -translate-y-1/2"
+                              style={{ top: `${topPos}px` }}
+                            >
                               <span>{hour.toString().padStart(2, '0')}:00</span>
                               <div className="w-1.5 h-[1px] bg-zinc-700" />
                             </div>
@@ -622,14 +665,8 @@ export default function AdminShowtimesPage() {
 
                           return (
                             <div key={room.roomId} className="relative h-full border-r border-white/5 last:border-r-0 flex flex-col pt-1">
-                              {/* Column Header */}
-                              <div className="bg-white/5 border border-white/5 rounded-xl px-3 py-2 text-center mb-2 shrink-0 select-none z-10">
-                                <p className={cn("text-xs font-black", isVipRoom ? "text-primary" : "text-white")}>{room.name}</p>
-                                <p className="text-[10px] text-zinc-400 font-bold mt-0.5">Sức chứa: {room.capacity} ghế</p>
-                              </div>
-
                               {/* Interactive Relative container for blocks */}
-                              <div className="flex-1 relative w-full h-[780px]">
+                              <div className="flex-1 relative w-full h-[840px]">
                                 
                                 {/* 1. Showtime card blocks */}
                                 {roomShowtimes.map(s => {
@@ -720,9 +757,8 @@ export default function AdminShowtimesPage() {
                           );
                         })}
                       </div>
-
                     </div>
-                    
+
                     {/* Time Legend indicators */}
                     <div className="flex items-center justify-center flex-wrap gap-4 text-xs text-zinc-500 py-4 border-t border-white/5 mt-4">
                       <div className="flex items-center gap-1.5"><div className="w-3.5 h-3.5 rounded-md border border-[#2563eb]/40 bg-[#1e3a8a]/10" /> Standard Room</div>
@@ -766,7 +802,7 @@ export default function AdminShowtimesPage() {
                   <SelectValue placeholder="Chọn phim" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#121215] border-white/10">
-                  {movies.map(m => <SelectItem key={m.movieId} value={m.movieId.toString()}>{m.title}</SelectItem>)}
+                  {activeMoviesForForm.map(m => <SelectItem key={m.movieId} value={m.movieId.toString()}>{m.title}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { MapPin, Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, Loader2 } from 'lucide-react';
+import { MapPin, Plus, Search, MoreHorizontal, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import cinemaApi from '@/api/cinemaApi';
@@ -213,28 +213,23 @@ export default function AdminCinemasPage() {
                       <p className="text-xs text-muted-foreground mt-1">{cinema.address}</p>
                     </div>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="w-8 h-8 shrink-0">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem className="gap-2">
-                        <Eye className="w-4 h-4" /> Xem chi tiết
-                      </DropdownMenuItem>
-                      {user?.role !== 'manager' && (
-                        <>
-                          <DropdownMenuItem className="gap-2" onClick={() => openEdit(cinema)}>
-                            <Pencil className="w-4 h-4" /> Chỉnh sửa
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2 text-destructive focus:text-destructive" onClick={() => confirmDelete(cinema.id)}>
-                            <Trash2 className="w-4 h-4" /> Xóa
-                          </DropdownMenuItem>
-                        </>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {user?.role !== 'manager' && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="w-8 h-8 shrink-0">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem className="gap-2" onClick={() => openEdit(cinema)}>
+                          <Pencil className="w-4 h-4" /> Chỉnh sửa
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="gap-2 text-destructive focus:text-destructive" onClick={() => confirmDelete(cinema.id)}>
+                          <Trash2 className="w-4 h-4" /> Xóa
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between">
